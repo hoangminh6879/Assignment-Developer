@@ -1,3 +1,32 @@
+server:
+  port: 9999
 spring:
   application:
     name: HomestayDev
+  datasource:
+    url: jdbc:sqlserver://localhost:1433;databaseName=HomestayDev;encrypt=true;trustServerCertificate=true
+    username: j2ee
+    password: Minh@7979
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.SQLServerDialect
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/HomestayRealm
+          jwk-set-uri: http://localhost:8080/realms/HomestayRealm/protocol/openid-connect/certs
+
+keycloak:
+  server-url: http://localhost:8080/
+  realm: HomestayRealm
+  client-id: homestay-client
+  client-secret: U6IpDXlqMwRODktPk3usOM8gODXY9YJI
+

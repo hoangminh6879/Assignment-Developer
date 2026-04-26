@@ -1,0 +1,60 @@
+<div class="register-container">
+  <div class="register-card animate-fade-in">
+    <div class="register-header">
+      <h1>Tham gia cùng chúng tôi</h1>
+      <p>Bắt đầu hành trình quản lý homestay chuyên nghiệp</p>
+    </div>
+
+    <form (ngSubmit)="onRegister()" #registerForm="ngForm" class="register-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">Họ</label>
+          <input type="text" id="firstName" name="firstName" [(ngModel)]="userData.firstName" required>
+        </div>
+        <div class="form-group">
+          <label for="lastName">Tên</label>
+          <input type="text" id="lastName" name="lastName" [(ngModel)]="userData.lastName" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Tên đăng nhập</label>
+        <input type="text" id="username" name="username" [(ngModel)]="userData.username" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" [(ngModel)]="userData.email" required email>
+      </div>
+
+      <div class="form-group">
+        <label for="phoneNumber">Số điện thoại</label>
+        <input type="text" id="phoneNumber" name="phoneNumber" [(ngModel)]="userData.phoneNumber">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <input type="password" id="password" name="password" [(ngModel)]="userData.password" required minlength="6">
+      </div>
+
+      @if (errorMessage) {
+        <div class="error-alert">{{ errorMessage }}</div>
+      }
+      @if (successMessage) {
+        <div class="success-alert">{{ successMessage }}</div>
+      }
+
+      <button type="button" (click)="onRegister()" class="btn-primary">
+        @if (isLoading) {
+          <span class="loader"></span>
+        } @else {
+          Tạo tài khoản
+        }
+      </button>
+
+      <div class="form-footer">
+        <p>Đã có tài khoản? <a routerLink="/login">Đăng nhập</a></p>
+      </div>
+    </form>
+  </div>
+</div>

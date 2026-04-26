@@ -1,0 +1,58 @@
+<div class="login-container">
+  <div class="login-card animate-fade-in">
+    <div class="login-header">
+      <h1>Chào mừng trở lại!</h1>
+      <p>Đăng nhập để quản lý homestay của bạn</p>
+    </div>
+
+    <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="login-form">
+      <div class="form-group">
+        <label for="username">Tên đăng nhập</label>
+        <div class="input-wrapper">
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            [(ngModel)]="loginData.username" 
+            required 
+            placeholder="Nhập tên đăng nhập"
+          >
+          <span class="input-icon">👤</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <div class="input-wrapper">
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            [(ngModel)]="loginData.password" 
+            required 
+            placeholder="Nhập mật khẩu"
+          >
+          <span class="input-icon">🔒</span>
+        </div>
+      </div>
+
+      @if (errorMessage) {
+        <div class="error-alert">
+          {{ errorMessage }}
+        </div>
+      }
+
+      <button type="submit" class="btn-primary" [disabled]="!loginForm.valid || isLoading">
+        @if (isLoading) {
+          <span class="loader"></span>
+        } @else {
+          Đăng Nhập
+        }
+      </button>
+
+      <div class="form-footer">
+        <p>Chưa có tài khoản? <a routerLink="/register">Đăng ký ngay</a></p>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,45 @@
+<app-navbar></app-navbar>
+
+<div class="home-container">
+  <!-- Hero Section -->
+  <section class="hero animate-fade-in">
+    <div class="hero-content">
+      <h1>Tìm Ngôi Nhà Thứ Hai Của Bạn</h1>
+      <p>Khám phá những homestay độc đáo và ấm cúng trên khắp Việt Nam</p>
+      <div class="search-bar">
+        <input type="text" placeholder="Bạn muốn đi đâu?">
+        <button class="btn-search">Tìm kiếm</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Section -->
+  <section class="featured">
+    <div class="section-header">
+      <h2>Homestay Nổi Bật</h2>
+      <p>Những địa điểm được yêu thích nhất bởi cộng đồng</p>
+    </div>
+
+    <div class="homestay-grid">
+      @for (home of featuredHomestays; track home.id) {
+        <div class="home-card">
+          <div class="card-image">
+            <img [src]="home.image" [alt]="home.name">
+            <div class="badge">Mới</div>
+          </div>
+          <div class="card-body">
+            <div class="card-header">
+              <h3>{{ home.name }}</h3>
+              <span class="rating">★ {{ home.rating }}</span>
+            </div>
+            <p class="location">📍 {{ home.city }}</p>
+            <div class="card-footer">
+              <span class="price">{{ home.price | number }}đ <span>/ đêm</span></span>
+              <button class="btn-view">Chi tiết</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+</div>
