@@ -1,0 +1,23 @@
+<nav class="navbar">
+  <div class="nav-container">
+    <a routerLink="/" class="logo">
+      <span class="logo-icon">🏠</span> Homestay<span>Dev</span>
+    </a>
+
+    <div class="nav-links">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Trang chủ</a>
+      <a routerLink="/discover">Khám phá</a>
+      
+      @if (authService.isAuthenticated()) {
+        <a routerLink="/my-bookings">Lịch đặt</a>
+        <div class="user-menu">
+          <span class="user-name">Xin chào!</span>
+          <button (click)="onLogout()" class="btn-logout">Đăng xuất</button>
+        </div>
+      } @else {
+        <a routerLink="/login" class="btn-login">Đăng nhập</a>
+        <a routerLink="/register" class="btn-register">Đăng ký</a>
+      }
+    </div>
+  </div>
+</nav>
