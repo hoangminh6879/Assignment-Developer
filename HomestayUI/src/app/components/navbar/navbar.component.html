@@ -10,6 +10,13 @@
       
       @if (authService.isAuthenticated()) {
         <a routerLink="/my-bookings">Lịch đặt</a>
+        @if (authService.hasRole('ADMIN')) {
+          <a routerLink="/dashboard/admin" class="dashboard-link">Trang Quản trị</a>
+        } @else if (authService.hasRole('HOST')) {
+          <a routerLink="/dashboard/host" class="dashboard-link">Kênh Chủ Nhà</a>
+        } @else {
+          <a routerLink="/dashboard/user" class="dashboard-link">Tài khoản của tôi</a>
+        }
         <div class="user-menu">
           <span class="user-name">Xin chào!</span>
           <button (click)="onLogout()" class="btn-logout">Đăng xuất</button>

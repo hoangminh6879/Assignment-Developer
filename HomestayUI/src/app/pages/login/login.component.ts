@@ -27,7 +27,14 @@ export class LoginComponent {
     
     this.authService.login(this.loginData).subscribe({
       next: () => {
-        this.router.navigate(['/']);
+        const roles = this.authService.getRoles();
+        if (roles.includes('ADMIN')) {
+          this.router.navigate(['/dashboard/admin']);
+        } else if (roles.includes('HOST')) {
+          this.router.navigate(['/dashboard/host']);
+        } else {
+          this.router.navigate(['/']);
+        }
       },
       error: (err) => {
         this.errorMessage = 'Tên đăng nhập hoặc mật khẩu không đúng!';
