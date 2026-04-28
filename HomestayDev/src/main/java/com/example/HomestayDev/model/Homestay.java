@@ -24,16 +24,16 @@ public class Homestay {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String name;
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String address;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String city;
 
     private Double longitude;
@@ -48,6 +48,9 @@ public class Homestay {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     private HomestayStatus status = HomestayStatus.PENDING;
+
+    @Column(name = "admin_reason", columnDefinition = "NVARCHAR(500)")
+    private String adminReason;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
