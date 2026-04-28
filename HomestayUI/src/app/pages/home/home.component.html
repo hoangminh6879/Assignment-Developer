@@ -20,26 +20,37 @@
       <p>Những địa điểm được yêu thích nhất bởi cộng đồng</p>
     </div>
 
-    <div class="homestay-grid">
+    <div class="homestay-grid" *ngIf="featuredHomestays.length > 0; else noData">
       @for (home of featuredHomestays; track home.id) {
         <div class="home-card">
           <div class="card-image">
-            <img [src]="home.image" [alt]="home.name">
-            <div class="badge">Mới</div>
+            <img *ngIf="home.images && home.images.length > 0" [src]="'http://localhost:9999' + home.images[0].url" [alt]="home.name">
+            <div *ngIf="!home.images || home.images.length === 0" class="no-image-placeholder">🏠</div>
+            <div class="badge">Đang mở</div>
           </div>
           <div class="card-body">
             <div class="card-header">
               <h3>{{ home.name }}</h3>
-              <span class="rating">★ {{ home.rating }}</span>
+              <span class="rating">★ 5.0</span>
             </div>
             <p class="location">📍 {{ home.city }}</p>
+            <div class="amenities-preview">
+              <span *ngFor="let am of home.amenities | slice:0:3" class="am-icon" [title]="am.name">{{ am.iconUrl }}</span>
+              <span *ngIf="home.amenities.length > 3" class="am-icon">...</span>
+            </div>
             <div class="card-footer">
-              <span class="price">{{ home.price | number }}đ <span>/ đêm</span></span>
+              <span class="price">{{ home.pricePerNight | number }}đ <span>/ đêm</span></span>
               <button class="btn-view">Chi tiết</button>
             </div>
           </div>
         </div>
       }
     </div>
+    <ng-template #noData>
+      <div class="empty-state">
+        <span class="empty-icon">🏖️</span>
+        <p>Hiện chưa có homestay nào hoạt động. Trở lại sau nhé!</p>
+      </div>
+    </ng-template>
   </section>
 </div>

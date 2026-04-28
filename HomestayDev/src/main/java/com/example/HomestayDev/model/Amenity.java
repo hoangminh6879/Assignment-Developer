@@ -18,10 +18,10 @@ public class Amenity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, columnDefinition = "NVARCHAR(255)")
     private String name;
 
-    @Column(name = "icon_url")
+    @Column(name = "icon_url", columnDefinition = "NVARCHAR(255)")
     private String iconUrl;
 
     @OneToMany(mappedBy = "amenity")

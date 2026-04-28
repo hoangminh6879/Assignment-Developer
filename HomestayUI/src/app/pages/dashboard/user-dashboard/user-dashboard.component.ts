@@ -11,12 +11,23 @@ import { UpgradeRequestService, UpgradeRequestDto } from '../../../services/upgr
   template: `
     <app-navbar></app-navbar>
     <div class="dashboard-page">
-      <div class="dashboard-container">
-        <div class="header">
-          <h2>Tài Khoản Của Tôi</h2>
-          <p class="subtitle">Quản lý thông tin và cài đặt cá nhân của bạn</p>
-        </div>
+      <div class="dashboard-layout">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <h2>Người Dùng</h2>
+            <p class="subtitle">Tài khoản cá nhân</p>
+          </div>
+          <ul class="sidebar-menu">
+            <li class="active">
+              <span class="menu-icon">🚀</span> Nâng cấp Host
+            </li>
+          </ul>
+        </aside>
 
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
         <div class="card glass-card">
           <div class="card-header">
             <span class="icon">🚀</span>
@@ -45,15 +56,26 @@ import { UpgradeRequestService, UpgradeRequestDto } from '../../../services/upgr
             </button>
           </div>
         </div>
+        </main>
       </div>
     </div>
   `,
   styles: [`
-    .dashboard-page { min-height: 100vh; background: #f0f4f8; padding-top: 40px; font-family: 'Inter', sans-serif; }
-    .dashboard-container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
-    .header { margin-bottom: 30px; }
-    .header h2 { font-size: 28px; color: #1a202c; margin-bottom: 8px; font-weight: 700; }
-    .subtitle { color: #718096; font-size: 16px; }
+    .dashboard-page { min-height: 100vh; background: #f0f4f8; padding-top: 80px; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; }
+    .dashboard-layout { display: flex; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; padding: 30px 20px; gap: 30px; }
+    
+    .sidebar { width: 260px; background: white; border-radius: 16px; padding: 25px 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; height: fit-content; flex-shrink: 0; }
+    .sidebar-header { margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;}
+    .sidebar-header h2 { font-size: 24px; color: #1a202c; margin: 0 0 5px 0; font-weight: 700; }
+    .subtitle { color: #718096; font-size: 14px; margin: 0; }
+    
+    .sidebar-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+    .sidebar-menu li { padding: 12px 16px; border-radius: 10px; color: #4a5568; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px; font-size: 15px; }
+    .sidebar-menu li:hover { background: #f8fafc; color: #1a202c; }
+    .sidebar-menu li.active { background: #4f46e5; color: white; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2); }
+    .menu-icon { font-size: 18px; }
+
+    .main-content { flex: 1; min-width: 0; }
     
     .glass-card {
       background: white; border-radius: 16px; padding: 30px;
