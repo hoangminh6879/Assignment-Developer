@@ -50,7 +50,7 @@ export class RegisterComponent {
       },
       error: (err) => {
         console.error('Registration error:', err);
-        this.errorMessage = 'Có lỗi xảy ra, vui lòng kiểm tra lại thông tin!';
+        this.errorMessage = err.error || 'Có lỗi xảy ra, vui lòng kiểm tra lại thông tin!';
         this.isLoading = false;
       }
     });
