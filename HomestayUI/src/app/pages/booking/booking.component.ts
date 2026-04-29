@@ -9,6 +9,8 @@ import { RoomDto } from '../../services/room.service';
 import { NotificationService } from '../../services/notification.service';
 import { NavbarComponent } from '../../components/navbar/navbar.component';
 import { AuthService } from '../../services/auth.service';
+import { PaymentService } from '../../services/payment.service';
+import { UserService, UserProfileDto, ProfileUpdateRequest } from '../../services/user.service';
 
 @Component({
   selector: 'app-booking',
@@ -42,6 +44,9 @@ import { AuthService } from '../../services/auth.service';
                   <label>Ngày trả</label>
                   <input type="date" [(ngModel)]="checkOutDate" (change)="onDateChange()" [min]="minCheckOut" class="input-field">
                 </div>
+              </div>
+              <div class="date-error" *ngIf="dateError">
+                ⚠️ {{ dateError }}
               </div>
             </div>
 
@@ -131,13 +136,67 @@ import { AuthService } from '../../services/auth.service';
             <button 
               class="btn-confirm" 
               [disabled]="!canBook || bookingLoading" 
-              (click)="confirmBooking()">
-              {{ bookingLoading ? 'Đang xử lý...' : 'Xác nhận Đặt phòng' }}
+              (click)="openConfirmationModal()">
+              {{ bookingLoading ? 'Đang xử lý...' : 'Tiếp tục' }}
             </button>
-            <p class="disclaimer">Vui lòng kiểm tra kỹ thông tin trước khi đặt.</p>
+            <p class="disclaimer">Bạn sẽ có thể kiểm tra thông tin trước khi hoàn tất.</p>
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" *ngIf="showConfirmModal">
+      <div class="modal-content animate-fade-in">
+        <button class="close-btn" (click)="closeConfirmationModal()">×</button>
+        <h2>Xác nhận Đặt phòng</h2>
+        
+        <div class="modal-body">
+          <div class="booking-summary-modal">
+            <h3>Chi tiết phòng</h3>
+            <p><strong>Homestay:</strong> {{ homestay?.name }}</p>
+            <p><strong>Ngày nhận:</strong> {{ checkInDate | date:'dd/MM/yyyy' }}</p>
+            <p><strong>Ngày trả:</strong> {{ checkOutDate | date:'dd/MM/yyyy' }}</p>
+            <p><strong>Tổng tiền:</strong> <span class="total-price-modal">{{ totalPrice | number }}đ</span></p>
+            <p><strong>Thanh toán:</strong> {{ selectedPaymentMethod === 'VNPAY' ? 'VNPay' : 'Tại quầy' }}</p>
+          </div>
+
+          <div class="user-info-form">
+            <h3>Thông tin người đặt</h3>
+            <p class="info-note">Vui lòng kiểm tra và cập nhật thông tin chính xác. Thông tin này sẽ được lưu vào hồ sơ của bạn.</p>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Họ</label>
+                <input type="text" [(ngModel)]="userProfile.lastName" class="input-field" placeholder="Nguyễn Văn">
+              </div>
+              <div class="form-group">
+                <label>Tên</label>
+                <input type="text" [(ngModel)]="userProfile.firstName" class="input-field" placeholder="A">
+              </div>
+              <div class="form-group">
+                <label>Số điện thoại</label>
+                <input type="text" [(ngModel)]="userProfile.phoneNumber" class="input-field" placeholder="0901234567">
+              </div>
+              <div class="form-group">
+                <label>CCCD/CMND</label>
+                <input type="text" [(ngModel)]="userProfile.citizenId" class="input-field" placeholder="0123456789">
+              </div>
+              <div class="form-group full-width">
+                <label>Địa chỉ</label>
+                <input type="text" [(ngModel)]="userProfile.address" class="input-field" placeholder="Địa chỉ hiện tại">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" (click)="closeConfirmationModal()">Hủy</button>
+          <button class="btn-confirm-final" [disabled]="isSubmitting" (click)="submitBooking()">
+            {{ isSubmitting ? 'Đang xử lý...' : 'Xác nhận và Thanh toán' }}
+          </button>
+        </div>
       </div>
     </div>
   `,
@@ -161,6 +220,7 @@ import { AuthService } from '../../services/auth.service';
     .date-group { flex: 1; }
     .date-group label { display: block; font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; }
     .input-field { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; }
+    .date-error { margin-top: 10px; padding: 10px 14px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; color: #c2410c; font-size: 13px; font-weight: 500; }
 
     .room-types-list { display: flex; gap: 12px; flex-wrap: wrap; }
     .rt-item { padding: 15px 25px; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; font-weight: 600; }
@@ -202,9 +262,35 @@ import { AuthService } from '../../services/auth.service';
     .animate-fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Modal Styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-content { background: white; border-radius: 24px; padding: 30px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s; }
+    .close-btn:hover { color: #0f172a; }
+    .modal-content h2 { margin: 0 0 20px; font-size: 24px; color: #0f172a; }
+    .modal-body { display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; }
+    .booking-summary-modal { background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; }
+    .booking-summary-modal h3 { margin: 0 0 15px; font-size: 16px; color: #1e293b; }
+    .booking-summary-modal p { margin: 0 0 10px; color: #475569; font-size: 14px; }
+    .booking-summary-modal strong { color: #0f172a; }
+    .total-price-modal { font-size: 18px; font-weight: 800; color: #4f46e5; }
+    .user-info-form h3 { margin: 0 0 10px; font-size: 16px; color: #1e293b; }
+    .info-note { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .full-width { grid-column: span 2; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #475569; }
+    .modal-footer { margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+    .btn-cancel { padding: 12px 24px; border-radius: 12px; background: #f1f5f9; color: #475569; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-cancel:hover { background: #e2e8f0; }
+    .btn-confirm-final { padding: 12px 30px; border-radius: 12px; background: #4f46e5; color: white; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-confirm-final:hover:not(:disabled) { background: #4338ca; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3); }
+    .btn-confirm-final:disabled { opacity: 0.6; cursor: not-allowed; }
+
     @media (max-width: 992px) {
       .booking-container { grid-template-columns: 1fr; }
       .summary-card { position: static; }
+      .modal-body { grid-template-columns: 1fr; }
     }
   `]
 })
@@ -221,9 +307,14 @@ export class BookingComponent implements OnInit {
   
   today = new Date().toISOString().split('T')[0];
   minCheckOut = '';
+  dateError = '';
   
   selectedPaymentMethod = 'VNPAY';
   bookingLoading = false;
+
+  showConfirmModal = false;
+  isSubmitting = false;
+  userProfile: any = {};
 
   constructor(
     private route: ActivatedRoute,
@@ -232,6 +323,8 @@ export class BookingComponent implements OnInit {
     private homestayService: HomestayService,
     private roomTypeService: RoomTypeService,
     private bookingService: BookingService,
+    private paymentService: PaymentService,
+    private userService: UserService,
     private notification: NotificationService
   ) {}
 
@@ -240,6 +333,17 @@ export class BookingComponent implements OnInit {
     if (!this.homestayId) {
       this.router.navigate(['/']);
       return;
+    }
+
+    if (this.authService.hasRole('USER')) {
+      this.userService.getProfile().subscribe({
+        next: (profile) => {
+          this.userProfile = profile;
+        },
+        error: (err) => {
+          console.error('Lỗi khi lấy profile', err);
+        }
+      });
     }
 
     this.loadData();
@@ -258,16 +362,20 @@ export class BookingComponent implements OnInit {
   }
 
   onDateChange() {
+    this.dateError = '';
     if (this.checkInDate) {
       const nextDay = new Date(this.checkInDate);
       nextDay.setDate(nextDay.getDate() + 1);
       this.minCheckOut = nextDay.toISOString().split('T')[0];
-      
-      if (this.checkOutDate && this.checkOutDate <= this.checkInDate) {
-        this.checkOutDate = this.minCheckOut;
+
+      if (this.checkOutDate) {
+        if (this.checkOutDate <= this.checkInDate) {
+          this.checkOutDate = this.minCheckOut;
+          this.dateError = 'Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 ngày.';
+        }
       }
     }
-    
+
     this.loadAvailableRooms();
   }
 
@@ -305,10 +413,13 @@ export class BookingComponent implements OnInit {
   }
 
   get canBook(): boolean {
-    return !!(this.selectedRoomId && this.checkInDate && this.checkOutDate && this.totalNights > 0 && this.selectedPaymentMethod);
+    if (!this.selectedRoomId || !this.checkInDate || !this.checkOutDate || !this.selectedPaymentMethod) return false;
+    if (this.totalNights <= 0) return false;
+    if (new Date(this.checkOutDate) <= new Date(this.checkInDate)) return false;
+    return true;
   }
 
-  confirmBooking() {
+  openConfirmationModal() {
     if (!this.canBook) return;
 
     if (!this.authService.hasRole('USER')) {
@@ -316,7 +427,38 @@ export class BookingComponent implements OnInit {
       return;
     }
     
-    this.bookingLoading = true;
+    this.showConfirmModal = true;
+  }
+
+  closeConfirmationModal() {
+    this.showConfirmModal = false;
+  }
+
+  submitBooking() {
+    this.isSubmitting = true;
+    
+    // 1. Update Profile
+    const profileReq: ProfileUpdateRequest = {
+      firstName: this.userProfile.firstName || '',
+      lastName: this.userProfile.lastName || '',
+      phoneNumber: this.userProfile.phoneNumber || '',
+      address: this.userProfile.address || '',
+      citizenId: this.userProfile.citizenId || ''
+    };
+
+    this.userService.updateProfile(profileReq).subscribe({
+      next: () => {
+        // 2. Create Booking
+        this.processBooking();
+      },
+      error: (err) => {
+        this.notification.error('Có lỗi xảy ra khi cập nhật thông tin cá nhân. Vui lòng thử lại.');
+        this.isSubmitting = false;
+      }
+    });
+  }
+
+  private processBooking() {
     const request: BookingRequestDto = {
       homestayId: this.homestayId,
       roomId: this.selectedRoomId!,
@@ -327,13 +469,33 @@ export class BookingComponent implements OnInit {
 
     this.bookingService.createBooking(request).subscribe({
       next: (res) => {
-        this.notification.success('Đặt phòng thành công! Chúng tôi sẽ sớm liên hệ với bạn.');
-        this.router.navigate(['/dashboard/user']);
-        this.bookingLoading = false;
+        if (this.selectedPaymentMethod === 'VNPAY') {
+          // If VNPay, get URL and redirect
+          this.paymentService.createVNPayUrl(res.id!).subscribe({
+            next: (paymentRes) => {
+              if (paymentRes.url) {
+                window.location.href = paymentRes.url;
+              } else {
+                this.notification.error('Không thể tạo URL thanh toán VNPay.');
+                this.isSubmitting = false;
+              }
+            },
+            error: (err) => {
+              this.notification.error('Có lỗi xảy ra khi tạo thanh toán VNPay.');
+              this.isSubmitting = false;
+            }
+          });
+        } else {
+          // If At Counter, just show success and go to dashboard
+          this.notification.success('Đặt phòng thành công! Chúng tôi sẽ sớm liên hệ với bạn.');
+          this.closeConfirmationModal();
+          this.router.navigate(['/dashboard/user']);
+          this.isSubmitting = false;
+        }
       },
       error: (err) => {
         this.notification.error(err.error?.message || 'Có lỗi xảy ra khi đặt phòng.');
-        this.bookingLoading = false;
+        this.isSubmitting = false;
       }
     });
   }

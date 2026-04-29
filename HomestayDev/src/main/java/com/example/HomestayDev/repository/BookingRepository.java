@@ -20,4 +20,9 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     List<Booking> findOverlappingBookings(@Param("roomId") UUID roomId, 
                                           @Param("startDate") LocalDate startDate, 
                                           @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT b FROM Booking b WHERE b.status = 'PENDING' AND b.paymentMethod = 'VNPAY' AND b.paymentStatus = 'UNPAID' AND b.createdAt < :timeLimit")
+    List<Booking> findExpiredVNPayBookings(@Param("timeLimit") java.time.LocalDateTime timeLimit);
+
+    java.util.Optional<Booking> findByCheckInCode(String checkInCode);
 }

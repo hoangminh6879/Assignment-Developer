@@ -1,14 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { BookingService, BookingDto } from '../../services/booking.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
+import { PaymentService } from '../../services/payment.service';
 
 @Component({
   selector: 'app-booking-history-tab',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="booking-history-container">
       <div class="tab-header">
@@ -16,7 +18,57 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
         <p>{{ subtitle }}</p>
       </div>
 
-      <div class="table-container" *ngIf="bookings.length > 0; else emptyState">
+      <!-- Booking Details Modal -->
+      <div class="modal-overlay" *ngIf="selectedBookingDetails">
+        <div class="modal-content animate-fade-in">
+          <button class="close-btn" (click)="closeDetails()">×</button>
+          <h2>Chi tiết đơn đặt phòng</h2>
+          <div class="modal-body">
+            <div class="booking-summary-modal">
+              <h3>Thông tin cơ bản</h3>
+              <p><strong>Khách hàng:</strong> {{ selectedBookingDetails.userName || 'N/A' }}</p>
+              <p><strong>Homestay:</strong> {{ selectedBookingDetails.homestayName }}</p>
+              <p><strong>Phòng:</strong> {{ selectedBookingDetails.roomTypeName }} - {{ selectedBookingDetails.roomName }}</p>
+              <p><strong>Thời gian:</strong> {{ selectedBookingDetails.checkInDate | date:'dd/MM/yyyy' }} - {{ selectedBookingDetails.checkOutDate | date:'dd/MM/yyyy' }}</p>
+              <p><strong>Đặt lúc:</strong> {{ selectedBookingDetails.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+            
+            <div class="booking-summary-modal" style="margin-top: 20px;">
+              <h3>Thông tin thanh toán & Trạng thái</h3>
+              <p><strong>Tổng tiền:</strong> <span class="total-price-modal">{{ selectedBookingDetails.totalPrice | number }}đ</span></p>
+              <p><strong>Hình thức thanh toán:</strong> {{ selectedBookingDetails.paymentMethod === 'VNPAY' ? 'VNPay' : 'Tại quầy' }}</p>
+              <p>
+                <strong>Trạng thái thanh toán:</strong> 
+                <span class="badge" [ngClass]="selectedBookingDetails.paymentStatus.toLowerCase()">
+                  {{ selectedBookingDetails.paymentStatus === 'PAID' ? 'Đã trả' : 'Chưa trả' }}
+                </span>
+                <button 
+                  *ngIf="selectedBookingDetails.paymentMethod === 'VNPAY' && selectedBookingDetails.paymentStatus === 'UNPAID' && selectedBookingDetails.status === 'PENDING' && role === 'USER'"
+                  class="btn-pay-now"
+                  (click)="payNow(selectedBookingDetails.id)"
+                  [disabled]="isPaying">
+                  {{ isPaying ? 'Đang chuyển hướng...' : 'Thanh toán ngay' }}
+                </button>
+              </p>
+              <p>
+                <strong>Trạng thái đặt phòng:</strong> 
+                <span class="badge status-badge" [ngClass]="selectedBookingDetails.status.toLowerCase()">
+                  {{ selectedBookingDetails.status === 'CHECKED_IN' ? 'Đã nhận phòng' : selectedBookingDetails.status }}
+                </span>
+              </p>
+            </div>
+
+            <div class="booking-summary-modal" style="margin-top: 20px; text-align: center;" *ngIf="selectedBookingDetails.checkInCode">
+              <p style="margin: 0 0 10px; color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600;">Mã Đặt Phòng</p>
+              <div style="display: inline-block; padding: 15px 30px; border-radius: 12px; background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%); border: 2px dashed #6366f1;">
+                <span style="color: #4f46e5; font-size: 28px; font-weight: 800; letter-spacing: 4px;">{{ selectedBookingDetails.checkInCode }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container" *ngIf="paginatedBookings.length > 0; else emptyState">
         <table class="modern-table">
           <thead>
             <tr>
@@ -30,7 +82,7 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let b of bookings" class="table-row">
+            <tr *ngFor="let b of paginatedBookings" class="table-row">
               <td *ngIf="role !== 'USER'">
                 <div class="user-info">
                   <span class="user-name">{{ b.userName || 'N/A' }}</span>
@@ -40,6 +92,7 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
                 <div class="homestay-info">
                   <strong>{{ b.homestayName }}</strong>
                   <span>{{ b.roomTypeName }} - {{ b.roomName }}</span>
+                  <div class="code-badge" *ngIf="b.checkInCode">Mã: <strong>{{ b.checkInCode }}</strong></div>
                 </div>
               </td>
               <td>
@@ -61,11 +114,12 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
               </td>
               <td>
                 <span class="badge status-badge" [ngClass]="b.status.toLowerCase()">
-                  {{ b.status }}
+                  {{ b.status === 'CHECKED_IN' ? 'Đã nhận phòng' : b.status }}
                 </span>
               </td>
               <td class="actions-col">
                 <div class="action-buttons">
+                  <button class="btn-action btn-view" (click)="viewDetails(b)">Chi tiết</button>
                   <button 
                     *ngIf="role === 'HOST' && b.status === 'PENDING'" 
                     class="btn-action btn-approve" 
@@ -73,7 +127,7 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
                     Duyệt
                   </button>
                   <button 
-                    *ngIf="(role === 'USER' || role === 'HOST') && b.status !== 'CANCELLED'" 
+                    *ngIf="(role === 'USER' || role === 'HOST') && b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && b.status !== 'CHECKED_IN'" 
                     class="btn-action btn-cancel" 
                     (click)="cancel(b.id)">
                     {{ role === 'USER' ? 'Hủy đặt' : 'Từ chối' }}
@@ -83,6 +137,13 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-controls" *ngIf="totalPages > 1">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">Trang trước</button>
+        <span class="page-info">Trang {{ currentPage }} / {{ totalPages }}</span>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">Trang sau</button>
       </div>
 
       <ng-template #emptyState>
@@ -124,13 +185,43 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
     .actions-col { text-align: right; }
     .action-buttons { display: flex; gap: 8px; justify-content: flex-end; }
     .btn-action { padding: 6px 12px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-view { background: #e0e7ff; color: #4f46e5; }
+    .btn-view:hover { background: #c7d2fe; }
     .btn-approve { background: #10b981; color: white; }
     .btn-approve:hover { background: #059669; }
     .btn-cancel { background: #f1f5f9; color: #ef4444; border: 1px solid #fee2e2; }
     .btn-cancel:hover { background: #fee2e2; }
 
+    .code-badge { display: inline-block; margin-top: 8px; padding: 4px 10px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; font-family: monospace; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .code-badge strong { color: #4f46e5; letter-spacing: 1px; }
+    
+    .status-badge.checked_in { background: #dcfce7; color: #166534; }
+
+    /* Pagination */
+    .pagination-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 25px; }
+    .page-btn { padding: 8px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; color: #475569; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .page-btn:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .page-info { font-size: 14px; font-weight: 600; color: #1e293b; }
+
     .empty-state { text-align: center; padding: 60px; color: #94a3b8; }
     .empty-state .icon { font-size: 40px; display: block; margin-bottom: 10px; }
+
+    /* Modal Styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-content { background: white; border-radius: 24px; padding: 30px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s; }
+    .close-btn:hover { color: #0f172a; }
+    .modal-content h2 { margin: 0 0 20px; font-size: 20px; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;}
+    .booking-summary-modal { background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; }
+    .booking-summary-modal h3 { margin: 0 0 15px; font-size: 15px; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;}
+    .booking-summary-modal p { margin: 0 0 10px; color: #475569; font-size: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
+    .booking-summary-modal strong { color: #0f172a; }
+    .total-price-modal { font-size: 18px; font-weight: 800; color: #ef4444; }
+
+    .btn-pay-now { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 12px; margin-left: 10px;}
+    .btn-pay-now:hover:not(:disabled) { background: #dc2626; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(239,68,68,0.2); }
+    .btn-pay-now:disabled { opacity: 0.7; cursor: not-allowed; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   `]
@@ -138,13 +229,24 @@ import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 export class BookingHistoryTabComponent implements OnInit {
   @Input() role: 'USER' | 'HOST' | 'ADMIN' = 'USER';
   bookings: BookingDto[] = [];
+  paginatedBookings: BookingDto[] = [];
   title = 'Lịch sử đặt phòng';
   subtitle = 'Xem danh sách các đơn đặt phòng của bạn';
+
+  // Pagination state
+  currentPage = 1;
+  pageSize = 5;
+  totalPages = 1;
+
+  // Details Modal state
+  selectedBookingDetails: BookingDto | null = null;
+  isPaying = false;
 
   constructor(
     private bookingService: BookingService,
     private notification: NotificationService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private paymentService: PaymentService
   ) {}
 
   ngOnInit() {
@@ -164,7 +266,54 @@ export class BookingHistoryTabComponent implements OnInit {
     else if (this.role === 'HOST') obs = this.bookingService.getHostBookings();
     else obs = this.bookingService.getMyBookings();
 
-    obs.subscribe(data => this.bookings = data);
+    obs.subscribe(data => {
+      // Sort by newest first
+      this.bookings = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      this.updatePagination();
+    });
+  }
+
+  updatePagination() {
+    this.totalPages = Math.ceil(this.bookings.length / this.pageSize);
+    if (this.totalPages === 0) this.totalPages = 1;
+    if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
+    
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    this.paginatedBookings = this.bookings.slice(start, end);
+  }
+
+  changePage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
+
+  viewDetails(booking: BookingDto) {
+    this.selectedBookingDetails = booking;
+  }
+
+  closeDetails() {
+    this.selectedBookingDetails = null;
+  }
+
+  payNow(bookingId: string) {
+    this.isPaying = true;
+    this.paymentService.createVNPayUrl(bookingId).subscribe({
+      next: (res) => {
+        if (res.url) {
+          window.location.href = res.url;
+        } else {
+          this.notification.error('Không lấy được URL thanh toán');
+          this.isPaying = false;
+        }
+      },
+      error: (err) => {
+        this.notification.error(err.error?.message || 'Có lỗi xảy ra khi tạo link thanh toán');
+        this.isPaying = false;
+      }
+    });
   }
 
   async approve(id: string) {

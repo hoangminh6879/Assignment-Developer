@@ -2,7 +2,9 @@ package com.example.HomestayDev.controller;
 
 import com.example.HomestayDev.dto.BookingDto;
 import com.example.HomestayDev.dto.BookingRequestDto;
+import com.example.HomestayDev.dto.CheckoutRequestDto;
 import com.example.HomestayDev.dto.RoomDto;
+import com.example.HomestayDev.model.Booking;
 import com.example.HomestayDev.model.Room;
 import com.example.HomestayDev.service.BookingService;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +57,10 @@ public class BookingController {
     public ResponseEntity<BookingDto> approveBooking(
             Authentication authentication,
             @PathVariable UUID id) {
-        return ResponseEntity.ok(bookingService.approveBooking(id, authentication.getName()));
+        BookingDto result = bookingService.approveBooking(id, authentication.getName());
+        // Gửi email sau khi transaction đã commit thành công
+        bookingService.sendConfirmationEmail(id);
+        return ResponseEntity.ok(result);
     }
 
     @PutMapping("/{id}/cancel")
@@ -63,6 +68,44 @@ public class BookingController {
             Authentication authentication,
             @PathVariable UUID id) {
         return ResponseEntity.ok(bookingService.cancelBooking(id, authentication.getName()));
+    }
+
+    @GetMapping("/check-in/{code}")
+    @PreAuthorize("hasRole('HOST')")
+    public ResponseEntity<BookingDto> getBookingByCheckInCode(@PathVariable String code) {
+        Booking booking = bookingService.getBookingByCheckInCode(code);
+        return ResponseEntity.ok(bookingService.mapToDtoPublic(booking));
+    }
+
+    @GetMapping("/check-in/cccd/{citizenId}")
+    @PreAuthorize("hasRole('HOST')")
+    public ResponseEntity<List<BookingDto>> getBookingsByCitizenId(
+            Authentication authentication,
+            @PathVariable String citizenId) {
+        return ResponseEntity.ok(bookingService.getBookingsByCitizenId(citizenId, authentication.getName()));
+    }
+
+    @PutMapping("/{id}/check-in")
+    @PreAuthorize("hasRole('HOST')")
+    public ResponseEntity<BookingDto> confirmCheckIn(
+            Authentication authentication,
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(bookingService.confirmCheckIn(id, authentication.getName()));
+    }
+
+    @GetMapping("/host/checked-in")
+    @PreAuthorize("hasRole('HOST')")
+    public ResponseEntity<List<BookingDto>> getCheckedInBookings(Authentication authentication) {
+        return ResponseEntity.ok(bookingService.getCheckedInBookings(authentication.getName()));
+    }
+
+    @PutMapping("/{id}/checkout")
+    @PreAuthorize("hasRole('HOST')")
+    public ResponseEntity<BookingDto> checkout(
+            Authentication authentication,
+            @PathVariable UUID id,
+            @RequestBody CheckoutRequestDto request) {
+        return ResponseEntity.ok(bookingService.checkout(id, request, authentication.getName()));
     }
 
     @GetMapping("/available-rooms")

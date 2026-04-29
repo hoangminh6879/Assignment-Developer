@@ -20,6 +20,7 @@ export interface BookingDto {
   paymentStatus: string;
   paymentMethod: string;
   createdAt: string;
+  checkInCode: string;
   homestayName: string;
   roomName: string;
   roomTypeName: string;
@@ -56,6 +57,26 @@ export class BookingService {
 
   cancelBooking(id: string): Observable<BookingDto> {
     return this.http.put<BookingDto>(`${this.apiUrl}/${id}/cancel`, {});
+  }
+
+  getBookingByCheckInCode(code: string): Observable<BookingDto> {
+    return this.http.get<BookingDto>(`${this.apiUrl}/check-in/${code}`);
+  }
+
+  getBookingsByCitizenId(citizenId: string): Observable<BookingDto[]> {
+    return this.http.get<BookingDto[]>(`${this.apiUrl}/check-in/cccd/${citizenId}`);
+  }
+
+  confirmCheckIn(id: string): Observable<BookingDto> {
+    return this.http.put<BookingDto>(`${this.apiUrl}/${id}/check-in`, {});
+  }
+
+  getCheckedInBookings(): Observable<BookingDto[]> {
+    return this.http.get<BookingDto[]>(`${this.apiUrl}/host/checked-in`);
+  }
+
+  checkout(id: string, citizenId: string, confirmPayment: boolean): Observable<BookingDto> {
+    return this.http.put<BookingDto>(`${this.apiUrl}/${id}/checkout`, { citizenId, confirmPayment });
   }
 
   getAvailableRooms(homestayId: string, roomTypeId: number, checkIn: string, checkOut: string): Observable<RoomDto[]> {

@@ -33,5 +33,9 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/booking/booking.component').then(m => m.BookingComponent),
     canActivate: [AuthGuard]
   },
+  {
+    path: 'payment/result',
+    loadComponent: () => import('./pages/payment-result/payment-result.component').then(m => m.PaymentResultComponent)
+  },
   { path: '**', redirectTo: '' }
 ];

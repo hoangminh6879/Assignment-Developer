@@ -25,6 +25,7 @@ public class BookingDto {
     private PaymentStatus paymentStatus;
     private String paymentMethod;
     private LocalDateTime createdAt;
+    private String checkInCode;
     
     private UUID homestayId;
     private String homestayName;

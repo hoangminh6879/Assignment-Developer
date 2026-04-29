@@ -11,11 +11,12 @@ import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 
 import { ProfileTabComponent } from '../../../components/profile-tab/profile-tab.component';
 import { BookingHistoryTabComponent } from '../../../components/booking-history-tab/booking-history-tab.component';
+import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/host-checkin-tab.component';
 
 @Component({
   selector: 'app-host-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, HostCheckinTabComponent],
   template: `
     <app-navbar></app-navbar>
     <div class="dashboard-page">
@@ -33,6 +34,9 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
             </li>
             <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
               <span class="menu-icon">📅</span> Quản lý Đặt phòng
+            </li>
+            <li [class.active]="activeTab === 'checkin'" (click)="activeTab = 'checkin'">
+              <span class="menu-icon">🔑</span> Mã nhận phòng
             </li>
             <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'">
               <span class="menu-icon">🏠</span> Quản lý Homestay
@@ -54,6 +58,11 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
         <!-- BOOKINGS TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'bookings'">
           <app-booking-history-tab role="HOST"></app-booking-history-tab>
+        </div>
+
+        <!-- CHECKIN TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'checkin'">
+          <app-host-checkin-tab></app-host-checkin-tab>
         </div>
         
         <!-- HOMESTAYS TAB -->
