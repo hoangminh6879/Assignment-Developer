@@ -5,6 +5,9 @@ import { NavbarComponent } from '../../../components/navbar/navbar.component';
 import { UpgradeRequestService, UpgradeRequestDto } from '../../../services/upgrade-request.service';
 import { AmenityService, AmenityDto } from '../../../services/amenity.service';
 import { HomestayService, HomestayDto } from '../../../services/homestay.service';
+import { RoomTypeService, RoomTypeDto } from '../../../services/room-type.service';
+import { NotificationService } from '../../../services/notification.service';
+import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -30,6 +33,9 @@ import { HomestayService, HomestayDto } from '../../../services/homestay.service
             </li>
             <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'">
               <span class="menu-icon">🏠</span> Duyệt Homestay
+            </li>
+            <li [class.active]="activeTab === 'room-types'" (click)="activeTab = 'room-types'">
+              <span class="menu-icon">🛏️</span> Loại phòng
             </li>
           </ul>
         </aside>
@@ -166,7 +172,88 @@ import { HomestayService, HomestayDto } from '../../../services/homestay.service
           </div>
         </div>
 
+
+        <!-- ROOM TYPES TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'room-types'">
+          <div class="card-header">
+            <h3>Quản lý Loại phòng (Room Types)</h3>
+            <div class="add-form" style="display: flex; gap: 10px; align-items: flex-start;">
+              <div style="display: flex; flex-direction: column; gap: 5px;">
+                <input type="text" [(ngModel)]="newRoomTypeName" placeholder="Tên loại phòng" class="input-field" style="width: 250px;" />
+                <input type="text" [(ngModel)]="newRoomTypeDesc" placeholder="Mô tả..." class="input-field" style="width: 250px;" />
+              </div>
+              <button class="btn-primary btn-sm" (click)="addRoomType()" style="height: 36px;">Thêm</button>
+            </div>
+          </div>
+          
+          <div class="table-container">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Tên</th>
+                  <th>Mô tả</th>
+                  <th class="actions-col">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let rt of roomTypes" class="table-row">
+                  <td><strong>{{ rt.name }}</strong></td>
+                  <td>{{ rt.description }}</td>
+                  <td class="actions-cell">
+                    <button class="action-btn detail-btn" (click)="editRoomType(rt)">Sửa</button>
+                    <button class="action-btn reject-btn" (click)="deleteRoomType(rt.id!)">Xóa</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         </main>
+      </div>
+    </div>
+
+    <!-- REASON MODAL (Generic for approve/reject/inactive) -->
+    <div class="modal-overlay" *ngIf="showReasonModal" (click)="showReasonModal = false">
+      <div class="edit-modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ reasonTitle }}</h3>
+          <button class="modal-close" (click)="showReasonModal = false">✕</button>
+        </div>
+        <div class="edit-modal-body">
+          <div class="form-group">
+            <label>{{ reasonLabel }}</label>
+            <textarea [(ngModel)]="reasonValue" class="input-field" rows="4" [placeholder]="reasonLabel + '...'"></textarea>
+          </div>
+          <div class="edit-modal-actions">
+            <button class="btn-secondary" (click)="showReasonModal = false">Hủy</button>
+            <button class="btn-primary" style="padding: 10px 24px;" (click)="submitReason()">Xác nhận</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT ROOM TYPE MODAL -->
+    <div class="modal-overlay" *ngIf="editingRoomType" (click)="cancelEditRoomType()">
+      <div class="edit-modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>✏️ Sửa Loại Phòng</h3>
+          <button class="modal-close" (click)="cancelEditRoomType()">✕</button>
+        </div>
+        <div class="edit-modal-body">
+          <div class="form-group">
+            <label>Tên loại phòng *</label>
+            <input type="text" [(ngModel)]="editRoomTypeForm.name" class="input-field" placeholder="Nhập tên..." />
+          </div>
+          <div class="form-group">
+            <label>Mô tả</label>
+            <textarea [(ngModel)]="editRoomTypeForm.description" class="input-field" rows="3" placeholder="Nhập mô tả..."></textarea>
+          </div>
+          <div class="edit-modal-actions">
+            <button class="btn-secondary" (click)="cancelEditRoomType()">Hủy</button>
+            <button class="btn-primary btn-sm" style="padding: 10px 24px;" (click)="submitEditRoomType()">Lưu</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -350,6 +437,12 @@ import { HomestayService, HomestayDto } from '../../../services/homestay.service
     .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
     .empty-icon { font-size: 48px; display: block; margin-bottom: 15px; opacity: 0.8; }
     .status-filter { margin-left: 15px; }
+    /* EDIT MINI MODAL */
+    .edit-modal-box { background: white; border-radius: 16px; width: 480px; max-width: 95vw; box-shadow: 0 25px 50px rgba(0,0,0,0.25); animation: slideUp 0.3s ease; }
+    .edit-modal-body { padding: 24px 28px; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-weight: 600; font-size: 14px; color: #475569; margin-bottom: 6px; }
+    .edit-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
   `]
 })
 export class AdminDashboardComponent implements OnInit {
@@ -364,16 +457,33 @@ export class AdminDashboardComponent implements OnInit {
   filterStatus = 'ALL';
   selectedHomestay: HomestayDto | null = null;
 
+  roomTypes: RoomTypeDto[] = [];
+  newRoomTypeName = '';
+  newRoomTypeDesc = '';
+  editingRoomType: RoomTypeDto | null = null;
+  editRoomTypeForm = { name: '', description: '' };
+
+  // REASON MODAL STATE
+  showReasonModal = false;
+  reasonTitle = '';
+  reasonLabel = '';
+  reasonValue = '';
+  reasonTarget: any = null;
+
   constructor(
     private upgradeReqService: UpgradeRequestService,
     private amenityService: AmenityService,
-    private homestayService: HomestayService
+    private homestayService: HomestayService,
+    private roomTypeService: RoomTypeService,
+    private notification: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit() {
     this.loadRequests();
     this.loadAmenities();
     this.loadHomestays();
+    this.loadRoomTypes();
   }
 
   // --- UPGRADES ---
@@ -385,26 +495,19 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   approve(id: string) {
-    const note = prompt('Thêm ghi chú phê duyệt (tuỳ chọn):') || '';
-    this.upgradeReqService.approveRequest(id, note).subscribe({
-      next: () => {
-        alert('Đã phê duyệt thành công!');
-        this.loadRequests();
-      },
-      error: (err) => { alert('Lỗi: ' + (err.error?.message || err.message)); }
-    });
+    this.reasonTarget = { id, type: 'APPROVE_UPGRADE' };
+    this.reasonTitle = 'Phê duyệt Host';
+    this.reasonLabel = 'Ghi chú phê duyệt (tùy chọn)';
+    this.reasonValue = '';
+    this.showReasonModal = true;
   }
 
   reject(id: string) {
-    const note = prompt('Lý do từ chối:') || '';
-    if (note === null) return;
-    this.upgradeReqService.rejectRequest(id, note).subscribe({
-      next: () => {
-        alert('Đã từ chối yêu cầu.');
-        this.loadRequests();
-      },
-      error: (err) => { alert('Lỗi: ' + (err.error?.message || err.message)); }
-    });
+    this.reasonTarget = { id, type: 'REJECT_UPGRADE' };
+    this.reasonTitle = 'Từ chối Host';
+    this.reasonLabel = 'Lý do từ chối (bắt buộc)';
+    this.reasonValue = '';
+    this.showReasonModal = true;
   }
 
   // --- AMENITIES ---
@@ -413,17 +516,21 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   addAmenity() {
-    if (!this.newAmenityName) return alert('Vui lòng nhập tên tiện ích');
+    if (!this.newAmenityName) return this.notification.warning('Vui lòng nhập tên tiện ích');
     this.amenityService.createAmenity({ name: this.newAmenityName, iconUrl: '' }).subscribe(() => {
       this.newAmenityName = '';
+      this.notification.success('Đã thêm tiện ích mới!');
       this.loadAmenities();
     });
   }
 
-  deleteAmenity(id: number) {
-    if (confirm('Bạn có chắc muốn xóa tiện ích này?')) {
-      this.amenityService.deleteAmenity(id).subscribe(() => this.loadAmenities());
-    }
+  async deleteAmenity(id: number) {
+    const ok = await this.confirmDialog.confirm({ message: 'Bạn có chắc muốn xóa tiện ích này?', type: 'danger', confirmText: 'Xóa' });
+    if (!ok) return;
+    this.amenityService.deleteAmenity(id).subscribe(() => {
+      this.notification.success('Đã xóa tiện ích.');
+      this.loadAmenities();
+    });
   }
 
   // --- HOMESTAYS ---
@@ -436,24 +543,64 @@ export class AdminDashboardComponent implements OnInit {
     return this.homestays.filter(h => h.status === this.filterStatus);
   }
 
-  changeHomestayStatus(id: string, newStatus: string) {
-    let reason = '';
+  async changeHomestayStatus(id: string, newStatus: string) {
     if (newStatus === 'INACTIVE' || newStatus === 'REJECTED') {
-      const p = prompt(`Vui lòng nhập lý do (Bắt buộc):`);
-      if (p === null || p.trim() === '') {
-        alert('Bạn phải nhập lý do!');
-        return;
-      }
-      reason = p.trim();
+      this.reasonTarget = { id, type: 'HOMESTAY_STATUS', status: newStatus };
+      this.reasonTitle = newStatus === 'REJECTED' ? 'Từ chối Homestay' : 'Tạm ngưng Homestay';
+      this.reasonLabel = 'Lý do (bắt buộc)';
+      this.reasonValue = '';
+      this.showReasonModal = true;
+      return;
     }
-    
-    this.homestayService.updateHomestayStatus(id, newStatus, reason).subscribe({
-      next: () => {
-        alert('Đã cập nhật trạng thái Homestay thành công!');
-        this.loadHomestays();
-      },
-      error: (err) => alert('Lỗi: ' + (err.error?.message || err.message))
+
+    const ok = await this.confirmDialog.confirm({
+      title: 'Xác nhận thay đổi',
+      message: `Bạn có muốn thay đổi trạng thái Homestay sang ${newStatus}?`,
+      type: 'info',
+      confirmText: 'Xác nhận'
     });
+    if (!ok) return;
+
+    this.homestayService.updateHomestayStatus(id, newStatus, '').subscribe({
+      next: () => {
+        this.notification.success('Đã cập nhật trạng thái Homestay!');
+        this.loadHomestays();
+        this.closeDetail();
+      },
+      error: (err) => this.notification.error(err.error?.message || err.message)
+    });
+  }
+
+  submitReason() {
+    if (!this.reasonTarget) return;
+    const { id, type, status } = this.reasonTarget;
+
+    if ((type === 'REJECT_UPGRADE' || status === 'REJECTED' || status === 'INACTIVE') && !this.reasonValue.trim()) {
+      this.notification.warning('Vui lòng nhập lý do!');
+      return;
+    }
+
+    if (type === 'APPROVE_UPGRADE') {
+      this.upgradeReqService.approveRequest(id, this.reasonValue).subscribe({
+        next: () => { this.notification.success('Đã phê duyệt!'); this.loadRequests(); this.showReasonModal = false; },
+        error: err => this.notification.error(err.error?.message || err.message)
+      });
+    } else if (type === 'REJECT_UPGRADE') {
+      this.upgradeReqService.rejectRequest(id, this.reasonValue).subscribe({
+        next: () => { this.notification.info('Đã từ chối!'); this.loadRequests(); this.showReasonModal = false; },
+        error: err => this.notification.error(err.error?.message || err.message)
+      });
+    } else if (type === 'HOMESTAY_STATUS') {
+      this.homestayService.updateHomestayStatus(id, status, this.reasonValue).subscribe({
+        next: () => {
+          this.notification.success('Đã cập nhật trạng thái Homestay!');
+          this.loadHomestays();
+          this.closeDetail();
+          this.showReasonModal = false;
+        },
+        error: err => this.notification.error(err.error?.message || err.message)
+      });
+    }
   }
 
   viewDetail(homestay: HomestayDto) {
@@ -462,5 +609,60 @@ export class AdminDashboardComponent implements OnInit {
 
   closeDetail() {
     this.selectedHomestay = null;
+  }
+
+  // --- ROOM TYPES ---
+  loadRoomTypes() {
+    this.roomTypeService.getAllRoomTypes().subscribe(res => this.roomTypes = res);
+  }
+
+  addRoomType() {
+    if (!this.newRoomTypeName) return this.notification.warning('Vui lòng nhập tên loại phòng!');
+    this.roomTypeService.createRoomType({ name: this.newRoomTypeName, description: this.newRoomTypeDesc }).subscribe({
+      next: () => {
+        this.newRoomTypeName = '';
+        this.newRoomTypeDesc = '';
+        this.notification.success('Đã thêm loại phòng mới!');
+        this.loadRoomTypes();
+      },
+      error: err => this.notification.error(err.error?.message || err.message)
+    });
+  }
+
+  editRoomType(rt: RoomTypeDto) {
+    this.editingRoomType = rt;
+    this.editRoomTypeForm = { name: rt.name, description: rt.description || '' };
+  }
+
+  cancelEditRoomType() {
+    this.editingRoomType = null;
+  }
+
+  submitEditRoomType() {
+    if (!this.editRoomTypeForm.name.trim()) return this.notification.warning('Tên không được để trống');
+    this.roomTypeService.updateRoomType(this.editingRoomType!.id!, this.editRoomTypeForm).subscribe({
+      next: () => {
+        this.notification.success('Đã cập nhật loại phòng!');
+        this.editingRoomType = null;
+        this.loadRoomTypes();
+      },
+      error: err => this.notification.error(err.error?.message || err.message)
+    });
+  }
+
+  async deleteRoomType(id: number) {
+    const ok = await this.confirmDialog.confirm({
+      message: 'Bạn có chắc muốn xóa loại phòng này?',
+      type: 'danger',
+      confirmText: 'Xóa'
+    });
+    if (!ok) return;
+    this.roomTypeService.deleteRoomType(id).subscribe({
+      next: () => {
+        this.notification.success('Đã xóa loại phòng.');
+        this.loadRoomTypes();
+      },
+      error: err => this.notification.error(err.error?.message || err.message)
+    });
   }
 }
