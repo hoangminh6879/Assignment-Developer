@@ -24,7 +24,7 @@ public class HomestayController {
     private final HomestayService homestayService;
 
     // PUBLIC
-    @GetMapping("/homestays")
+    @GetMapping(value = "/homestays", produces = "application/json;charset=UTF-8")
     public ResponseEntity<List<HomestayDto>> getActiveHomestays() {
         return ResponseEntity.ok(homestayService.getActiveHomestays());
     }
@@ -36,7 +36,7 @@ public class HomestayController {
         return ResponseEntity.ok(homestayService.getHostHomestays(auth.getName()));
     }
 
-    @PostMapping(value = "/host/homestays", consumes = "multipart/form-data")
+    @PostMapping(value = "/host/homestays", consumes = "multipart/form-data", produces = "application/json;charset=UTF-8")
     public ResponseEntity<HomestayDto> createHomestay(
             @RequestParam("name") String name,
             @RequestParam("description") String description,

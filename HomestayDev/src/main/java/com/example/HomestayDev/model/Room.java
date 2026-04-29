@@ -2,6 +2,7 @@ package com.example.HomestayDev.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.example.HomestayDev.model.enums.RoomStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,7 +21,7 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,6 +33,11 @@ public class Room {
 
     @Column(name = "max_guests")
     private Integer maxGuests;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private RoomStatus status = RoomStatus.AVAILABLE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "homestay_id", nullable = false)

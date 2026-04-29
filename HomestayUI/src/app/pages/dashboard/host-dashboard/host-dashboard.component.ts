@@ -4,6 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from '../../../components/navbar/navbar.component';
 import { HomestayService, HomestayDto } from '../../../services/homestay.service';
 import { AmenityService, AmenityDto } from '../../../services/amenity.service';
+import { RoomService, RoomDto } from '../../../services/room.service';
+import { RoomTypeService, RoomTypeDto } from '../../../services/room-type.service';
+import { NotificationService } from '../../../services/notification.service';
+import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 
 @Component({
   selector: 'app-host-dashboard',
@@ -21,14 +25,20 @@ import { AmenityService, AmenityDto } from '../../../services/amenity.service';
             <p class="subtitle">Kênh quản lý</p>
           </div>
           <ul class="sidebar-menu">
-            <li class="active">
+            <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'">
               <span class="menu-icon">🏠</span> Quản lý Homestay
+            </li>
+            <li [class.active]="activeTab === 'rooms'" (click)="activeTab = 'rooms'">
+              <span class="menu-icon">🛏️</span> Quản lý Phòng
             </li>
           </ul>
         </aside>
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
+        
+        <!-- HOMESTAYS TAB -->
+        <div *ngIf="activeTab === 'homestays'">
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">🏠</div>
@@ -174,6 +184,133 @@ import { AmenityService, AmenityDto } from '../../../services/amenity.service';
             </div>
           </form>
         </div>
+        </div> <!-- END HOMESTAYS TAB -->
+
+        <!-- ROOMS TAB -->
+        <div *ngIf="activeTab === 'rooms'">
+          <div class="card glass-card" *ngIf="!showRoomForm">
+            <div class="card-header">
+              <h3>Danh sách Phòng</h3>
+              <div style="display: flex; gap: 15px; align-items: center;">
+                <select [(ngModel)]="selectedHomestayForRoom" (change)="loadRooms()" class="input-field" style="width: 250px;">
+                  <option [ngValue]="null">-- Chọn Homestay --</option>
+                  <option *ngFor="let h of homestays" [ngValue]="h.id">{{ h.name }}</option>
+                </select>
+                <button class="btn-primary" [disabled]="!selectedHomestayForRoom" (click)="openAddRoomForm()">+ Thêm Phòng</button>
+              </div>
+            </div>
+
+            <div class="table-container" *ngIf="rooms.length > 0; else emptyRoomState">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Phòng</th>
+                    <th>Loại</th>
+                    <th>Giá thêm</th>
+                    <th>Khách tối đa</th>
+                    <th>Trạng thái</th>
+                    <th class="actions-col">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let r of rooms" class="table-row">
+                    <td class="homestay-cell">
+                      <img *ngIf="r.images && r.images.length > 0" [src]="'http://localhost:9999' + r.images[0].url" class="h-thumb" />
+                      <div class="h-thumb-placeholder" *ngIf="!r.images || r.images.length === 0">🛏️</div>
+                      <div class="h-name">{{ r.name }}</div>
+                    </td>
+                    <td>{{ r.roomTypeName }}</td>
+                    <td>{{ r.priceExtra | number }}đ</td>
+                    <td>{{ r.maxGuests }}</td>
+                    <td>
+                      <span class="badge room-status" [ngClass]="r.status?.toLowerCase()">
+                        {{ r.status === 'AVAILABLE' ? 'Sẵn sàng' : r.status === 'BOOKED' ? 'Đã đặt' : 'Tạm ngưng' }}
+                      </span>
+                    </td>
+                    <td class="actions-cell">
+                      <button class="btn-icon btn-edit" (click)="openEditRoomForm(r)">Sửa</button>
+                      <button class="btn-icon btn-delete" (click)="deleteRoom(r.id)">Xóa</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <ng-template #emptyRoomState>
+              <div class="empty-state">
+                <span class="empty-icon">🛏️</span>
+                <p *ngIf="selectedHomestayForRoom">Chưa có phòng nào trong Homestay này.</p>
+                <p *ngIf="!selectedHomestayForRoom">Vui lòng chọn một Homestay để xem danh sách phòng.</p>
+              </div>
+            </ng-template>
+          </div>
+
+          <!-- FORM ADD/EDIT ROOM -->
+          <div class="card glass-card" *ngIf="showRoomForm">
+            <div class="card-header">
+              <h3>{{ isRoomEditMode ? 'Cập nhật Phòng' : 'Thêm Phòng mới' }}</h3>
+              <button class="btn-secondary" (click)="closeRoomForm()">Quay lại</button>
+            </div>
+
+            <form (submit)="submitRoomForm($event)" class="homestay-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Tên Phòng *</label>
+                  <input type="text" [(ngModel)]="roomFormData.name" name="name" required class="input-field" placeholder="Nhập tên phòng..." />
+                </div>
+                <div class="form-group">
+                  <label>Loại Phòng *</label>
+                  <select [(ngModel)]="roomFormData.roomTypeId" name="roomTypeId" required class="input-field">
+                    <option [ngValue]="null">-- Chọn loại phòng --</option>
+                    <option *ngFor="let rt of roomTypes" [ngValue]="rt.id">{{ rt.name }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Giá phụ thu (VNĐ) *</label>
+                  <input type="number" [(ngModel)]="roomFormData.priceExtra" name="priceExtra" required class="input-field" />
+                </div>
+                <div class="form-group">
+                  <label>Số khách tối đa *</label>
+                  <input type="number" [(ngModel)]="roomFormData.maxGuests" name="maxGuests" required class="input-field" />
+                </div>
+              </div>
+
+              <div class="form-group" *ngIf="isRoomEditMode">
+                <label>Trạng thái phòng</label>
+                <select [(ngModel)]="roomFormData.status" name="status" class="input-field">
+                  <option value="AVAILABLE">✅ Sẵn sàng</option>
+                  <option value="BOOKED">📅 Đã đặt</option>
+                  <option value="UNAVAILABLE">🔧 Tạm ngưng</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Hình ảnh (Có thể chọn nhiều ảnh)</label>
+                <input type="file" multiple (change)="onRoomFilesSelected($event)" accept="image/*" class="input-file" />
+                <div class="file-info" *ngIf="roomPreviewUrls.length > 0">
+                  <p style="margin-bottom: 10px;">Đã chọn {{ roomPreviewUrls.length }} ảnh:</p>
+                  <div class="image-preview-grid">
+                    <div class="preview-wrapper" *ngFor="let url of roomPreviewUrls; let i = index">
+                      <img [src]="url" class="preview-img" />
+                      <button type="button" class="preview-remove-btn" (click)="removeRoomImage(i)">✕</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="file-info" *ngIf="isRoomEditMode">
+                  <small>* Nếu bạn chọn ảnh mới, các ảnh cũ sẽ bị thay thế.</small>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-primary" [disabled]="isLoading">
+                  {{ isLoading ? 'Đang lưu...' : 'Lưu Phòng' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div> <!-- END ROOMS TAB -->
         </main>
       </div>
     </div>
@@ -224,6 +361,10 @@ import { AmenityService, AmenityDto } from '../../../services/amenity.service';
     .active { background: #dcfce7; color: #166534; }
     .inactive { background: #f1f5f9; color: #475569; }
     .rejected { background: #fee2e2; color: #991b1b; }
+    .room-status { text-transform: none; font-size: 11px; }
+    .available { background: #dcfce7; color: #166534; }
+    .booked { background: #dbeafe; color: #1e40af; }
+    .unavailable { background: #fef3c7; color: #92400e; }
     .admin-reason-text { font-size: 11px; color: #ef4444; margin-top: 4px; max-width: 200px; }
     
     .actions-col { text-align: right; }
@@ -261,6 +402,7 @@ import { AmenityService, AmenityDto } from '../../../services/amenity.service';
   `]
 })
 export class HostDashboardComponent implements OnInit {
+  activeTab = 'homestays';
   homestays: HomestayDto[] = [];
   availableAmenities: AmenityDto[] = [];
   
@@ -279,12 +421,17 @@ export class HostDashboardComponent implements OnInit {
 
   constructor(
     private homestayService: HomestayService,
-    private amenityService: AmenityService
+    private amenityService: AmenityService,
+    private roomService: RoomService,
+    private roomTypeService: RoomTypeService,
+    private notification: NotificationService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit() {
     this.loadHomestays();
     this.loadAmenities();
+    this.loadRoomTypes();
   }
 
   loadHomestays() {
@@ -305,7 +452,7 @@ export class HostDashboardComponent implements OnInit {
   openAddForm() {
     this.isEditMode = false;
     this.currentEditId = null;
-    this.formData = { pricePerNight: 0, maxGuests: 1 };
+    this.formData = { name: '', description: '', address: '', city: '', pricePerNight: 0, maxGuests: 1 };
     this.selectedAmenityIds = [];
     this.selectedFiles = [];
     this.previewUrls = [];
@@ -364,12 +511,12 @@ export class HostDashboardComponent implements OnInit {
     this.isLoading = true;
 
     const fd = new FormData();
-    fd.append('name', this.formData.name);
+    fd.append('name', this.formData.name || '');
     fd.append('description', this.formData.description || '');
-    fd.append('address', this.formData.address);
-    fd.append('city', this.formData.city);
-    fd.append('pricePerNight', this.formData.pricePerNight);
-    fd.append('maxGuests', this.formData.maxGuests);
+    fd.append('address', this.formData.address || '');
+    fd.append('city', this.formData.city || '');
+    fd.append('pricePerNight', (this.formData.pricePerNight || 0).toString());
+    fd.append('maxGuests', (this.formData.maxGuests || 1).toString());
     
     this.selectedAmenityIds.forEach(id => {
       fd.append('amenityIds', id.toString());
@@ -382,41 +529,185 @@ export class HostDashboardComponent implements OnInit {
     if (this.isEditMode && this.currentEditId) {
       this.homestayService.updateHomestay(this.currentEditId, fd).subscribe({
         next: () => {
-          alert('Cập nhật thành công! Trạng thái chuyển về Chờ duyệt.');
+          this.notification.success('Cập nhật thành công! Trạng thái chuyển về Chờ duyệt.');
           this.closeForm();
           this.loadHomestays();
           this.isLoading = false;
         },
         error: (err) => {
-          alert('Lỗi: ' + (err.error?.message || err.message));
+          this.notification.error(err.error?.message || err.message);
           this.isLoading = false;
         }
       });
     } else {
       this.homestayService.createHomestay(fd).subscribe({
         next: () => {
-          alert('Thêm mới thành công! Đang chờ duyệt.');
+          this.notification.success('Thêm mới thành công! Đang chờ duyệt.');
           this.closeForm();
           this.loadHomestays();
           this.isLoading = false;
         },
         error: (err) => {
-          alert('Lỗi: ' + (err.error?.message || err.message));
+          this.notification.error(err.error?.message || err.message);
           this.isLoading = false;
         }
       });
     }
   }
 
-  deleteHomestay(id: string) {
-    if (confirm('Bạn có chắc muốn xóa Homestay này không? Hành động này không thể hoàn tác.')) {
-      this.homestayService.deleteHomestay(id).subscribe({
-        next: () => {
-          alert('Đã xóa thành công!');
-          this.loadHomestays();
-        },
-        error: (err) => alert('Lỗi: ' + (err.error?.message || err.message))
+  async deleteHomestay(id: string) {
+    const ok = await this.confirmDialog.confirm({
+      message: 'Bạn có chắc muốn xóa Homestay này không? Hành động này không thể hoàn tác.',
+      type: 'danger',
+      confirmText: 'Xóa'
+    });
+    if (!ok) return;
+
+    this.homestayService.deleteHomestay(id).subscribe({
+      next: () => {
+        this.notification.success('Đã xóa thành công!');
+        this.loadHomestays();
+      },
+      error: (err) => this.notification.error(err.error?.message || err.message)
+    });
+  }
+
+  // === ROOMS LOGIC ===
+  rooms: RoomDto[] = [];
+  roomTypes: RoomTypeDto[] = [];
+  selectedHomestayForRoom: string | null = null;
+  
+  showRoomForm = false;
+  isRoomEditMode = false;
+  roomFormData: any = {};
+  roomSelectedFiles: File[] = [];
+  roomPreviewUrls: string[] = [];
+  currentRoomEditId: string | null = null;
+
+  loadRoomTypes() {
+    this.roomTypeService.getAllRoomTypes().subscribe(res => this.roomTypes = res);
+  }
+
+  loadRooms() {
+    if (!this.selectedHomestayForRoom) {
+      this.rooms = [];
+      return;
+    }
+    this.roomService.getRoomsByHomestay(this.selectedHomestayForRoom).subscribe({
+      next: (res) => this.rooms = res,
+      error: (err) => console.error(err)
+    });
+  }
+
+  openAddRoomForm() {
+    this.isRoomEditMode = false;
+    this.currentRoomEditId = null;
+    this.roomFormData = { priceExtra: 0, maxGuests: 2, roomTypeId: null };
+    this.roomSelectedFiles = [];
+    this.roomPreviewUrls = [];
+    this.showRoomForm = true;
+  }
+
+  openEditRoomForm(room: RoomDto) {
+    this.isRoomEditMode = true;
+    this.currentRoomEditId = room.id;
+    this.roomFormData = {
+      name: room.name,
+      roomTypeId: room.roomTypeId,
+      priceExtra: room.priceExtra,
+      maxGuests: room.maxGuests,
+      status: room.status || 'AVAILABLE'
+    };
+    this.roomSelectedFiles = [];
+    this.roomPreviewUrls = [];
+    this.showRoomForm = true;
+  }
+
+  closeRoomForm() {
+    this.roomPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    this.showRoomForm = false;
+  }
+
+  onRoomFilesSelected(event: any) {
+    if (event.target.files) {
+      const newFiles: File[] = Array.from(event.target.files);
+      newFiles.forEach(file => {
+        this.roomSelectedFiles.push(file);
+        this.roomPreviewUrls.push(URL.createObjectURL(file));
       });
     }
+  }
+
+  removeRoomImage(index: number) {
+    URL.revokeObjectURL(this.roomPreviewUrls[index]);
+    this.roomPreviewUrls.splice(index, 1);
+    this.roomSelectedFiles.splice(index, 1);
+  }
+
+  submitRoomForm(event: Event) {
+    event.preventDefault();
+    if (!this.selectedHomestayForRoom || !this.roomFormData.roomTypeId) {
+      this.notification.warning('Vui lòng chọn Homestay và Loại phòng!');
+      return;
+    }
+    this.isLoading = true;
+
+    const fd = new FormData();
+    fd.append('name', this.roomFormData.name);
+    fd.append('roomTypeId', this.roomFormData.roomTypeId);
+    fd.append('priceExtra', this.roomFormData.priceExtra);
+    fd.append('maxGuests', this.roomFormData.maxGuests);
+    if (this.isRoomEditMode && this.roomFormData.status) {
+      fd.append('status', this.roomFormData.status);
+    }
+    
+    this.roomSelectedFiles.forEach(file => {
+      fd.append('images', file);
+    });
+
+    if (this.isRoomEditMode && this.currentRoomEditId) {
+      this.roomService.updateRoom(this.currentRoomEditId, fd).subscribe({
+        next: () => {
+          this.notification.success('Cập nhật phòng thành công!');
+          this.closeRoomForm();
+          this.loadRooms();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.notification.error(err.error?.message || err.message);
+          this.isLoading = false;
+        }
+      });
+    } else {
+      this.roomService.createRoom(this.selectedHomestayForRoom, fd).subscribe({
+        next: () => {
+          this.notification.success('Thêm phòng thành công!');
+          this.closeRoomForm();
+          this.loadRooms();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.notification.error(err.error?.message || err.message);
+          this.isLoading = false;
+        }
+      });
+    }
+  }
+
+  async deleteRoom(id: string) {
+    const ok = await this.confirmDialog.confirm({
+      message: 'Bạn có chắc muốn xóa Phòng này không?',
+      type: 'danger',
+      confirmText: 'Xóa'
+    });
+    if (!ok) return;
+
+    this.roomService.deleteRoom(id).subscribe({
+      next: () => {
+        this.notification.success('Đã xóa phòng!');
+        this.loadRooms();
+      },
+      error: (err) => this.notification.error(err.error?.message || err.message)
+    });
   }
 }

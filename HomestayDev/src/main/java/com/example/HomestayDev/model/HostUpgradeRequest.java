@@ -30,13 +30,13 @@ public class HostUpgradeRequest {
     @Column(nullable = false)
     private UpgradeRequestStatus status;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "NVARCHAR(1000)")
     private String userNote;
 
     @Column
     private String proofUrl;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "NVARCHAR(500)")
     private String adminNote;
 
     @CreationTimestamp

@@ -13,7 +13,7 @@ spring:
   application:
     name: HomestayDev
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=HomestayDev;encrypt=true;trustServerCertificate=true;sendStringParametersAsUnicode=true
+    url: jdbc:sqlserver://localhost:1433;databaseName=HomestayDev;encrypt=true;trustServerCertificate=true;sendStringParametersAsUnicode=true;useUnicode=true;characterEncoding=UTF-8
     username: j2ee
     password: Minh@7979
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -25,6 +25,10 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.SQLServerDialect
+        connection:
+          charSet: UTF-8
+          characterEncoding: UTF-8
+          useUnicode: true
 
   security:
     oauth2:
