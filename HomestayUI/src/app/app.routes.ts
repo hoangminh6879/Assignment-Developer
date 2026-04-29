@@ -28,5 +28,10 @@ export const routes: Routes = [
     canActivate: [AuthGuard], 
     data: { roles: ['ADMIN'] } 
   },
+  {
+    path: 'booking/:homestayId',
+    loadComponent: () => import('./pages/booking/booking.component').then(m => m.BookingComponent),
+    canActivate: [AuthGuard]
+  },
   { path: '**', redirectTo: '' }
 ];

@@ -1,14 +1,17 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from '../../../components/navbar/navbar.component';
 import { UpgradeRequestService, UpgradeRequestDto } from '../../../services/upgrade-request.service';
 import { NotificationService } from '../../../services/notification.service';
+import { ProfileTabComponent } from '../../../components/profile-tab/profile-tab.component';
+import { BookingHistoryTabComponent } from '../../../components/booking-history-tab/booking-history-tab.component';
 
 @Component({
   selector: 'app-user-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent],
   template: `
     <app-navbar></app-navbar>
     <div class="dashboard-page">
@@ -21,7 +24,13 @@ import { NotificationService } from '../../../services/notification.service';
             <p class="subtitle">Tài khoản cá nhân</p>
           </div>
           <ul class="sidebar-menu">
-            <li class="active">
+            <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+              <span class="menu-icon">👤</span> Hồ sơ của tôi
+            </li>
+            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
+              <span class="menu-icon">📅</span> Lịch sử đặt phòng
+            </li>
+            <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'">
               <span class="menu-icon">🚀</span> Nâng cấp Host
             </li>
           </ul>
@@ -29,7 +38,19 @@ import { NotificationService } from '../../../services/notification.service';
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
-        <div class="card glass-card">
+        
+        <!-- PROFILE TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'profile'">
+          <app-profile-tab></app-profile-tab>
+        </div>
+
+        <!-- BOOKINGS TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'bookings'">
+          <app-booking-history-tab role="USER"></app-booking-history-tab>
+        </div>
+
+        <!-- UPGRADES TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'upgrades'">
           <div class="card-header">
             <span class="icon">🚀</span>
             <h3>Trở thành Chủ Nhà (Host)</h3>
@@ -110,6 +131,7 @@ import { NotificationService } from '../../../services/notification.service';
   `]
 })
 export class UserDashboardComponent implements OnInit {
+  activeTab = 'profile'; // Default to profile as requested
   requestStatus: UpgradeRequestDto | null = null;
   isLoading = false;
   
@@ -117,17 +139,23 @@ export class UserDashboardComponent implements OnInit {
   selectedFile: File | null = null;
 
   constructor(
+    private route: ActivatedRoute,
     private upgradeReqService: UpgradeRequestService,
     private notification: NotificationService
   ) {}
 
   ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeTab = params['tab'];
+      }
+    });
     this.checkStatus();
   }
 
   checkStatus() {
     this.upgradeReqService.getMyRequestStatus().subscribe({
-      next: (res) => { this.requestStatus = res; },
+      next: (res: UpgradeRequestDto) => { this.requestStatus = res; },
       error: () => { console.log('No pending request found'); }
     });
   }
@@ -141,14 +169,14 @@ export class UserDashboardComponent implements OnInit {
   requestUpgrade() {
     this.isLoading = true;
     this.upgradeReqService.createUpgradeRequest(this.userNote, this.selectedFile).subscribe({
-      next: (res) => {
+      next: (res: UpgradeRequestDto) => {
         this.notification.success('Yêu cầu đã được gửi thành công!');
         this.requestStatus = res;
         this.isLoading = false;
         this.userNote = '';
         this.selectedFile = null;
       },
-      error: (err) => {
+      error: (err: any) => {
         this.notification.error(err.error?.message || err.message || 'Có lỗi xảy ra khi gửi yêu cầu');
         this.isLoading = false;
       }

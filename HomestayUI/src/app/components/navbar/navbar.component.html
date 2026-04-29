@@ -9,17 +9,32 @@
       <a routerLink="/discover">Khám phá</a>
       
       @if (authService.isAuthenticated()) {
-        <a routerLink="/my-bookings">Lịch đặt</a>
-        @if (authService.hasRole('ADMIN')) {
-          <a routerLink="/dashboard/admin" class="dashboard-link">Trang Quản trị</a>
-        } @else if (authService.hasRole('HOST')) {
-          <a routerLink="/dashboard/host" class="dashboard-link">Kênh Chủ Nhà</a>
-        } @else {
-          <a routerLink="/dashboard/user" class="dashboard-link">Tài khoản của tôi</a>
-        }
-        <div class="user-menu">
-          <span class="user-name">Xin chào!</span>
-          <button (click)="onLogout()" class="btn-logout">Đăng xuất</button>
+        <div class="user-dropdown">
+          <div class="user-info-trigger">
+            <div class="avatar-sm">
+              {{ (profile?.firstName?.charAt(0) || profile?.username?.charAt(0) || '?').toUpperCase() }}
+            </div>
+            <span class="user-name-label">{{ profile?.firstName || profile?.username }}</span>
+            <span class="dropdown-arrow">▼</span>
+          </div>
+          
+          <div class="dropdown-menu">
+            <div class="dropdown-header">
+              <p class="full-name">{{ profile?.firstName }} {{ profile?.lastName }}</p>
+              <p class="user-email">{{ profile?.email }}</p>
+            </div>
+            <hr>
+            @if (authService.hasRole('ADMIN')) {
+              <a routerLink="/dashboard/admin" class="dropdown-item">⚙️ Quản trị hệ thống</a>
+            } @else if (authService.hasRole('HOST')) {
+              <a routerLink="/dashboard/host" class="dropdown-item">🏠 Kênh Chủ Nhà</a>
+            } @else {
+              <a routerLink="/dashboard/user" class="dropdown-item">👤 Hồ sơ của tôi</a>
+            }
+            <a *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')" [routerLink]="['/dashboard/user']" [queryParams]="{tab: 'bookings'}" class="dropdown-item">📅 Lịch sử đặt phòng</a>
+            <hr>
+            <button (click)="onLogout()" class="dropdown-item logout-item">🚪 Đăng xuất</button>
+          </div>
         </div>
       } @else {
         <a routerLink="/login" class="btn-login">Đăng nhập</a>
