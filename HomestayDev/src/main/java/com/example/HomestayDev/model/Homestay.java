@@ -27,7 +27,7 @@ public class Homestay {
     @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String name;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
+    @Column(columnDefinition = "NVARCHAR(2000)")
     private String description;
 
     @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
@@ -49,7 +49,7 @@ public class Homestay {
     @Enumerated(EnumType.STRING)
     private HomestayStatus status = HomestayStatus.PENDING;
 
-    @Column(name = "admin_reason", columnDefinition = "NVARCHAR(500)")
+    @Column(name = "admin_reason", columnDefinition = "NVARCHAR(1000)")
     private String adminReason;
 
     @CreationTimestamp

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from '../../../components/navbar/navbar.component';
 import { UpgradeRequestService, UpgradeRequestDto } from '../../../services/upgrade-request.service';
+import { NotificationService } from '../../../services/notification.service';
 
 @Component({
   selector: 'app-user-dashboard',
@@ -115,7 +116,10 @@ export class UserDashboardComponent implements OnInit {
   userNote = '';
   selectedFile: File | null = null;
 
-  constructor(private upgradeReqService: UpgradeRequestService) {}
+  constructor(
+    private upgradeReqService: UpgradeRequestService,
+    private notification: NotificationService
+  ) {}
 
   ngOnInit() {
     this.checkStatus();
@@ -138,14 +142,14 @@ export class UserDashboardComponent implements OnInit {
     this.isLoading = true;
     this.upgradeReqService.createUpgradeRequest(this.userNote, this.selectedFile).subscribe({
       next: (res) => {
-        alert('Yêu cầu đã được gửi thành công!');
+        this.notification.success('Yêu cầu đã được gửi thành công!');
         this.requestStatus = res;
         this.isLoading = false;
         this.userNote = '';
         this.selectedFile = null;
       },
       error: (err) => {
-        alert(err.error?.message || err.message || 'Có lỗi xảy ra khi gửi yêu cầu');
+        this.notification.error(err.error?.message || err.message || 'Có lỗi xảy ra khi gửi yêu cầu');
         this.isLoading = false;
       }
     });
