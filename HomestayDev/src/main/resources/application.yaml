@@ -30,6 +30,18 @@ spring:
           characterEncoding: UTF-8
           useUnicode: true
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: hoangminh.p7979@gmail.com
+    password: iwakdvxmmnwmutgs
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   security:
     oauth2:
       resourceserver:
@@ -43,3 +55,8 @@ keycloak:
   client-id: homestay-client
   client-secret: U6IpDXlqMwRODktPk3usOM8gODXY9YJI
 
+vnpay:
+  tmn-code: 7GNDMSBK
+  hash-secret: SL5ZVQYVP56C3818K450D3AOQXQ3XBY0
+  url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:9999/api/payment/vnpay-return

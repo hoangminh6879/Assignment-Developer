@@ -2,10 +2,12 @@ package com.example.HomestayDev.service;
 
 import com.example.HomestayDev.dto.BookingDto;
 import com.example.HomestayDev.dto.BookingRequestDto;
+import com.example.HomestayDev.dto.CheckoutRequestDto;
 import com.example.HomestayDev.model.*;
 import com.example.HomestayDev.model.enums.BookingStatus;
 import com.example.HomestayDev.model.enums.PaymentMethod;
 import com.example.HomestayDev.model.enums.PaymentStatus;
+import com.example.HomestayDev.model.enums.RoomStatus;
 import com.example.HomestayDev.repository.BookingRepository;
 import com.example.HomestayDev.repository.HomestayRepository;
 import com.example.HomestayDev.repository.RoomRepository;
@@ -13,6 +15,7 @@ import com.example.HomestayDev.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -29,6 +32,7 @@ public class BookingService {
     private final HomestayRepository homestayRepository;
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
     @Transactional
     public BookingDto createBooking(String username, BookingRequestDto request) {
@@ -66,6 +70,8 @@ public class BookingService {
         BigDecimal pricePerNight = homestay.getPricePerNight().add(room.getPriceExtra());
         BigDecimal totalPrice = pricePerNight.multiply(BigDecimal.valueOf(nights));
 
+        String checkInCode = java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+
         Booking booking = Booking.builder()
                 .user(user)
                 .homestay(homestay)
@@ -76,9 +82,12 @@ public class BookingService {
                 .status(BookingStatus.PENDING)
                 .paymentStatus(PaymentStatus.UNPAID)
                 .paymentMethod(PaymentMethod.valueOf(request.getPaymentMethod()))
+                .checkInCode(checkInCode)
                 .build();
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+
+        return mapToDto(savedBooking);
     }
 
     public List<BookingDto> getMyBookings(String username) {
@@ -99,9 +108,27 @@ public class BookingService {
         User host = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Host not found"));
         
-        // Find bookings for homestays owned by this host
         return bookingRepository.findAll().stream()
                 .filter(b -> b.getHomestay().getHost().getId().equals(host.getId()))
+                // Không hiển thị CHECKED_IN ở tab này (chúng được quản lý ở tab check-in)
+                .filter(b -> b.getStatus() != BookingStatus.CHECKED_IN)
+                .filter(b -> {
+                    if (b.getPaymentMethod() == PaymentMethod.VNPAY) {
+                        return b.getPaymentStatus() == PaymentStatus.PAID;
+                    }
+                    return true;
+                })
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<BookingDto> getCheckedInBookings(String hostUsername) {
+        User host = userRepository.findByUsername(hostUsername)
+                .orElseThrow(() -> new RuntimeException("Host not found"));
+
+        return bookingRepository.findAll().stream()
+                .filter(b -> b.getHomestay().getHost().getId().equals(host.getId()))
+                .filter(b -> b.getStatus() == BookingStatus.CHECKED_IN)
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
@@ -120,7 +147,30 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CONFIRMED);
-        return mapToDto(bookingRepository.save(booking));
+
+        // Cập nhật trạng thái phòng: Đã đặt
+        Room room = booking.getRoom();
+        if (room != null) {
+            room.setStatus(RoomStatus.BOOKED);
+            roomRepository.save(room);
+        }
+
+        bookingRepository.save(booking);
+
+        return mapToDto(booking);
+    }
+
+    // Gửi email SAU khi transaction đã commit (gọi riêng, không trong @Transactional)
+    public void sendConfirmationEmail(UUID bookingId) {
+        try {
+            Booking booking = bookingRepository.findById(bookingId).orElse(null);
+            if (booking != null) {
+                emailService.sendBookingConfirmation(booking);
+            }
+        } catch (Exception e) {
+            System.err.println("[Email] Failed to send confirmation email for booking " + bookingId);
+            e.printStackTrace();
+        }
     }
 
     @Transactional
@@ -144,7 +194,115 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
+        
+        // Trả phòng về trạng thái Sẵn sàng nếu đơn bị hủy
+        Room room = booking.getRoom();
+        if (room != null) {
+            room.setStatus(RoomStatus.AVAILABLE);
+            roomRepository.save(room);
+        }
+        
         return mapToDto(bookingRepository.save(booking));
+    }
+
+    public Booking getBookingByCheckInCode(String code) {
+        return bookingRepository.findByCheckInCode(code.toUpperCase())
+                .orElseThrow(() -> new RuntimeException("Check-in code not found or invalid"));
+    }
+
+    public List<BookingDto> getBookingsByCitizenId(String citizenId, String hostUsername) {
+        User host = userRepository.findByUsername(hostUsername)
+                .orElseThrow(() -> new RuntimeException("Host not found"));
+
+        return bookingRepository.findAll().stream()
+                .filter(b -> b.getHomestay().getHost().getId().equals(host.getId()))
+                .filter(b -> b.getUser().getCitizenId() != null && b.getUser().getCitizenId().equals(citizenId))
+                .filter(b -> b.getStatus() == BookingStatus.PENDING || b.getStatus() == BookingStatus.CONFIRMED)
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public BookingDto confirmCheckIn(UUID bookingId, String hostUsername) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (!booking.getHomestay().getHost().getUsername().equals(hostUsername)) {
+            throw new RuntimeException("You are not the host of this homestay");
+        }
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new RuntimeException("Booking is cancelled");
+        }
+
+        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
+            throw new RuntimeException("Booking is already checked in");
+        }
+
+        // Ràng buộc: Chỉ được check-in từ ngày nhận phòng trở đi
+        LocalDate today = LocalDate.now();
+        if (today.isBefore(booking.getCheckInDate())) {
+            throw new RuntimeException("Chưa đến ngày nhận phòng. Ngày check-in theo đơn là: " + booking.getCheckInDate());
+        }
+
+        booking.setStatus(BookingStatus.CHECKED_IN);
+
+        // Cập nhật trạng thái phòng: Đang được sử dụng (Checked-in)
+        Room room = booking.getRoom();
+        if (room != null) {
+            room.setStatus(RoomStatus.CHECKED_IN);
+            roomRepository.save(room);
+        }
+
+        return mapToDto(bookingRepository.save(booking));
+    }
+
+    @Transactional
+    public BookingDto checkout(UUID bookingId, CheckoutRequestDto request, String hostUsername) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (!booking.getHomestay().getHost().getUsername().equals(hostUsername)) {
+            throw new RuntimeException("You are not the host of this homestay");
+        }
+
+        if (booking.getStatus() != BookingStatus.CHECKED_IN) {
+            throw new RuntimeException("Booking is not in CHECKED_IN status");
+        }
+
+        // Ràng buộc: Chỉ được checkout sau ngày nhận phòng trong đơn
+        LocalDate today = LocalDate.now();
+        if (!today.isAfter(booking.getCheckInDate())) {
+            throw new RuntimeException("Ngày checkout phải sau ngày nhận phòng trong đơn ("
+                    + booking.getCheckInDate() + "). Vui lòng thực hiện checkout vào ngày "
+                    + booking.getCheckInDate().plusDays(1) + " hoặc sau đó.");
+        }
+
+        String userCitizenId = booking.getUser().getCitizenId();
+        if (userCitizenId == null || !userCitizenId.equals(request.getCitizenId())) {
+            throw new RuntimeException("CCCD/CMND không khớp với thông tin đơn đặt phòng");
+        }
+
+        if (booking.getPaymentStatus() == PaymentStatus.UNPAID) {
+            if (!request.isConfirmPayment()) {
+                throw new RuntimeException("Đơn hàng chưa thanh toán. Vui lòng xác nhận thanh toán để checkout.");
+            }
+            booking.setPaymentStatus(PaymentStatus.PAID);
+        }
+
+        booking.setStatus(BookingStatus.COMPLETED);
+
+        Room room = booking.getRoom();
+        if (room != null) {
+            room.setStatus(RoomStatus.AVAILABLE);
+            roomRepository.save(room);
+        }
+
+        return mapToDto(bookingRepository.save(booking));
+    }
+
+    public BookingDto mapToDtoPublic(Booking booking) {
+        return mapToDto(booking);
     }
 
     public List<Room> getAvailableRooms(UUID homestayId, Long roomTypeId, LocalDate checkIn, LocalDate checkOut) {
@@ -159,6 +317,29 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
+    @Scheduled(fixedRate = 60000) // Run every 60 seconds
+    @Transactional
+    public void autoCancelExpiredVNPayBookings() {
+        java.time.LocalDateTime oneHourAgo = java.time.LocalDateTime.now().minusHours(1);
+        List<Booking> expiredBookings = bookingRepository.findExpiredVNPayBookings(oneHourAgo);
+        
+        for (Booking booking : expiredBookings) {
+            booking.setStatus(BookingStatus.CANCELLED);
+            
+            // Giải phóng phòng về trạng thái Sẵn sàng
+            Room room = booking.getRoom();
+            if (room != null) {
+                room.setStatus(RoomStatus.AVAILABLE);
+                roomRepository.save(room);
+            }
+        }
+        
+        if (!expiredBookings.isEmpty()) {
+            bookingRepository.saveAll(expiredBookings);
+            System.out.println("Auto-cancelled " + expiredBookings.size() + " expired VNPay bookings and released rooms.");
+        }
+    }
+
     private BookingDto mapToDto(Booking booking) {
         return BookingDto.builder()
                 .id(booking.getId())
@@ -169,6 +350,7 @@ public class BookingService {
                 .paymentStatus(booking.getPaymentStatus())
                 .paymentMethod(booking.getPaymentMethod() != null ? booking.getPaymentMethod().name() : null)
                 .createdAt(booking.getCreatedAt())
+                .checkInCode(booking.getCheckInCode())
                 .homestayId(booking.getHomestay().getId())
                 .homestayName(booking.getHomestay().getName())
                 .roomId(booking.getRoom().getId())
