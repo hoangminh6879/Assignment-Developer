@@ -39,6 +39,12 @@ public class HomestayService {
                 .collect(Collectors.toList());
     }
 
+    public HomestayDto getHomestayById(UUID id) {
+        return homestayRepository.findById(id)
+                .map(this::mapToDto)
+                .orElseThrow(() -> new RuntimeException("Homestay not found"));
+    }
+
     // HOST
     public List<HomestayDto> getHostHomestays(String username) {
         User user = userRepository.findByUsername(username)
