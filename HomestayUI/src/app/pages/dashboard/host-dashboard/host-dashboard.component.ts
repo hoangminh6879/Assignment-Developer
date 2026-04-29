@@ -9,10 +9,13 @@ import { RoomTypeService, RoomTypeDto } from '../../../services/room-type.servic
 import { NotificationService } from '../../../services/notification.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 
+import { ProfileTabComponent } from '../../../components/profile-tab/profile-tab.component';
+import { BookingHistoryTabComponent } from '../../../components/booking-history-tab/booking-history-tab.component';
+
 @Component({
   selector: 'app-host-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent],
   template: `
     <app-navbar></app-navbar>
     <div class="dashboard-page">
@@ -25,6 +28,12 @@ import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
             <p class="subtitle">Kênh quản lý</p>
           </div>
           <ul class="sidebar-menu">
+            <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+              <span class="menu-icon">👤</span> Hồ sơ của tôi
+            </li>
+            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
+              <span class="menu-icon">📅</span> Quản lý Đặt phòng
+            </li>
             <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'">
               <span class="menu-icon">🏠</span> Quản lý Homestay
             </li>
@@ -36,6 +45,16 @@ import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
+        
+        <!-- PROFILE TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'profile'">
+          <app-profile-tab></app-profile-tab>
+        </div>
+
+        <!-- BOOKINGS TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'bookings'">
+          <app-booking-history-tab role="HOST"></app-booking-history-tab>
+        </div>
         
         <!-- HOMESTAYS TAB -->
         <div *ngIf="activeTab === 'homestays'">
@@ -223,7 +242,7 @@ import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
                     <td>{{ r.priceExtra | number }}đ</td>
                     <td>{{ r.maxGuests }}</td>
                     <td>
-                      <span class="badge room-status" [ngClass]="r.status?.toLowerCase()">
+                      <span class="badge room-status" [ngClass]="(r.status || '').toLowerCase()">
                         {{ r.status === 'AVAILABLE' ? 'Sẵn sàng' : r.status === 'BOOKED' ? 'Đã đặt' : 'Tạm ngưng' }}
                       </span>
                     </td>
@@ -402,7 +421,7 @@ import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
   `]
 })
 export class HostDashboardComponent implements OnInit {
-  activeTab = 'homestays';
+  activeTab = 'profile';
   homestays: HomestayDto[] = [];
   availableAmenities: AmenityDto[] = [];
   

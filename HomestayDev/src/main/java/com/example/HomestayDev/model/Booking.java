@@ -1,6 +1,7 @@
 package com.example.HomestayDev.model;
 
 import com.example.HomestayDev.model.enums.BookingStatus;
+import com.example.HomestayDev.model.enums.PaymentMethod;
 import com.example.HomestayDev.model.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -54,8 +55,16 @@ public class Booking {
     @JoinColumn(name = "homestay_id", nullable = false)
     private Homestay homestay;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
+
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
     private Payment payment;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method")
+    private PaymentMethod paymentMethod;
 
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
     private Review review;

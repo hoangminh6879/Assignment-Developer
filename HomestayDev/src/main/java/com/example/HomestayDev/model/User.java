@@ -40,6 +40,12 @@ public class User {
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Column(name = "address", columnDefinition = "NVARCHAR(255)")
+    private String address;
+
+    @Column(name = "citizen_id", columnDefinition = "NVARCHAR(50)")
+    private String citizenId;
+
     @Column(name = "avatar_url")
     private String avatarUrl;
 
