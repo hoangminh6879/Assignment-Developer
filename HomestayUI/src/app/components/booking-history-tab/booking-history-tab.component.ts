@@ -14,8 +14,22 @@ import { PaymentService } from '../../services/payment.service';
   template: `
     <div class="booking-history-container">
       <div class="tab-header">
-        <h3>{{ title }}</h3>
-        <p>{{ subtitle }}</p>
+        <div class="header-text">
+          <h3>{{ title }}</h3>
+          <p>{{ subtitle }}</p>
+        </div>
+        
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label>Từ ngày</label>
+            <input type="date" [(ngModel)]="startDateFilter" (change)="onFilterChange()">
+          </div>
+          <div class="filter-group">
+            <label>Đến ngày</label>
+            <input type="date" [(ngModel)]="endDateFilter" (change)="onFilterChange()">
+          </div>
+          <button class="btn-reset" (click)="resetFilters()" *ngIf="startDateFilter || endDateFilter">Đặt lại</button>
+        </div>
       </div>
 
       <!-- Booking Details Modal -->
@@ -90,9 +104,12 @@ import { PaymentService } from '../../services/payment.service';
               </td>
               <td>
                 <div class="homestay-info">
-                  <strong>{{ b.homestayName }}</strong>
-                  <span>{{ b.roomTypeName }} - {{ b.roomName }}</span>
-                  <div class="code-badge" *ngIf="b.checkInCode">Mã: <strong>{{ b.checkInCode }}</strong></div>
+                  <div class="h-name-row">
+                    <strong>{{ b.homestayName }}</strong>
+                  </div>
+                  <div class="room-row">
+                    <span>🛏️ {{ b.roomTypeName }} - {{ b.roomName }}</span>
+                  </div>
                 </div>
               </td>
               <td>
@@ -114,7 +131,7 @@ import { PaymentService } from '../../services/payment.service';
               </td>
               <td>
                 <span class="badge status-badge" [ngClass]="b.status.toLowerCase()">
-                  {{ b.status === 'CHECKED_IN' ? 'Đã nhận phòng' : b.status }}
+                  {{ translateStatus(b.status) }}
                 </span>
               </td>
               <td class="actions-col">
@@ -156,17 +173,26 @@ import { PaymentService } from '../../services/payment.service';
   `,
   styles: [`
     .booking-history-container { animation: fadeIn 0.4s ease-out; }
-    .tab-header { margin-bottom: 25px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; }
-    .tab-header h3 { font-size: 20px; color: #1e293b; margin: 0 0 5px 0; font-weight: 700; }
-    .tab-header p { color: #64748b; font-size: 14px; margin: 0; }
+    .tab-header { margin-bottom: 25px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px; }
+    .header-text h3 { font-size: 22px; color: #0f172a; margin: 0 0 5px 0; font-weight: 800; }
+    .header-text p { color: #64748b; font-size: 14px; margin: 0; }
 
-    .table-container { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 12px; }
-    .modern-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .modern-table th { background: #f8fafc; padding: 15px; font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
-    .modern-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .filter-bar { display: flex; gap: 15px; align-items: flex-end; background: #f8fafc; padding: 12px 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .filter-group label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+    .filter-group input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; color: #1e293b; outline: none; }
+    .filter-group input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+    .btn-reset { background: none; border: none; color: #ef4444; font-size: 13px; font-weight: 600; cursor: pointer; padding: 8px; }
+
+    .table-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
+    .modern-table { width: 100%; border-collapse: collapse; }
+    .modern-table th { background: #f8fafc; padding: 18px 20px; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; }
+    .modern-table td { padding: 20px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
     
-    .homestay-info strong { display: block; color: #1e293b; font-size: 14px; }
-    .homestay-info span { font-size: 12px; color: #64748b; }
+    .homestay-info { display: flex; flex-direction: column; gap: 8px; }
+    .h-name-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .h-name-row strong { color: #0f172a; font-size: 15px; font-weight: 700; line-height: 1.4; }
+    .room-row { font-size: 13px; color: #64748b; font-weight: 500; }
     
     .date-info { font-size: 13px; color: #334155; }
     .created-at { color: #94a3b8; font-size: 11px; }
@@ -174,7 +200,7 @@ import { PaymentService } from '../../services/payment.service';
     .price-info .price { display: block; font-weight: 700; color: #4f46e5; }
     .price-info .method { font-size: 11px; color: #64748b; }
     
-    .badge { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .badge { padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; display: inline-block; }
     .paid { background: #dcfce7; color: #166534; }
     .unpaid { background: #fee2e2; color: #991b1b; }
     
@@ -192,10 +218,14 @@ import { PaymentService } from '../../services/payment.service';
     .btn-cancel { background: #f1f5f9; color: #ef4444; border: 1px solid #fee2e2; }
     .btn-cancel:hover { background: #fee2e2; }
 
-    .code-badge { display: inline-block; margin-top: 8px; padding: 4px 10px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; font-family: monospace; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-    .code-badge strong { color: #4f46e5; letter-spacing: 1px; }
+    .code-badge { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 700; white-space: nowrap; }
     
-    .status-badge.checked_in { background: #dcfce7; color: #166534; }
+    .status-badge { min-width: 100px; text-align: center; }
+    .status-badge.pending { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+    .status-badge.confirmed { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+    .status-badge.cancelled { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
+    .status-badge.completed { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
+    .status-badge.checked_in { background: #fdf4ff; color: #701a75; border: 1px solid #fae8ff; }
 
     /* Pagination */
     .pagination-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 25px; }
@@ -242,6 +272,11 @@ export class BookingHistoryTabComponent implements OnInit {
   selectedBookingDetails: BookingDto | null = null;
   isPaying = false;
 
+  // Filters
+  startDateFilter = '';
+  endDateFilter = '';
+  filteredBookings: BookingDto[] = [];
+
   constructor(
     private bookingService: BookingService,
     private notification: NotificationService,
@@ -269,18 +304,60 @@ export class BookingHistoryTabComponent implements OnInit {
     obs.subscribe(data => {
       // Sort by newest first
       this.bookings = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      this.updatePagination();
+      this.applyFilters();
     });
   }
 
+  onFilterChange() {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  resetFilters() {
+    this.startDateFilter = '';
+    this.endDateFilter = '';
+    this.onFilterChange();
+  }
+
+  applyFilters() {
+    let result = [...this.bookings];
+
+    if (this.startDateFilter) {
+      const start = new Date(this.startDateFilter);
+      start.setHours(0, 0, 0, 0);
+      result = result.filter(b => new Date(b.checkInDate) >= start);
+    }
+
+    if (this.endDateFilter) {
+      const end = new Date(this.endDateFilter);
+      end.setHours(23, 59, 59, 999);
+      result = result.filter(b => new Date(b.checkInDate) <= end);
+    }
+
+    this.filteredBookings = result;
+    this.updatePagination();
+  }
+
   updatePagination() {
-    this.totalPages = Math.ceil(this.bookings.length / this.pageSize);
+    this.totalPages = Math.ceil(this.filteredBookings.length / this.pageSize);
     if (this.totalPages === 0) this.totalPages = 1;
     if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
     
     const start = (this.currentPage - 1) * this.pageSize;
     const end = start + this.pageSize;
-    this.paginatedBookings = this.bookings.slice(start, end);
+    this.paginatedBookings = this.filteredBookings.slice(start, end);
+  }
+
+  translateStatus(status: string): string {
+    const map: any = {
+      'PENDING': 'Chờ duyệt',
+      'CONFIRMED': 'Đã xác nhận',
+      'CANCELLED': 'Đã hủy',
+      'COMPLETED': 'Hoàn thành',
+      'REFUNDED': 'Đã hoàn tiền',
+      'CHECKED_IN': 'Đã nhận phòng'
+    };
+    return map[status] || status;
   }
 
   changePage(page: number) {

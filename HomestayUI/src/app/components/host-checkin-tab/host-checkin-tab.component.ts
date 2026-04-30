@@ -35,14 +35,26 @@ interface CheckoutState {
           <div class="icon-wrapper">🔑</div>
           <div class="text-wrapper">
             <h2>Xác nhận nhận phòng (Check-in)</h2>
-            <p>Nhập số CCCD/CMND của khách để tìm đơn đặt phòng và xác nhận check-in.</p>
+            <p>Tìm kiếm bằng mã đơn đặt phòng hoặc số CCCD/CMND để xác nhận check-in.</p>
+          </div>
+        </div>
+
+        <div class="search-options">
+          <div class="search-type-tabs">
+            <button class="type-tab" [class.active]="searchMode === 'CODE'" (click)="searchMode = 'CODE'">Mã đặt phòng</button>
+            <button class="type-tab" [class.active]="searchMode === 'CCCD'" (click)="searchMode = 'CCCD'">CCCD / CMND</button>
           </div>
         </div>
 
         <div class="search-card">
           <div class="input-group">
-            <input type="text" [(ngModel)]="citizenIdInput" placeholder="Nhập số CCCD/CMND của khách hàng" class="main-input" (keyup.enter)="searchByCitizenId()">
-            <button class="btn-search" (click)="searchByCitizenId()" [disabled]="!citizenIdInput || isLoading">
+            <input 
+              type="text" 
+              [(ngModel)]="searchQuery" 
+              [placeholder]="searchMode === 'CODE' ? 'Nhập mã đặt phòng (ví dụ: ABC123)' : 'Nhập số CCCD/CMND của khách'" 
+              class="main-input" 
+              (keyup.enter)="onSearch()">
+            <button class="btn-search" (click)="onSearch()" [disabled]="!searchQuery || isLoading">
               {{ isLoading ? '⏳ Đang tìm...' : '🔍 Tìm kiếm' }}
             </button>
           </div>
@@ -59,10 +71,9 @@ interface CheckoutState {
             <div class="result-card-header">
               <div>
                 <div class="guest-name">👤 {{ b.userName }}</div>
-                <div class="booking-code">Mã: {{ b.checkInCode }}</div>
               </div>
               <span class="status-pill" [ngClass]="b.status.toLowerCase()">
-                {{ b.status === 'CONFIRMED' ? 'Đã xác nhận' : 'Chờ duyệt' }}
+                {{ translateStatus(b.status) }}
               </span>
             </div>
             <div class="result-card-body">
@@ -90,21 +101,27 @@ interface CheckoutState {
           </div>
         </div>
 
+        <div class="list-filter" *ngIf="checkedInBookings.length > 0">
+          <div class="filter-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" [(ngModel)]="listFilterQuery" placeholder="Tìm nhanh theo tên khách hoặc mã đơn...">
+          </div>
+        </div>
+
         <div *ngIf="listLoading" class="loading-state">
           <div class="spinner"></div>
           <p>Đang tải danh sách...</p>
         </div>
 
-        <div *ngIf="!listLoading && checkedInBookings.length === 0" class="empty-result">
+        <div *ngIf="!listLoading && filteredCheckedInBookings.length === 0" class="empty-result">
           <span class="empty-icon">🏖️</span>
-          <p>Hiện không có khách nào đang lưu trú.</p>
+          <p>{{ listFilterQuery ? 'Không tìm thấy kết quả nào khớp với từ khóa.' : 'Hiện không có khách nào đang lưu trú.' }}</p>
         </div>
 
-        <div *ngFor="let b of checkedInBookings" class="checkout-card">
+        <div *ngFor="let b of filteredCheckedInBookings" class="checkout-card">
           <div class="checkout-card-header">
             <div class="guest-info">
               <div class="guest-name">👤 {{ b.userName }}</div>
-              <div class="booking-code">Mã: {{ b.checkInCode }}</div>
             </div>
             <div class="payment-info">
               <span class="payment-pill" [ngClass]="b.paymentStatus === 'PAID' ? 'paid' : 'unpaid'">
@@ -179,6 +196,11 @@ interface CheckoutState {
     .text-wrapper h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
     .text-wrapper p { margin: 0; font-size: 14px; opacity: 0.9; }
 
+    .search-options { margin-bottom: 12px; }
+    .search-type-tabs { display: flex; gap: 10px; }
+    .type-tab { padding: 6px 16px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; font-size: 12px; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s; }
+    .type-tab.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+
     /* Search section */
     .search-card { background: white; border-radius: 14px; padding: 24px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
     .input-group { display: flex; gap: 12px; }
@@ -187,6 +209,13 @@ interface CheckoutState {
     .btn-search { background: #4f46e5; color: white; border: none; padding: 0 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
     .btn-search:hover:not(:disabled) { background: #4338ca; transform: translateY(-1px); }
     .btn-search:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* List filter */
+    .list-filter { margin-bottom: 20px; }
+    .filter-input-wrapper { position: relative; width: 100%; }
+    .filter-input-wrapper input { width: 100%; padding: 12px 15px 12px 40px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; box-sizing: border-box; }
+    .filter-input-wrapper input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.05); }
+    .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 16px; }
 
     /* Empty / Loading */
     .empty-result { text-align: center; padding: 50px 20px; background: white; border-radius: 14px; border: 1px dashed #e2e8f0; color: #94a3b8; }
@@ -217,7 +246,7 @@ interface CheckoutState {
     .info-row .price { color: #4f46e5; font-size: 16px; }
 
     /* Pills */
-    .status-pill, .payment-pill { padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .status-pill, .payment-pill { padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
     .status-pill.confirmed { background: #e0e7ff; color: #4338ca; }
     .status-pill.pending { background: #fffbeb; color: #92400e; }
     .payment-pill.paid { background: #dcfce7; color: #166534; }
@@ -258,7 +287,8 @@ export class HostCheckinTabComponent implements OnInit {
   activeSubTab: 'search' | 'list' = 'search';
 
   // Tab 1: Search & Check-in
-  citizenIdInput = '';
+  searchMode: 'CODE' | 'CCCD' = 'CODE';
+  searchQuery = '';
   foundBookings: BookingDto[] = [];
   isLoading = false;
   searched = false;
@@ -266,6 +296,7 @@ export class HostCheckinTabComponent implements OnInit {
 
   // Tab 2: Checked-in list & Checkout
   checkedInBookings: BookingDto[] = [];
+  listFilterQuery = '';
   listLoading = false;
   private checkoutStates = new Map<string, CheckoutState>();
 
@@ -280,7 +311,18 @@ export class HostCheckinTabComponent implements OnInit {
 
   switchToList() {
     this.activeSubTab = 'list';
+    this.listFilterQuery = '';
     this.loadCheckedInBookings();
+  }
+
+  get filteredCheckedInBookings(): BookingDto[] {
+    if (!this.listFilterQuery.trim()) return this.checkedInBookings;
+    const query = this.listFilterQuery.toLowerCase();
+    return this.checkedInBookings.filter(b => 
+      (b.userName?.toLowerCase().includes(query)) || 
+      (b.checkInCode?.toLowerCase().includes(query)) ||
+      (b.roomName?.toLowerCase().includes(query))
+    );
   }
 
   loadCheckedInBookings() {
@@ -298,13 +340,38 @@ export class HostCheckinTabComponent implements OnInit {
   }
 
   // === TAB 1 METHODS ===
-  searchByCitizenId() {
-    if (!this.citizenIdInput.trim()) return;
+  onSearch() {
+    if (this.searchMode === 'CODE') this.searchByCode();
+    else this.searchByCitizenId();
+  }
+
+  searchByCode() {
+    if (!this.searchQuery.trim()) return;
     this.isLoading = true;
     this.searched = false;
     this.foundBookings = [];
 
-    this.bookingService.getBookingsByCitizenId(this.citizenIdInput.trim()).subscribe({
+    this.bookingService.getBookingByCheckInCode(this.searchQuery.trim()).subscribe({
+      next: (booking: BookingDto) => {
+        this.foundBookings = [booking];
+        this.searched = true;
+        this.isLoading = false;
+      },
+      error: (err: any) => {
+        this.isLoading = false;
+        this.searched = true;
+        this.notification.error(err.error?.message || 'Không tìm thấy đơn đặt phòng với mã này.');
+      }
+    });
+  }
+
+  searchByCitizenId() {
+    if (!this.searchQuery.trim()) return;
+    this.isLoading = true;
+    this.searched = false;
+    this.foundBookings = [];
+
+    this.bookingService.getBookingsByCitizenId(this.searchQuery.trim()).subscribe({
       next: (bookings: BookingDto[]) => {
         this.foundBookings = bookings;
         this.searched = true;
@@ -381,5 +448,17 @@ export class HostCheckinTabComponent implements OnInit {
         state.isProcessing = false;
       }
     });
+  }
+
+  translateStatus(status: string): string {
+    const map: any = {
+      'PENDING': 'Chờ duyệt',
+      'CONFIRMED': 'Đã xác nhận',
+      'CANCELLED': 'Đã hủy',
+      'COMPLETED': 'Hoàn thành',
+      'REFUNDED': 'Đã hoàn tiền',
+      'CHECKED_IN': 'Đã nhận phòng'
+    };
+    return map[status] || status;
   }
 }

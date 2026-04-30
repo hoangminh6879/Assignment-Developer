@@ -42,7 +42,7 @@
               <span class="price">{{ home.pricePerNight | number }}đ <span>/ đêm</span></span>
               <div class="card-actions">
                 <button class="btn-action btn-view" (click)="viewDetail(home); $event.stopPropagation()">Chi tiết</button>
-                <button *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')" class="btn-action btn-book" [routerLink]="['/booking', home.id]" (click)="$event.stopPropagation()">Đặt phòng</button>
+                <button *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')" class="btn-action btn-book" [routerLink]="['/booking', home.id]" (click)="incrementView(home.id); $event.stopPropagation()">Đặt phòng</button>
               </div>
             </div>
           </div>

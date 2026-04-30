@@ -29,6 +29,18 @@ public class HomestayController {
         return ResponseEntity.ok(homestayService.getActiveHomestays());
     }
 
+    @PostMapping("/homestays/{id}/view")
+    public ResponseEntity<Void> incrementViewCount(@PathVariable("id") String id) {
+        System.out.println("Incrementing view count for homestay ID: " + id);
+        try {
+            homestayService.incrementViewCount(UUID.fromString(id));
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace(); // Log stack trace to console
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     // HOST
     @GetMapping("/host/homestays")
     public ResponseEntity<List<HomestayDto>> getHostHomestays() {

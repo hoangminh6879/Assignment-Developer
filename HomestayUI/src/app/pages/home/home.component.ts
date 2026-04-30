@@ -38,6 +38,15 @@ export class HomeComponent implements OnInit {
     this.selectedHomestay = homestay;
     this.slideIndex = 0;
     document.body.style.overflow = 'hidden';
+    this.incrementView(homestay.id);
+  }
+
+  incrementView(id: string) {
+    console.log('Sending view increment request for:', id);
+    this.homestayService.incrementViewCount(id).subscribe({
+      next: () => console.log('View incremented successfully'),
+      error: (err) => console.error('Error incrementing view count:', err)
+    });
   }
 
   closeDetail() {

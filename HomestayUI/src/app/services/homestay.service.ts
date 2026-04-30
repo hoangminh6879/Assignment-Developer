@@ -24,6 +24,7 @@ export interface HomestayDto {
   hostName: string;
   images: HomestayImageDto[];
   amenities: AmenityDto[];
+  viewCount?: number;
 }
 
 @Injectable({
@@ -60,5 +61,9 @@ export class HomestayService {
 
   updateHomestayStatus(id: string, status: string, adminReason: string = ''): Observable<HomestayDto> {
     return this.http.put<HomestayDto>(`${this.apiUrl}/admin/homestays/${id}/status`, { status, adminReason });
+  }
+
+  incrementViewCount(id: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/homestays/${id}/view`, null);
   }
 }
