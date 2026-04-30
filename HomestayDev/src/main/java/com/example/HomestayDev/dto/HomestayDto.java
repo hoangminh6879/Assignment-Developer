@@ -26,6 +26,7 @@ public class HomestayDto {
     private HomestayStatus status;
     private String adminReason;
     private LocalDateTime createdAt;
+    private Long viewCount;
     
     private UUID hostId;
     private String hostName;

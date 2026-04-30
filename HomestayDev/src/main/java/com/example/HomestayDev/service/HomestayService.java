@@ -45,6 +45,15 @@ public class HomestayService {
                 .orElseThrow(() -> new RuntimeException("Homestay not found"));
     }
 
+    @Transactional
+    public void incrementViewCount(UUID id) {
+        homestayRepository.findById(id).ifPresent(homestay -> {
+            Long currentViews = homestay.getViewCount();
+            homestay.setViewCount((currentViews == null ? 0 : currentViews) + 1);
+            homestayRepository.save(homestay);
+        });
+    }
+
     // HOST
     public List<HomestayDto> getHostHomestays(String username) {
         User user = userRepository.findByUsername(username)
@@ -204,6 +213,7 @@ public class HomestayService {
                 .createdAt(homestay.getCreatedAt())
                 .hostId(homestay.getHost().getId())
                 .hostName(homestay.getHost().getUsername())
+                .viewCount(homestay.getViewCount())
                 .images(images)
                 .amenities(amenities)
                 .build();

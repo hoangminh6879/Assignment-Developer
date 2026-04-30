@@ -10,6 +10,8 @@ import { NotificationService } from '../../../services/notification.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { ProfileTabComponent } from '../../../components/profile-tab/profile-tab.component';
 import { BookingHistoryTabComponent } from '../../../components/booking-history-tab/booking-history-tab.component';
+import { StatisticsService, AdminStatistics } from '../../../services/statistics.service';
+import { ReportService } from '../../../services/report.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -29,6 +31,9 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
           <ul class="sidebar-menu">
             <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
               <span class="menu-icon">👤</span> Hồ sơ cá nhân
+            </li>
+            <li [class.active]="activeTab === 'statistics'" (click)="activeTab = 'statistics'; loadAdminStats()">
+              <span class="menu-icon">📊</span> Thống kê
             </li>
             <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
               <span class="menu-icon">🧾</span> Quản lý Đơn hàng
@@ -51,6 +56,124 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
         <!-- MAIN CONTENT -->
         <main class="main-content">
         
+        <!-- STATISTICS TAB -->
+        <div *ngIf="activeTab === 'statistics'">
+          <div class="tab-header-actions">
+            <div class="export-dropdown">
+              <button class="btn-export">📥 Xuất báo cáo quản trị</button>
+              <div class="dropdown-content">
+                <a (click)="reportService.exportAdminStatsPdf()">PDF/XLSX</a>
+                <a (click)="reportService.exportStatsJasper()">Jasper Report</a>
+              </div>
+            </div>
+          </div>
+          <div class="stats-overview">
+            <div class="stat-card-premium blue">
+              <div class="stat-info">
+                <span class="label">Tổng doanh thu</span>
+                <span class="value">{{ adminStats?.totalRevenue | number }}đ</span>
+              </div>
+              <div class="stat-icon">💰</div>
+            </div>
+            <div class="stat-card-premium purple">
+              <div class="stat-info">
+                <span class="label">Tổng đơn hàng</span>
+                <span class="value">{{ adminStats?.totalBookings }}</span>
+              </div>
+              <div class="stat-icon">🧾</div>
+            </div>
+            <div class="stat-card-premium green">
+              <div class="stat-info">
+                <span class="label">Tổng Homestay</span>
+                <span class="value">{{ adminStats?.totalHomestays }}</span>
+              </div>
+              <div class="stat-icon">🏠</div>
+            </div>
+            <div class="stat-card-premium orange">
+              <div class="stat-info">
+                <span class="label">Người dùng</span>
+                <span class="value">{{ adminStats?.totalUsers }}</span>
+              </div>
+              <div class="stat-icon">👥</div>
+            </div>
+          </div>
+
+          <div class="stats-grid-main">
+            <!-- REVENUE CHART (Simple CSS Bars) -->
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3>Doanh thu theo tháng</h3>
+              </div>
+              <div class="chart-container-simple">
+                <div class="bar-chart" *ngIf="adminStats?.monthlyRevenue?.length; else emptyChart">
+                  <div class="bar-item" *ngFor="let item of adminStats?.monthlyRevenue">
+                    <div class="bar-wrapper">
+                      <div class="bar" [style.height.%]="getRevenuePercentage(item.revenue)">
+                        <span class="bar-tooltip">{{ item.revenue | number }}đ</span>
+                      </div>
+                    </div>
+                    <span class="bar-label">{{ formatMonthLabel(item.month) }}</span>
+                  </div>
+                </div>
+                <ng-template #emptyChart>
+                  <div class="empty-chart">Không có dữ liệu doanh thu</div>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- TOP HOMESTAYS -->
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3>Homestay hàng đầu</h3>
+              </div>
+              <div class="table-container-simple">
+                <table class="simple-table" *ngIf="adminStats?.topHomestays?.length; else emptyTable">
+                  <thead>
+                    <tr>
+                      <th>Homestay</th>
+                      <th>Đơn hàng</th>
+                      <th>Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let h of adminStats?.topHomestays">
+                      <td>{{ h.homestayName }}</td>
+                      <td>{{ h.bookingCount }}</td>
+                      <td class="revenue-cell">{{ h.totalRevenue | number }}đ</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <ng-template #emptyTable>
+                   <div class="empty-state-simple">Chưa có dữ liệu</div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-grid-secondary">
+             <!-- BOOKING STATUS -->
+             <div class="card glass-card">
+                <div class="card-header">
+                  <h3>Trạng thái đơn hàng</h3>
+                </div>
+                <div class="status-distribution">
+                  <div class="status-item" *ngFor="let entry of adminStats?.bookingsByStatus | keyvalue">
+                    <div class="status-label-wrap">
+                      <span class="status-circle" [ngClass]="entry.key.toLowerCase()"></span>
+                      <span class="status-name">{{ translateStatus(entry.key) }}</span>
+                    </div>
+                    <div class="status-value-wrap">
+                      <div class="status-progress-bg">
+                        <div class="status-progress-bar" [ngClass]="entry.key.toLowerCase()" [style.width.%]="getStatusPercentage(entry.value || 0)"></div>
+                      </div>
+                      <span class="status-count">{{ entry.value }}</span>
+                    </div>
+                  </div>
+                </div>
+             </div>
+          </div>
+        </div>
+
         <!-- PROFILE TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'profile'">
           <app-profile-tab></app-profile-tab>
@@ -58,6 +181,16 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
 
         <!-- BOOKINGS TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'bookings'">
+          <div class="card-header">
+            <h3>Quản lý Đơn hàng</h3>
+            <div class="export-dropdown">
+              <button class="btn-primary">📤 Xuất báo cáo hệ thống</button>
+              <div class="dropdown-content">
+                <a (click)="reportService.exportBookingsPdf()">PDF/XLSX</a>
+                <a (click)="reportService.exportBookingsJasper()">Jasper Report</a>
+              </div>
+            </div>
+          </div>
           <app-booking-history-tab role="ADMIN"></app-booking-history-tab>
         </div>
 
@@ -462,12 +595,73 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
     .form-group { margin-bottom: 18px; }
     .form-group label { display: block; font-weight: 600; font-size: 14px; color: #475569; margin-bottom: 6px; }
     .edit-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+    /* STATISTICS STYLES */
+    .stats-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
+    .stat-card-premium { border-radius: 20px; padding: 24px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.15); transition: transform 0.3s ease; }
+    .stat-card-premium:hover { transform: translateY(-5px); }
+    .stat-card-premium.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .stat-card-premium.purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .stat-card-premium.green { background: linear-gradient(135deg, #10b981, #047857); }
+    .stat-card-premium.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .stat-info .label { display: block; font-size: 14px; opacity: 0.9; font-weight: 500; margin-bottom: 5px; }
+    .stat-info .value { display: block; font-size: 24px; font-weight: 800; }
+    .stat-icon { font-size: 40px; opacity: 0.3; }
+
+    .stats-grid-main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 25px; }
+    .stats-grid-secondary { display: grid; grid-template-columns: 1fr; gap: 20px; }
+
+    .chart-container-simple { height: 300px; display: flex; align-items: flex-end; padding: 20px 0; }
+    .bar-chart { display: flex; align-items: flex-end; justify-content: space-around; width: 100%; height: 100%; gap: 10px; }
+    .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; max-width: 60px; }
+    .bar-wrapper { width: 100%; flex: 1; display: flex; align-items: flex-end; background: #f1f5f9; border-radius: 8px 8px 0 0; overflow: visible; position: relative; }
+    .bar { width: 100%; background: linear-gradient(to top, #4f46e5, #818cf8); border-radius: 8px 8px 0 0; position: relative; transition: height 0.5s ease-out; }
+    .bar:hover { background: #4338ca; }
+    .bar-tooltip { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .bar:hover .bar-tooltip { opacity: 1; }
+    .bar-label { margin-top: 10px; font-size: 12px; color: #64748b; font-weight: 600; }
+    .empty-chart { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #94a3b8; font-style: italic; }
+
+    .table-container-simple { margin-top: 10px; }
+    .simple-table { width: 100%; border-collapse: collapse; }
+    .simple-table th { text-align: left; padding: 12px; color: #64748b; font-size: 13px; border-bottom: 1px solid #e2e8f0; }
+    .simple-table td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f1f5f9; }
+    .revenue-cell { font-weight: 700; color: #10b981; }
+
+    .status-distribution { display: flex; flex-direction: column; gap: 15px; }
+    .status-item { display: flex; flex-direction: column; gap: 8px; }
+    .status-label-wrap { display: flex; align-items: center; gap: 8px; }
+    .status-circle { width: 10px; height: 10px; border-radius: 50%; }
+    .status-circle.pending { background: #fbbf24; }
+    .status-circle.confirmed { background: #3b82f6; }
+    .status-circle.completed { background: #10b981; }
+    .status-circle.cancelled { background: #ef4444; }
+    .status-name { font-size: 14px; font-weight: 600; color: #475569; }
+    .status-value-wrap { display: flex; align-items: center; gap: 12px; }
+    .status-progress-bg { flex: 1; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+    .status-progress-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease-out; }
+    .status-progress-bar.pending { background: #fbbf24; }
+    .status-progress-bar.confirmed { background: #3b82f6; }
+    .status-progress-bar.completed { background: #10b981; }
+    .status-progress-bar.cancelled { background: #ef4444; }
+    .status-count { font-size: 14px; font-weight: 700; color: #1e293b; min-width: 30px; text-align: right; }
+
+    /* EXPORT DROPDOWN */
+    .tab-header-actions { display: flex; justify-content: flex-end; margin-bottom: 15px; }
+    .btn-export { background: #4f46e5; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-export:hover { background: #4338ca; transform: translateY(-2px); }
+
+    .export-dropdown { position: relative; display: inline-block; }
+    .dropdown-content { display: none; position: absolute; right: 0; background-color: white; min-width: 240px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1); z-index: 100; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
+    .dropdown-content a { color: #1e293b; padding: 12px 16px; text-decoration: none; display: block; font-size: 14px; cursor: pointer; transition: background 0.2s; text-align: left; }
+    .dropdown-content a:hover { background-color: #f1f5f9; color: #4f46e5; }
+    .export-dropdown:hover .dropdown-content { display: block; }
   `]
 })
 export class AdminDashboardComponent implements OnInit {
   activeTab = 'profile';
   pendingRequests: UpgradeRequestDto[] = [];
-  
+
   amenities: AmenityDto[] = [];
   newAmenityName = '';
   newAmenityIcon = '';
@@ -489,20 +683,61 @@ export class AdminDashboardComponent implements OnInit {
   reasonValue = '';
   reasonTarget: any = null;
 
+  adminStats: AdminStatistics | null = null;
+
   constructor(
     private upgradeReqService: UpgradeRequestService,
     private amenityService: AmenityService,
     private homestayService: HomestayService,
     private roomTypeService: RoomTypeService,
     private notification: NotificationService,
-    private confirmDialog: ConfirmDialogService
-  ) {}
+    private confirmDialog: ConfirmDialogService,
+    private statsService: StatisticsService,
+    public reportService: ReportService
+  ) { }
 
   ngOnInit() {
+    this.loadAdminStats();
     this.loadRequests();
     this.loadAmenities();
     this.loadHomestays();
     this.loadRoomTypes();
+  }
+
+  loadAdminStats() {
+    this.statsService.getAdminStats().subscribe({
+      next: (res) => this.adminStats = res,
+      error: (err) => console.error('Failed to load admin stats', err)
+    });
+  }
+
+  getRevenuePercentage(rev: number): number {
+    if (!this.adminStats || !this.adminStats.monthlyRevenue.length) return 0;
+    const max = Math.max(...this.adminStats.monthlyRevenue.map(m => m.revenue));
+    return max === 0 ? 0 : (rev / max) * 100;
+  }
+
+  getStatusPercentage(count: number): number {
+    if (!this.adminStats || !this.adminStats.totalBookings) return 0;
+    return (count / this.adminStats.totalBookings) * 100;
+  }
+
+  formatMonthLabel(monthStr: string): string {
+    if (!monthStr) return '';
+    const [y, m] = monthStr.split('-');
+    return `T${m}/${y.substring(2)}`;
+  }
+
+  translateStatus(status: string): string {
+    const map: any = {
+      'PENDING': 'Chờ xử lý',
+      'CONFIRMED': 'Đã xác nhận',
+      'CANCELLED': 'Đã hủy',
+      'COMPLETED': 'Hoàn thành',
+      'REFUNDED': 'Đã hoàn tiền',
+      'CHECKED_IN': 'Đã nhận phòng'
+    };
+    return map[status] || status;
   }
 
   // --- UPGRADES ---
