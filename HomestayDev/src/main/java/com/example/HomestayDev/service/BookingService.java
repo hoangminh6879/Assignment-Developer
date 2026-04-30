@@ -247,10 +247,10 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.CHECKED_IN);
 
-        // Cập nhật trạng thái phòng: Đang được sử dụng (Checked-in)
+        // Trạng thái phòng vẫn là BOOKED trong suốt quá trình khách ở
         Room room = booking.getRoom();
         if (room != null) {
-            room.setStatus(RoomStatus.CHECKED_IN);
+            room.setStatus(RoomStatus.BOOKED);
             roomRepository.save(room);
         }
 

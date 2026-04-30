@@ -8,10 +8,11 @@ import { RoomService, RoomDto } from '../../../services/room.service';
 import { RoomTypeService, RoomTypeDto } from '../../../services/room-type.service';
 import { NotificationService } from '../../../services/notification.service';
 import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
-
 import { ProfileTabComponent } from '../../../components/profile-tab/profile-tab.component';
 import { BookingHistoryTabComponent } from '../../../components/booking-history-tab/booking-history-tab.component';
 import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/host-checkin-tab.component';
+import { StatisticsService, HostStatistics } from '../../../services/statistics.service';
+import { ReportService } from '../../../services/report.service';
 
 @Component({
   selector: 'app-host-dashboard',
@@ -32,6 +33,9 @@ import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/ho
             <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
               <span class="menu-icon">👤</span> Hồ sơ của tôi
             </li>
+            <li [class.active]="activeTab === 'statistics'" (click)="activeTab = 'statistics'; loadAllStats()">
+              <span class="menu-icon">📊</span> Thống kê của tôi
+            </li>
             <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
               <span class="menu-icon">📅</span> Quản lý Đặt phòng
             </li>
@@ -50,6 +54,103 @@ import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/ho
         <!-- MAIN CONTENT -->
         <main class="main-content">
         
+        <!-- STATISTICS TAB -->
+        <div *ngIf="activeTab === 'statistics'">
+          <div class="tab-header-actions">
+            <div class="export-dropdown">
+              <button class="btn-export">📥 Xuất báo cáo thống kê</button>
+              <div class="dropdown-content">
+                <a (click)="reportService.exportStatsPdf()">PDF/XLSX</a>
+                <a (click)="reportService.exportStatsJasper()">Jasper Report</a>
+              </div>
+            </div>
+          </div>
+          <div class="stats-overview">
+            <div class="stat-card-premium green">
+              <div class="stat-info">
+                <span class="label">Doanh thu của tôi</span>
+                <span class="value">{{ hostStats?.totalRevenue | number }}đ</span>
+              </div>
+              <div class="stat-icon">💰</div>
+            </div>
+            <div class="stat-card-premium blue">
+              <div class="stat-info">
+                <span class="label">Tổng lượt đặt</span>
+                <span class="value">{{ hostStats?.totalBookings }}</span>
+              </div>
+              <div class="stat-icon">📅</div>
+            </div>
+            <div class="stat-card-premium orange">
+              <div class="stat-info">
+                <span class="label">Homestay của tôi</span>
+                <span class="value">{{ hostStats?.totalHomestays }}</span>
+              </div>
+              <div class="stat-icon">🏠</div>
+            </div>
+            <div class="stat-card-premium purple">
+              <div class="stat-info">
+                <span class="label">Tổng lượt truy cập</span>
+                <span class="value">{{ totalViews | number }}</span>
+              </div>
+              <div class="stat-icon">👁️</div>
+            </div>
+          </div>
+
+          <div class="stats-grid-vertical">
+            <!-- REVENUE CHART -->
+            <div class="card glass-card revenue-chart-section">
+              <div class="card-header">
+                <h3>Biểu đồ doanh thu</h3>
+              </div>
+              <div class="chart-container-large">
+                <div class="bar-chart" *ngIf="hostStats?.monthlyRevenue?.length; else emptyChart">
+                  <div class="bar-item" *ngFor="let item of hostStats?.monthlyRevenue">
+                    <div class="bar-wrapper">
+                      <div class="bar host-theme" [style.height.%]="getRevenuePercentage(item.revenue)">
+                        <span class="bar-tooltip">{{ item.revenue | number }}đ</span>
+                      </div>
+                    </div>
+                    <span class="bar-label">{{ formatMonthLabel(item.month) }}</span>
+                  </div>
+                </div>
+                <ng-template #emptyChart>
+                  <div class="empty-chart">Chưa có dữ liệu doanh thu</div>
+                </ng-template>
+              </div>
+            </div>
+
+            <!-- HOMESTAY PERFORMANCE -->
+            <div class="card glass-card performance-section">
+              <div class="card-header">
+                <h3>Hiệu suất Homestay</h3>
+              </div>
+              <div class="table-container-large">
+                <table class="simple-table" *ngIf="hostStats?.homestayStats?.length; else emptyTable">
+                  <thead>
+                    <tr>
+                      <th style="width: 40%">Homestay</th>
+                      <th style="text-align: center">Lượt đặt</th>
+                      <th style="text-align: center">Lượt xem</th>
+                      <th style="text-align: right">Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let s of hostStats?.homestayStats">
+                      <td class="h-name-cell">{{ s.homestayName }}</td>
+                      <td style="text-align: center; font-weight: 600;">{{ s.bookingCount }}</td>
+                      <td style="text-align: center; font-weight: 600; color: #6366f1;">{{ getViewCountForHomestay(s.homestayName) }}</td>
+                      <td class="revenue-cell" style="text-align: right">{{ s.totalRevenue | number }}đ</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <ng-template #emptyTable>
+                  <div class="empty-state-simple">Chưa có dữ liệu</div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- PROFILE TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'profile'">
           <app-profile-tab></app-profile-tab>
@@ -57,6 +158,16 @@ import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/ho
 
         <!-- BOOKINGS TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'bookings'">
+          <div class="card-header">
+            <h3>Danh sách Đặt phòng</h3>
+            <div class="export-dropdown">
+              <button class="btn-primary">📤 Xuất báo cáo</button>
+              <div class="dropdown-content">
+                <a (click)="reportService.exportBookingsPdf()">PDF/XLSX</a>
+                <a (click)="reportService.exportBookingsJasper()">Jasper Report</a>
+              </div>
+            </div>
+          </div>
           <app-booking-history-tab role="HOST"></app-booking-history-tab>
         </div>
 
@@ -103,6 +214,7 @@ import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/ho
                 <tr>
                   <th>Homestay</th>
                   <th>Giá / Đêm</th>
+                  <th>Lượt xem</th>
                   <th>Trạng thái</th>
                   <th class="actions-col">Hành động</th>
                 </tr>
@@ -118,6 +230,7 @@ import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/ho
                     </div>
                   </td>
                   <td>{{ h.pricePerNight | number }}đ</td>
+                  <td style="font-weight: 600; color: #6366f1;">{{ h.viewCount | number }}</td>
                   <td>
                     <span class="badge" [ngClass]="h.status.toLowerCase()">{{ h.status }}</span>
                     <div *ngIf="h.adminReason" class="admin-reason-text">Lý do: {{ h.adminReason }}</div>
@@ -427,25 +540,73 @@ import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/ho
     .preview-remove-btn { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: 2px solid white; font-size: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
     .preview-remove-btn:hover { background: #dc2626; transform: scale(1.1); }
     .form-actions { margin-top: 30px; text-align: right; }
+
+    /* STATISTICS STYLES */
+    .stats-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
+    .stat-card-premium { border-radius: 20px; padding: 24px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.15); transition: transform 0.3s ease; }
+    .stat-card-premium:hover { transform: translateY(-5px); }
+    .stat-card-premium.green { background: linear-gradient(135deg, #10b981, #047857); }
+    .stat-card-premium.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .stat-card-premium.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .stat-card-premium.purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .stat-info .label { display: block; font-size: 14px; opacity: 0.9; font-weight: 500; margin-bottom: 5px; }
+    .stat-info .value { display: block; font-size: 24px; font-weight: 800; }
+    .stat-icon { font-size: 40px; opacity: 0.3; }
+
+    .stats-grid-vertical { display: flex; flex-direction: column; gap: 25px; margin-bottom: 25px; }
+    .revenue-chart-section { min-height: 450px; }
+    .chart-container-large { height: 350px; display: flex; align-items: flex-end; padding: 30px 0; }
+    
+    .bar-chart { display: flex; align-items: flex-end; justify-content: space-around; width: 100%; height: 100%; gap: 10px; }
+    .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; max-width: 80px; }
+    .bar-wrapper { width: 100%; flex: 1; display: flex; align-items: flex-end; background: #f1f5f9; border-radius: 12px 12px 0 0; position: relative; }
+    .bar { width: 100%; background: linear-gradient(to top, #10b981, #34d399); border-radius: 12px 12px 0 0; position: relative; transition: height 0.5s ease-out; }
+    .bar.host-theme { background: linear-gradient(to top, #059669, #10b981); }
+    .bar:hover { opacity: 0.8; }
+    .bar-tooltip { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 6px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 10; }
+    .bar:hover .bar-tooltip { opacity: 1; }
+    .bar-label { margin-top: 12px; font-size: 13px; color: #64748b; font-weight: 600; }
+    .empty-chart { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #94a3b8; font-style: italic; }
+
+    .table-container-large { margin-top: 15px; }
+    .simple-table { width: 100%; border-collapse: collapse; }
+    .simple-table th { text-align: left; padding: 15px; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; font-weight: 700; }
+    .simple-table td { padding: 18px 15px; font-size: 15px; border-bottom: 1px solid #f1f5f9; }
+    .h-name-cell { font-weight: 700; color: #0f172a; }
+    .revenue-cell { font-weight: 800; color: #10b981; font-size: 16px; }
+    .empty-state-simple { text-align: center; padding: 40px; color: #94a3b8; font-style: italic; }
+
+    /* EXPORT DROPDOWN */
+    .tab-header-actions { display: flex; justify-content: flex-end; margin-bottom: 15px; }
+    .btn-export { background: #6366f1; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-export:hover { background: #4f46e5; transform: translateY(-2px); }
+
+    .export-dropdown { position: relative; display: inline-block; }
+    .dropdown-content { display: none; position: absolute; right: 0; background-color: white; min-width: 240px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1); z-index: 100; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
+    .dropdown-content a { color: #1e293b; padding: 12px 16px; text-decoration: none; display: block; font-size: 14px; cursor: pointer; transition: background 0.2s; }
+    .dropdown-content a:hover { background-color: #f1f5f9; color: #6366f1; }
+    .export-dropdown:hover .dropdown-content { display: block; }
   `]
 })
 export class HostDashboardComponent implements OnInit {
   activeTab = 'profile';
   homestays: HomestayDto[] = [];
   availableAmenities: AmenityDto[] = [];
-  
+
   activeCount = 0;
   pendingCount = 0;
 
   showForm = false;
   isEditMode = false;
   isLoading = false;
-  
+
   formData: any = {};
   selectedAmenityIds: number[] = [];
   selectedFiles: File[] = [];
   previewUrls: string[] = [];
   currentEditId: string | null = null;
+
+  hostStats: HostStatistics | null = null;
 
   constructor(
     private homestayService: HomestayService,
@@ -453,13 +614,49 @@ export class HostDashboardComponent implements OnInit {
     private roomService: RoomService,
     private roomTypeService: RoomTypeService,
     private notification: NotificationService,
-    private confirmDialog: ConfirmDialogService
-  ) {}
+    private confirmDialog: ConfirmDialogService,
+    private statsService: StatisticsService,
+    public reportService: ReportService
+  ) { }
 
   ngOnInit() {
+    this.loadHostStats();
     this.loadHomestays();
     this.loadAmenities();
     this.loadRoomTypes();
+  }
+
+  loadAllStats() {
+    this.loadHostStats();
+    this.loadHomestays();
+  }
+
+  loadHostStats() {
+    this.statsService.getHostStats().subscribe({
+      next: (res) => this.hostStats = res,
+      error: (err) => console.error('Failed to load host stats', err)
+    });
+  }
+
+  getRevenuePercentage(rev: number): number {
+    if (!this.hostStats || !this.hostStats.monthlyRevenue.length) return 0;
+    const max = Math.max(...this.hostStats.monthlyRevenue.map(m => m.revenue));
+    return max === 0 ? 0 : (rev / max) * 100;
+  }
+
+  formatMonthLabel(monthStr: string): string {
+    if (!monthStr) return '';
+    const [y, m] = monthStr.split('-');
+    return `T${m}/${y.substring(2)}`;
+  }
+
+  get totalViews(): number {
+    return this.homestays.reduce((acc, h) => acc + (h.viewCount || 0), 0);
+  }
+
+  getViewCountForHomestay(name: string): number {
+    const homestay = this.homestays.find(h => h.name === name);
+    return homestay ? (homestay.viewCount || 0) : 0;
   }
 
   loadHomestays() {
@@ -520,7 +717,7 @@ export class HostDashboardComponent implements OnInit {
   onFilesSelected(event: any) {
     if (event.target.files) {
       const newFiles: File[] = Array.from(event.target.files);
-      
+
       newFiles.forEach(file => {
         this.selectedFiles.push(file);
         this.previewUrls.push(URL.createObjectURL(file));
@@ -545,11 +742,11 @@ export class HostDashboardComponent implements OnInit {
     fd.append('city', this.formData.city || '');
     fd.append('pricePerNight', (this.formData.pricePerNight || 0).toString());
     fd.append('maxGuests', (this.formData.maxGuests || 1).toString());
-    
+
     this.selectedAmenityIds.forEach(id => {
       fd.append('amenityIds', id.toString());
     });
-    
+
     this.selectedFiles.forEach(file => {
       fd.append('images', file);
     });
@@ -604,7 +801,7 @@ export class HostDashboardComponent implements OnInit {
   rooms: RoomDto[] = [];
   roomTypes: RoomTypeDto[] = [];
   selectedHomestayForRoom: string | null = null;
-  
+
   showRoomForm = false;
   isRoomEditMode = false;
   roomFormData: any = {};
@@ -688,7 +885,7 @@ export class HostDashboardComponent implements OnInit {
     if (this.isRoomEditMode && this.roomFormData.status) {
       fd.append('status', this.roomFormData.status);
     }
-    
+
     this.roomSelectedFiles.forEach(file => {
       fd.append('images', file);
     });

@@ -12,4 +12,7 @@ import java.util.UUID;
 public interface HomestayRepository extends JpaRepository<Homestay, UUID> {
     List<Homestay> findByHostId(UUID hostId);
     List<Homestay> findByStatus(HomestayStatus status);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(h) FROM Homestay h WHERE h.host.username = :username")
+    Long countByHostUsername(@org.springframework.data.repository.query.Param("username") String username);
 }

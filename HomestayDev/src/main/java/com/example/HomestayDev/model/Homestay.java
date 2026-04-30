@@ -52,6 +52,10 @@ public class Homestay {
     @Column(name = "admin_reason", columnDefinition = "NVARCHAR(1000)")
     private String adminReason;
 
+    @Builder.Default
+    @Column(name = "view_count")
+    private Long viewCount = 0L;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
