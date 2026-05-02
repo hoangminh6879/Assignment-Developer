@@ -364,6 +364,8 @@ public class BookingService {
                 .roomTypeName(booking.getRoom().getRoomType().getName())
                 .userId(booking.getUser().getId())
                 .userName(booking.getUser().getUsername())
+                .hostId(booking.getHomestay().getHost().getId())
+                .hostName(booking.getHomestay().getHost().getUsername())
                 .review(booking.getReview() != null ? reviewService.mapToDto(booking.getReview()) : null)
                 .build();
     }

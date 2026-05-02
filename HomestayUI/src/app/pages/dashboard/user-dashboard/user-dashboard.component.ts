@@ -7,11 +7,12 @@ import { UpgradeRequestService, UpgradeRequestDto } from '../../../services/upgr
 import { NotificationService } from '../../../services/notification.service';
 import { ProfileTabComponent } from '../../../components/profile-tab/profile-tab.component';
 import { BookingHistoryTabComponent } from '../../../components/booking-history-tab/booking-history-tab.component';
+import { ChatTabComponent } from '../chat-tab/chat-tab.component';
 
 @Component({
   selector: 'app-user-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, ChatTabComponent],
   template: `
     <app-navbar></app-navbar>
     <div class="dashboard-page">
@@ -33,6 +34,9 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
             <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'">
               <span class="menu-icon">🚀</span> Nâng cấp Host
             </li>
+            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'">
+              <span class="menu-icon">💬</span> Tin nhắn
+            </li>
           </ul>
         </aside>
 
@@ -46,7 +50,7 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
 
         <!-- BOOKINGS TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'bookings'">
-          <app-booking-history-tab role="USER"></app-booking-history-tab>
+          <app-booking-history-tab role="USER" (chatRequested)="onChatRequested($event)"></app-booking-history-tab>
         </div>
 
         <!-- UPGRADES TAB -->
@@ -77,6 +81,11 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
               {{ isLoading ? 'Đang gửi...' : 'Gửi Yêu Cầu Nâng Cấp' }}
             </button>
           </div>
+        </div>
+
+        <!-- CHAT TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'chat'">
+          <app-chat-tab [initialUser]="chatRecipientUser"></app-chat-tab>
         </div>
         </main>
       </div>
@@ -132,6 +141,7 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
 })
 export class UserDashboardComponent implements OnInit {
   activeTab = 'profile'; // Default to profile as requested
+  chatRecipientUser: any = null;
   requestStatus: UpgradeRequestDto | null = null;
   isLoading = false;
   
@@ -181,5 +191,10 @@ export class UserDashboardComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  onChatRequested(user: any) {
+    this.chatRecipientUser = user;
+    this.activeTab = 'chat';
   }
 }

@@ -134,9 +134,9 @@
           <div class="review-item animate-fade-in" *ngFor="let review of reviews">
             <div class="review-header">
               <div class="user-meta">
-                <span class="avatar">{{ review.userFullName.charAt(0) }}</span>
+                <span class="avatar">{{ review.userFullName?.charAt(0) || 'U' }}</span>
                 <div class="user-name-date">
-                  <strong>{{ review.userFullName }}</strong>
+                  <strong>{{ review.userFullName || 'Khách hàng' }}</strong>
                   <span class="date">{{ review.createdAt | date:'dd/MM/yyyy' }}</span>
                 </div>
               </div>

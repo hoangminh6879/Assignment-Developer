@@ -54,4 +54,30 @@ export class AuthService {
   hasRole(role: string): boolean {
     return this.getRoles().includes(role);
   }
+
+  getUsername(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.preferred_username || payload.sub;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  getCurrentUser(): any {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return {
+        id: payload.sub,
+        username: payload.preferred_username || payload.sub,
+        roles: payload.realm_access?.roles || []
+      };
+    } catch (e) {
+      return null;
+    }
+  }
 }
