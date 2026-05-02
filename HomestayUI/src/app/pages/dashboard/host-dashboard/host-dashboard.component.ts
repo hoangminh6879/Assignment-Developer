@@ -11,13 +11,22 @@ import { ConfirmDialogService } from '../../../services/confirm-dialog.service';
 import { ProfileTabComponent } from '../../../components/profile-tab/profile-tab.component';
 import { BookingHistoryTabComponent } from '../../../components/booking-history-tab/booking-history-tab.component';
 import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/host-checkin-tab.component';
+import { HostReviewTabComponent } from '../../../components/host-review-tab/host-review-tab.component';
 import { StatisticsService, HostStatistics } from '../../../services/statistics.service';
 import { ReportService } from '../../../services/report.service';
 
 @Component({
   selector: 'app-host-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, HostCheckinTabComponent],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    NavbarComponent, 
+    ProfileTabComponent, 
+    BookingHistoryTabComponent, 
+    HostCheckinTabComponent,
+    HostReviewTabComponent
+  ],
   template: `
     <app-navbar></app-navbar>
     <div class="dashboard-page">
@@ -41,6 +50,9 @@ import { ReportService } from '../../../services/report.service';
             </li>
             <li [class.active]="activeTab === 'checkin'" (click)="activeTab = 'checkin'">
               <span class="menu-icon">🔑</span> Mã nhận phòng
+            </li>
+            <li [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">
+              <span class="menu-icon">💬</span> Quản lý Đánh giá
             </li>
             <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'">
               <span class="menu-icon">🏠</span> Quản lý Homestay
@@ -174,6 +186,14 @@ import { ReportService } from '../../../services/report.service';
         <!-- CHECKIN TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'checkin'">
           <app-host-checkin-tab></app-host-checkin-tab>
+        </div>
+
+        <!-- REVIEWS TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'reviews'">
+          <div class="card-header">
+            <h3>Quản lý Đánh giá & Phản hồi</h3>
+          </div>
+          <app-host-review-tab></app-host-review-tab>
         </div>
         
         <!-- HOMESTAYS TAB -->
@@ -337,8 +357,12 @@ import { ReportService } from '../../../services/report.service';
                   <option [ngValue]="null">-- Chọn Homestay --</option>
                   <option *ngFor="let h of homestays" [ngValue]="h.id">{{ h.name }}</option>
                 </select>
-                <button class="btn-primary" [disabled]="!selectedHomestayForRoom" (click)="openAddRoomForm()">+ Thêm Phòng</button>
+                <button class="btn-primary" [disabled]="!selectedHomestayForRoom || !isHomestayActive()" (click)="openAddRoomForm()">+ Thêm Phòng</button>
               </div>
+            </div>
+
+            <div class="warning-banner" *ngIf="selectedHomestayForRoom && !isHomestayActive()">
+              <span>⚠️ Homestay này đang ở trạng thái <strong>{{ getSelectedHomestayStatus() }}</strong>. Bạn cần chờ Quản trị viên phê duyệt để có thể thêm hoặc chỉnh sửa phòng.</span>
             </div>
 
             <div class="table-container" *ngIf="rooms.length > 0; else emptyRoomState">
@@ -369,7 +393,7 @@ import { ReportService } from '../../../services/report.service';
                       </span>
                     </td>
                     <td class="actions-cell">
-                      <button class="btn-icon btn-edit" (click)="openEditRoomForm(r)">Sửa</button>
+                      <button class="btn-icon btn-edit" [disabled]="!isHomestayActive()" (click)="openEditRoomForm(r)">Sửa</button>
                       <button class="btn-icon btn-delete" (click)="deleteRoom(r.id)">Xóa</button>
                     </td>
                   </tr>
@@ -486,6 +510,8 @@ import { ReportService } from '../../../services/report.service';
     .empty-state { text-align: center; padding: 50px 20px; color: #64748b; }
     .empty-icon { font-size: 48px; display: block; margin-bottom: 15px; opacity: 0.5; }
     
+    .warning-banner { background: #fff7ed; border: 1px solid #ffedd5; color: #9a3412; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+
     .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid #f1f5f9; }
     .modern-table { width: 100%; border-collapse: collapse; text-align: left; }
     .modern-table th { background: #f8fafc; padding: 15px 20px; color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
@@ -934,5 +960,15 @@ export class HostDashboardComponent implements OnInit {
       },
       error: (err) => this.notification.error(err.error?.message || err.message)
     });
+  }
+
+  isHomestayActive(): boolean {
+    const h = this.homestays.find(item => item.id === this.selectedHomestayForRoom);
+    return h ? h.status === 'ACTIVE' : false;
+  }
+
+  getSelectedHomestayStatus(): string {
+    const h = this.homestays.find(item => item.id === this.selectedHomestayForRoom);
+    return h ? h.status : '';
   }
 }

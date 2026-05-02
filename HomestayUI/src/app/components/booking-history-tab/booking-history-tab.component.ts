@@ -6,6 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { PaymentService } from '../../services/payment.service';
+import { ReviewService, ReviewDto } from '../../services/review.service';
 
 @Component({
   selector: 'app-booking-history-tab',
@@ -149,11 +150,87 @@ import { PaymentService } from '../../services/payment.service';
                     (click)="cancel(b.id)">
                     {{ role === 'USER' ? 'Hủy đặt' : 'Từ chối' }}
                   </button>
+                  
+                  <!-- Review Button for User -->
+                  <button 
+                    *ngIf="role === 'USER' && b.status === 'COMPLETED' && !b.review" 
+                    class="btn-action btn-review" 
+                    (click)="openReviewModal(b)">
+                    Đánh giá
+                  </button>
+
+                  <!-- Response Button for Host -->
+                  <button 
+                    *ngIf="role === 'HOST' && b.status === 'COMPLETED' && b.review && !b.review.response" 
+                    class="btn-action btn-response" 
+                    (click)="openResponseModal(b)">
+                    Phản hồi
+                  </button>
                 </div>
               </td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Review Modal (User) -->
+      <div class="modal-overlay" *ngIf="showReviewModal">
+        <div class="modal-content animate-fade-in" style="max-width: 500px;">
+          <button class="close-btn" (click)="closeReviewModal()">×</button>
+          <h2>Đánh giá Homestay</h2>
+          <div class="review-form">
+            <div class="form-group">
+              <label>Xếp hạng sao</label>
+              <div class="star-rating">
+                <span *ngFor="let s of [1,2,3,4,5]" (click)="reviewRating = s" [class.active]="reviewRating >= s">★</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Bình luận</label>
+              <textarea [(ngModel)]="reviewComment" placeholder="Chia sẻ trải nghiệm của bạn..." class="review-textarea"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Hình ảnh đi kèm</label>
+              <input type="file" (change)="onReviewFilesSelected($event)" multiple accept="image/*" class="review-file-input">
+              <div class="image-preview-list" *ngIf="reviewImagePreviews.length > 0">
+                <img *ngFor="let p of reviewImagePreviews" [src]="p" alt="Preview">
+              </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 20px;">
+              <button class="btn-cancel" (click)="closeReviewModal()">Hủy</button>
+              <button class="btn-confirm-final" [disabled]="!reviewRating || isSubmittingReview" (click)="submitReview()">
+                {{ isSubmittingReview ? 'Đang gửi...' : 'Gửi đánh giá' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Response Modal (Host) -->
+      <div class="modal-overlay" *ngIf="showResponseModal">
+        <div class="modal-content animate-fade-in" style="max-width: 500px;">
+          <button class="close-btn" (click)="closeResponseModal()">×</button>
+          <h2>Phản hồi khách hàng</h2>
+          <div class="response-form">
+            <div class="review-summary-card" *ngIf="selectedBookingForReview?.review">
+              <div class="q-header">
+                <strong>{{ selectedBookingForReview?.userName }}</strong>
+                <span>★ {{ selectedBookingForReview?.review?.rating }}</span>
+              </div>
+              <p>"{{ selectedBookingForReview?.review?.comment }}"</p>
+            </div>
+            <div class="form-group" style="margin-top: 20px;">
+              <label>Nội dung phản hồi</label>
+              <textarea [(ngModel)]="hostResponse" placeholder="Cảm ơn khách hàng hoặc phản hồi góp ý..." class="review-textarea"></textarea>
+            </div>
+            <div class="modal-footer" style="margin-top: 20px;">
+              <button class="btn-cancel" (click)="closeResponseModal()">Hủy</button>
+              <button class="btn-confirm-final" [disabled]="!hostResponse || isSubmittingResponse" (click)="submitResponse()">
+                {{ isSubmittingResponse ? 'Đang gửi...' : 'Gửi phản hồi' }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Pagination Controls -->
@@ -238,7 +315,7 @@ import { PaymentService } from '../../services/payment.service';
     .empty-state .icon { font-size: 40px; display: block; margin-bottom: 10px; }
 
     /* Modal Styles */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-start; justify-content: center; backdrop-filter: blur(4px); padding-top: 50px; overflow-y: auto; }
     .modal-content { background: white; border-radius: 24px; padding: 30px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
     .close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s; }
     .close-btn:hover { color: #0f172a; }
@@ -252,6 +329,25 @@ import { PaymentService } from '../../services/payment.service';
     .btn-pay-now { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 12px; margin-left: 10px;}
     .btn-pay-now:hover:not(:disabled) { background: #dc2626; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(239,68,68,0.2); }
     .btn-pay-now:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .btn-review { background: #10b981; color: white; }
+    .btn-review:hover { background: #059669; }
+    .btn-response { background: #4f46e5; color: white; }
+    .btn-response:hover { background: #4338ca; }
+
+    .star-rating { display: flex; gap: 10px; font-size: 32px; color: #e2e8f0; cursor: pointer; margin: 10px 0; }
+    .star-rating span.active { color: #f39c12; }
+    .review-textarea { width: 100%; min-height: 120px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 12px; font-family: inherit; resize: vertical; box-sizing: border-box;}
+    .review-textarea:focus { outline: none; border-color: #4f46e5; }
+    .review-file-input { margin-top: 10px; }
+    .image-preview-list { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+    .image-preview-list img { width: 80px; height: 80px; object-fit: cover; border-radius: 10px; border: 2px solid #f1f5f9; }
+    
+    .review-summary-card { background: #f8fafc; padding: 15px; border-radius: 12px; border-left: 4px solid #f39c12; }
+    .q-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .q-header strong { color: #1e293b; }
+    .q-header span { color: #d97706; font-weight: 700; }
+    .review-summary-card p { margin: 0; font-style: italic; color: #475569; font-size: 14px; }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   `]
@@ -277,8 +373,23 @@ export class BookingHistoryTabComponent implements OnInit {
   endDateFilter = '';
   filteredBookings: BookingDto[] = [];
 
+  // Review state
+  showReviewModal = false;
+  selectedBookingForReview: BookingDto | null = null;
+  reviewRating = 0;
+  reviewComment = '';
+  reviewImages: File[] = [];
+  reviewImagePreviews: string[] = [];
+  isSubmittingReview = false;
+
+  // Response state
+  showResponseModal = false;
+  hostResponse = '';
+  isSubmittingResponse = false;
+
   constructor(
     private bookingService: BookingService,
+    private reviewService: ReviewService,
     private notification: NotificationService,
     private confirmDialog: ConfirmDialogService,
     private paymentService: PaymentService
@@ -427,6 +538,87 @@ export class BookingHistoryTabComponent implements OnInit {
         this.loadBookings();
       },
       error: (err) => this.notification.error(err.error?.message || 'Có lỗi xảy ra')
+    });
+  }
+
+  // REVIEW LOGIC
+  openReviewModal(booking: BookingDto) {
+    this.selectedBookingForReview = booking;
+    this.showReviewModal = true;
+    this.reviewRating = 0;
+    this.reviewComment = '';
+    this.reviewImages = [];
+    this.reviewImagePreviews = [];
+  }
+
+  closeReviewModal() {
+    this.showReviewModal = false;
+    this.selectedBookingForReview = null;
+  }
+
+  onReviewFilesSelected(event: any) {
+    if (event.target.files) {
+      this.reviewImages = Array.from(event.target.files);
+      this.reviewImagePreviews = [];
+      this.reviewImages.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e: any) => this.reviewImagePreviews.push(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }
+  }
+
+  submitReview() {
+    if (!this.selectedBookingForReview) return;
+    this.isSubmittingReview = true;
+    
+    const formData = new FormData();
+    formData.append('bookingId', this.selectedBookingForReview.id);
+    formData.append('rating', this.reviewRating.toString());
+    formData.append('comment', this.reviewComment);
+    this.reviewImages.forEach(file => formData.append('images', file));
+
+    this.reviewService.createReview(formData).subscribe({
+      next: () => {
+        this.notification.success('Đã gửi đánh giá thành công!');
+        this.closeReviewModal();
+        this.loadBookings();
+        this.isSubmittingReview = false;
+      },
+      error: (err) => {
+        this.notification.error(err.error?.message || 'Có lỗi xảy ra khi gửi đánh giá');
+        this.isSubmittingReview = false;
+      }
+    });
+  }
+
+  // RESPONSE LOGIC
+  openResponseModal(booking: BookingDto) {
+    this.selectedBookingForReview = booking;
+    this.showResponseModal = true;
+    this.hostResponse = '';
+  }
+
+  closeResponseModal() {
+    this.showResponseModal = false;
+    this.selectedBookingForReview = null;
+  }
+
+  submitResponse() {
+    if (!this.selectedBookingForReview?.review) return;
+    this.isSubmittingResponse = true;
+
+    this.reviewService.respondToReview(this.selectedBookingForReview.review.id, this.hostResponse).subscribe({
+      next: () => {
+        this.notification.success('Đã gửi phản hồi thành công!');
+        this.closeResponseModal();
+        this.loadBookings();
+        this.isSubmittingResponse = false;
+      },
+      error: (err) => {
+        this.notification.error(err.error?.message || 'Có lỗi xảy ra khi gửi phản hồi');
+        this.isSubmittingResponse = false;
+      }
     });
   }
 }

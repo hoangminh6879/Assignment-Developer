@@ -25,6 +25,8 @@ export interface HomestayDto {
   images: HomestayImageDto[];
   amenities: AmenityDto[];
   viewCount?: number;
+  averageRating?: number;
+  reviewCount?: number;
 }
 
 @Injectable({

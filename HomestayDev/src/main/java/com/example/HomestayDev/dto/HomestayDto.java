@@ -33,4 +33,7 @@ public class HomestayDto {
     
     private List<HomestayImageDto> images;
     private List<AmenityDto> amenities;
+
+    private Double averageRating;
+    private Integer reviewCount;
 }

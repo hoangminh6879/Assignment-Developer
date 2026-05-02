@@ -11,6 +11,8 @@ export interface BookingRequestDto {
   paymentMethod: string;
 }
 
+import { ReviewDto } from './review.service';
+
 export interface BookingDto {
   id: string;
   checkInDate: string;
@@ -24,7 +26,8 @@ export interface BookingDto {
   homestayName: string;
   roomName: string;
   roomTypeName: string;
-  userName?: string; // For Admin/Host to see who booked
+  userName?: string;
+  review?: ReviewDto;
 }
 
 @Injectable({

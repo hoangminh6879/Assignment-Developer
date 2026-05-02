@@ -9,6 +9,7 @@ import com.example.HomestayDev.repository.AmenityRepository;
 import com.example.HomestayDev.repository.HomestayAmenityRepository;
 import com.example.HomestayDev.repository.HomestayImageRepository;
 import com.example.HomestayDev.repository.HomestayRepository;
+import com.example.HomestayDev.repository.ReviewRepository;
 import com.example.HomestayDev.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class HomestayService {
     private final UserRepository userRepository;
     private final AmenityRepository amenityRepository;
     private final FileStorageService fileStorageService;
+    private final ReviewRepository reviewRepository;
 
     // PUBLIC
     public List<HomestayDto> getActiveHomestays() {
@@ -200,6 +202,10 @@ public class HomestayService {
                     .build()).collect(Collectors.toList());
         }
 
+        List<Review> reviews = reviewRepository.findByBookingHomestayId(homestay.getId());
+        Double avgRating = reviews.isEmpty() ? 0.0 : reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
+        Integer reviewCount = reviews.size();
+
         return HomestayDto.builder()
                 .id(homestay.getId())
                 .name(homestay.getName())
@@ -216,6 +222,8 @@ public class HomestayService {
                 .viewCount(homestay.getViewCount())
                 .images(images)
                 .amenities(amenities)
+                .averageRating(avgRating)
+                .reviewCount(reviewCount)
                 .build();
     }
 }
