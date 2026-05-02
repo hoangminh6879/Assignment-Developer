@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Nationalized;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,15 +25,19 @@ public class Homestay {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Nationalized
     @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String name;
 
+    @Nationalized
     @Column(columnDefinition = "NVARCHAR(2000)")
     private String description;
 
+    @Nationalized
     @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String address;
 
+    @Nationalized
     @Column(nullable = false, columnDefinition = "NVARCHAR(255)")
     private String city;
 
@@ -49,6 +54,7 @@ public class Homestay {
     @Enumerated(EnumType.STRING)
     private HomestayStatus status = HomestayStatus.PENDING;
 
+    @Nationalized
     @Column(name = "admin_reason", columnDefinition = "NVARCHAR(1000)")
     private String adminReason;
 
