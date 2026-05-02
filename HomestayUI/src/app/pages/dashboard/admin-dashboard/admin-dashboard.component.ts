@@ -367,19 +367,38 @@ import { ReportService } from '../../../services/report.service';
 
     <!-- REASON MODAL (Generic for approve/reject/inactive) -->
     <div class="modal-overlay" *ngIf="showReasonModal" (click)="showReasonModal = false">
-      <div class="edit-modal-box" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h3>{{ reasonTitle }}</h3>
-          <button class="modal-close" (click)="showReasonModal = false">✕</button>
-        </div>
-        <div class="edit-modal-body">
-          <div class="form-group">
-            <label>{{ reasonLabel }}</label>
-            <textarea [(ngModel)]="reasonValue" class="input-field" rows="4" [placeholder]="reasonLabel + '...'"></textarea>
+      <div class="edit-modal-box premium-reason-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header premium-header">
+          <div class="header-content">
+            <div class="header-icon-wrap" [ngClass]="reasonTarget?.type?.includes('APPROVE') ? 'bg-success' : 'bg-warning'">
+              {{ reasonTarget?.type?.includes('APPROVE') ? '✨' : '⚠️' }}
+            </div>
+            <div class="header-text">
+              <h3>{{ reasonTitle }}</h3>
+              <p class="header-subtitle">Hành động này sẽ được lưu lại vào lịch sử hệ thống</p>
+            </div>
           </div>
-          <div class="edit-modal-actions">
-            <button class="btn-secondary" (click)="showReasonModal = false">Hủy</button>
-            <button class="btn-primary" style="padding: 10px 24px;" (click)="submitReason()">Xác nhận</button>
+          <button class="modal-close-btn" (click)="showReasonModal = false">✕</button>
+        </div>
+        
+        <div class="edit-modal-body premium-body">
+          <div class="info-banner" *ngIf="reasonTarget?.type?.includes('REJECT') || reasonTarget?.status === 'INACTIVE'">
+            <span class="banner-icon">ℹ️</span>
+            <p>Nội dung lý do sẽ được gửi trực tiếp qua thông báo cho người dùng.</p>
+          </div>
+
+          <div class="form-group-premium">
+            <label>{{ reasonLabel }}</label>
+            <textarea [(ngModel)]="reasonValue" class="premium-input" rows="4" 
+              [placeholder]="reasonTarget?.type?.includes('APPROVE') ? 'Nhập ghi chú chào mừng (không bắt buộc)...' : 'Nhập lý do chi tiết để hỗ trợ người dùng...'">
+            </textarea>
+          </div>
+
+          <div class="modal-actions-premium">
+            <button class="btn-cancel" (click)="showReasonModal = false">Hủy bỏ</button>
+            <button class="btn-confirm" [ngClass]="{'btn-success': reasonTarget?.type?.includes('APPROVE')}" (click)="submitReason()">
+              {{ reasonTarget?.type?.includes('APPROVE') ? 'Phê duyệt ngay' : 'Xác nhận gửi' }}
+            </button>
           </div>
         </div>
       </div>
@@ -589,12 +608,34 @@ import { ReportService } from '../../../services/report.service';
     .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
     .empty-icon { font-size: 48px; display: block; margin-bottom: 15px; opacity: 0.8; }
     .status-filter { margin-left: 15px; }
-    /* EDIT MINI MODAL */
-    .edit-modal-box { background: white; border-radius: 16px; width: 480px; max-width: 95vw; box-shadow: 0 25px 50px rgba(0,0,0,0.25); animation: slideUp 0.3s ease; }
-    .edit-modal-body { padding: 24px 28px; }
-    .form-group { margin-bottom: 18px; }
-    .form-group label { display: block; font-weight: 600; font-size: 14px; color: #475569; margin-bottom: 6px; }
-    .edit-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    /* REFINED PREMIUM MODAL */
+    .premium-reason-modal { width: 540px; background: white; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: none; }
+    .premium-header { padding: 30px 30px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; background: white; border-radius: 24px 24px 0 0; }
+    .header-content { display: flex; align-items: center; gap: 16px; }
+    .header-icon-wrap { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .bg-success { background: #ecfdf5; color: #10b981; }
+    .bg-warning { background: #fff7ed; color: #f59e0b; }
+    .header-text h3 { margin: 0; font-size: 18px; font-weight: 700; color: #1e293b; }
+    .header-subtitle { margin: 2px 0 0; font-size: 12px; color: #94a3b8; }
+    .modal-close-btn { background: #f8fafc; border: none; width: 32px; height: 32px; border-radius: 50%; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+    .modal-close-btn:hover { background: #fee2e2; color: #ef4444; }
+
+    .premium-body { padding: 25px 30px 30px; }
+    .info-banner { background: #f0f9ff; border-radius: 12px; padding: 12px 16px; display: flex; gap: 10px; margin-bottom: 20px; border: 1px solid #e0f2fe; }
+    .info-banner p { margin: 0; font-size: 13px; color: #0369a1; line-height: 1.5; }
+    
+    .form-group-premium label { display: block; font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .premium-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 16px; padding: 15px; font-size: 15px; background: #f8fafc; transition: all 0.2s; min-height: 120px; font-family: inherit; }
+    .premium-input:focus { outline: none; border-color: #6366f1; background: white; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
+    
+    .modal-actions-premium { display: flex; gap: 12px; margin-top: 30px; }
+    .modal-actions-premium button { flex: 1; height: 48px; border-radius: 14px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.2s; border: none; }
+    .btn-cancel { background: #f1f5f9; color: #475569; }
+    .btn-cancel:hover { background: #e2e8f0; }
+    .btn-confirm { background: #4f46e5; color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
+    .btn-confirm:hover { background: #4338ca; transform: translateY(-2px); }
+    .btn-success { background: #10b981; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+    .btn-success:hover { background: #059669; }
 
     /* STATISTICS STYLES */
     .stats-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }

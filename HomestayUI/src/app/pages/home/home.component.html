@@ -31,7 +31,7 @@
           <div class="card-body">
             <div class="card-header">
               <h3>{{ home.name }}</h3>
-              <span class="rating">★ 5.0</span>
+              <span class="rating">★ {{ (home.averageRating || 0) | number:'1.1-1' }}</span>
             </div>
             <p class="location">📍 {{ home.city }}</p>
             <div class="amenities-preview">
@@ -125,6 +125,49 @@
           </div>
         </div>
       </div> <!-- end modal-info-grid -->
+
+      <!-- Reviews Section -->
+      <div class="reviews-section">
+        <h3>💬 Đánh giá từ khách hàng ({{ reviews.length }})</h3>
+        
+        <div class="review-list" *ngIf="reviews.length > 0; else noReviews">
+          <div class="review-item animate-fade-in" *ngFor="let review of reviews">
+            <div class="review-header">
+              <div class="user-meta">
+                <span class="avatar">{{ review.userFullName.charAt(0) }}</span>
+                <div class="user-name-date">
+                  <strong>{{ review.userFullName }}</strong>
+                  <span class="date">{{ review.createdAt | date:'dd/MM/yyyy' }}</span>
+                </div>
+              </div>
+              <div class="review-rating">★ {{ review.rating }}</div>
+            </div>
+            <div class="review-content">
+              {{ review.comment }}
+            </div>
+            <div class="review-images" *ngIf="review.imageUrls && review.imageUrls.length > 0">
+              <img *ngFor="let url of review.imageUrls" [src]="'http://localhost:9999' + url" alt="Review Image">
+            </div>
+            
+            <!-- Host Response -->
+            <div class="host-response" *ngIf="review.response">
+              <div class="response-header">
+                <strong>🏠 Phản hồi từ chủ nhà</strong>
+                <span class="date">{{ review.responseCreatedAt | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="response-content">
+                {{ review.response }}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <ng-template #noReviews>
+          <div class="empty-reviews">
+            <p>Chưa có đánh giá nào cho homestay này.</p>
+          </div>
+        </ng-template>
+      </div>
     </div> <!-- end modal-body -->
     <div class="modal-footer" *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')">
       <button class="btn-book-large" [routerLink]="['/booking', selectedHomestay.id]" (click)="closeDetail()">Đặt phòng ngay</button>

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,18 +32,22 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Nationalized
     @Column(name = "first_name", columnDefinition = "NVARCHAR(255)")
     private String firstName;
 
+    @Nationalized
     @Column(name = "last_name", columnDefinition = "NVARCHAR(255)")
     private String lastName;
 
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Nationalized
     @Column(name = "address", columnDefinition = "NVARCHAR(255)")
     private String address;
 
+    @Nationalized
     @Column(name = "citizen_id", columnDefinition = "NVARCHAR(50)")
     private String citizenId;
 

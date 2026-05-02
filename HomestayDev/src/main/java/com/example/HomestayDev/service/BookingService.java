@@ -3,6 +3,7 @@ package com.example.HomestayDev.service;
 import com.example.HomestayDev.dto.BookingDto;
 import com.example.HomestayDev.dto.BookingRequestDto;
 import com.example.HomestayDev.dto.CheckoutRequestDto;
+import com.example.HomestayDev.dto.ReviewDto;
 import com.example.HomestayDev.model.*;
 import com.example.HomestayDev.model.enums.BookingStatus;
 import com.example.HomestayDev.model.enums.PaymentMethod;
@@ -33,6 +34,7 @@ public class BookingService {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final ReviewService reviewService;
 
     @Transactional
     public BookingDto createBooking(String username, BookingRequestDto request) {
@@ -41,6 +43,10 @@ public class BookingService {
 
         Homestay homestay = homestayRepository.findById(request.getHomestayId())
                 .orElseThrow(() -> new RuntimeException("Homestay not found"));
+
+        if (!homestay.getStatus().name().equals("ACTIVE")) {
+            throw new RuntimeException("Homestay này hiện đang tạm ngưng hoặc chưa được phê duyệt, không thể đặt phòng.");
+        }
 
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new RuntimeException("Room not found"));
@@ -358,6 +364,7 @@ public class BookingService {
                 .roomTypeName(booking.getRoom().getRoomType().getName())
                 .userId(booking.getUser().getId())
                 .userName(booking.getUser().getUsername())
+                .review(booking.getReview() != null ? reviewService.mapToDto(booking.getReview()) : null)
                 .build();
     }
 }

@@ -51,6 +51,10 @@ public class RoomService {
             throw new RuntimeException("Unauthorized");
         }
 
+        if (!homestay.getStatus().name().equals("ACTIVE")) {
+            throw new RuntimeException("Chỉ có thể thêm phòng cho Homestay đã được phê duyệt và đang hoạt động.");
+        }
+
         RoomType roomType = roomTypeRepository.findById(roomTypeId)
                 .orElseThrow(() -> new RuntimeException("Room type not found"));
 
@@ -89,6 +93,10 @@ public class RoomService {
 
         if (!room.getHomestay().getHost().getUsername().equals(hostUsername)) {
             throw new RuntimeException("Unauthorized");
+        }
+
+        if (!room.getHomestay().getStatus().name().equals("ACTIVE")) {
+            throw new RuntimeException("Chỉ có thể chỉnh sửa phòng cho Homestay đã được phê duyệt và đang hoạt động.");
         }
 
         RoomType roomType = roomTypeRepository.findById(roomTypeId)

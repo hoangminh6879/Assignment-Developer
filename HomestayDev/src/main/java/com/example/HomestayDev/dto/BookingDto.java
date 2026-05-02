@@ -35,4 +35,6 @@ public class BookingDto {
     
     private UUID userId;
     private String userName;
+
+    private ReviewDto review;
 }
