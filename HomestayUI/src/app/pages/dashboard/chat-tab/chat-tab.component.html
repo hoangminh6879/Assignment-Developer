@@ -1,0 +1,89 @@
+<div class="chat-container animate-fade-in">
+  <!-- Sidebar: Contacts -->
+  <div class="chat-sidebar">
+    <div class="sidebar-header">
+      <h3>Tin nhắn</h3>
+      <button *ngIf="authService.hasRole('HOST')" class="btn-admin-chat" (click)="chatWithAdmin()">
+        🎧 Chat với Admin
+      </button>
+    </div>
+    
+    <div class="search-box">
+      <input type="text" placeholder="Tìm người dùng...">
+    </div>
+
+    <div class="contact-list">
+      <div *ngFor="let contact of contacts" 
+           class="contact-item" 
+           [class.active]="selectedUser?.id === contact.id"
+           (click)="selectUser(contact)">
+        <div class="avatar-wrap">
+          <div class="avatar">{{ contact.firstName?.charAt(0) || contact.username.charAt(0) }}</div>
+          <div class="status-dot"></div>
+        </div>
+        <div class="contact-info">
+          <div class="contact-name">{{ contact.firstName ? contact.firstName + ' ' + contact.lastName : contact.username }}</div>
+          <div class="last-msg">Nhấn để xem tin nhắn</div>
+        </div>
+      </div>
+      
+      <div *ngIf="contacts.length === 0" class="empty-contacts">
+        <p>Chưa có cuộc hội thoại nào.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Window -->
+  <div class="chat-window" *ngIf="selectedUser; else noChatSelected">
+    <div class="chat-header">
+      <div class="user-info">
+        <div class="avatar">{{ selectedUser.username.charAt(0) }}</div>
+        <div class="name-status">
+          <h4>{{ selectedUser.username }}</h4>
+          <span class="status">Đang hoạt động</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <!-- Removed call and video call buttons per request -->
+      </div>
+    </div>
+
+    <div class="chat-messages">
+      <div *ngIf="isLoading" class="loader-wrap">
+        <div class="loader"></div>
+      </div>
+      
+      <div *ngFor="let msg of messages" 
+           class="msg-wrapper" 
+           [class.own-msg]="selectedUser && msg.senderId !== selectedUser.id">
+        <div class="msg-bubble">
+          {{ msg.content }}
+          <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="messages.length === 0 && !isLoading" class="empty-chat">
+        <p>Bắt đầu cuộc trò chuyện với <strong>{{ selectedUser.username }}</strong></p>
+      </div>
+    </div>
+
+    <form class="chat-input" (ngSubmit)="sendMessage()">
+      <input type="text" 
+             [(ngModel)]="newMessage" 
+             name="msg" 
+             placeholder="Nhập tin nhắn..." 
+             autocomplete="off">
+      <button type="submit" [disabled]="!newMessage.trim()">
+        <span>🚀</span>
+      </button>
+    </form>
+  </div>
+
+  <ng-template #noChatSelected>
+    <div class="no-chat-placeholder">
+      <div class="icon">💬</div>
+      <h3>Chọn một người dùng để bắt đầu trò chuyện</h3>
+      <p>Bạn có thể chat với Host của Homestay đã đặt, hoặc liên hệ với Admin để được hỗ trợ.</p>
+    </div>
+  </ng-template>
+</div>

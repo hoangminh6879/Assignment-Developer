@@ -14,6 +14,7 @@ import { HostCheckinTabComponent } from '../../../components/host-checkin-tab/ho
 import { HostReviewTabComponent } from '../../../components/host-review-tab/host-review-tab.component';
 import { StatisticsService, HostStatistics } from '../../../services/statistics.service';
 import { ReportService } from '../../../services/report.service';
+import { ChatTabComponent } from '../chat-tab/chat-tab.component';
 
 @Component({
   selector: 'app-host-dashboard',
@@ -25,7 +26,8 @@ import { ReportService } from '../../../services/report.service';
     ProfileTabComponent, 
     BookingHistoryTabComponent, 
     HostCheckinTabComponent,
-    HostReviewTabComponent
+    HostReviewTabComponent,
+    ChatTabComponent
   ],
   template: `
     <app-navbar></app-navbar>
@@ -59,6 +61,9 @@ import { ReportService } from '../../../services/report.service';
             </li>
             <li [class.active]="activeTab === 'rooms'" (click)="activeTab = 'rooms'">
               <span class="menu-icon">🛏️</span> Quản lý Phòng
+            </li>
+            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'">
+              <span class="menu-icon">💬</span> Tin nhắn
             </li>
           </ul>
         </aside>
@@ -476,6 +481,10 @@ import { ReportService } from '../../../services/report.service';
             </form>
           </div>
         </div> <!-- END ROOMS TAB -->
+        <!-- CHAT TAB -->
+        <div *ngIf="activeTab === 'chat'">
+          <app-chat-tab [initialUser]="chatRecipientUser"></app-chat-tab>
+        </div>
         </main>
       </div>
     </div>
@@ -616,6 +625,7 @@ import { ReportService } from '../../../services/report.service';
 })
 export class HostDashboardComponent implements OnInit {
   activeTab = 'profile';
+  chatRecipientUser: any = null;
   homestays: HomestayDto[] = [];
   availableAmenities: AmenityDto[] = [];
 
@@ -970,5 +980,10 @@ export class HostDashboardComponent implements OnInit {
   getSelectedHomestayStatus(): string {
     const h = this.homestays.find(item => item.id === this.selectedHomestayForRoom);
     return h ? h.status : '';
+  }
+
+  onChatRequested(user: any) {
+    this.chatRecipientUser = user;
+    this.activeTab = 'chat';
   }
 }

@@ -12,11 +12,12 @@ import { ProfileTabComponent } from '../../../components/profile-tab/profile-tab
 import { BookingHistoryTabComponent } from '../../../components/booking-history-tab/booking-history-tab.component';
 import { StatisticsService, AdminStatistics } from '../../../services/statistics.service';
 import { ReportService } from '../../../services/report.service';
+import { ChatTabComponent } from '../chat-tab/chat-tab.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, ChatTabComponent],
   template: `
     <app-navbar></app-navbar>
     <div class="dashboard-page">
@@ -49,6 +50,9 @@ import { ReportService } from '../../../services/report.service';
             </li>
             <li [class.active]="activeTab === 'room-types'" (click)="activeTab = 'room-types'">
               <span class="menu-icon">🛏️</span> Loại phòng
+            </li>
+            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'">
+              <span class="menu-icon">💬</span> Tin nhắn
             </li>
           </ul>
         </aside>
@@ -361,6 +365,10 @@ import { ReportService } from '../../../services/report.service';
           </div>
         </div>
 
+        <!-- CHAT TAB -->
+        <div *ngIf="activeTab === 'chat'">
+          <app-chat-tab></app-chat-tab>
+        </div>
         </main>
       </div>
     </div>
@@ -437,10 +445,15 @@ import { ReportService } from '../../../services/report.service';
         </div>
         <div class="modal-body">
           <!-- Images carousel -->
-          <div class="modal-images" *ngIf="selectedHomestay.images && selectedHomestay.images.length > 0">
-            <img *ngFor="let img of selectedHomestay.images" [src]="'http://localhost:9999' + img.url" class="modal-img" />
+          <div class="modal-images-container" *ngIf="selectedHomestay.images && selectedHomestay.images.length > 0">
+            <div class="modal-images">
+              <img *ngFor="let img of selectedHomestay.images" [src]="'http://localhost:9999' + img.url" class="modal-img" />
+            </div>
           </div>
-          <div class="modal-no-img" *ngIf="!selectedHomestay.images || selectedHomestay.images.length === 0">Không có ảnh</div>
+          <div class="modal-no-img" *ngIf="!selectedHomestay.images || selectedHomestay.images.length === 0">
+            <span class="icon">🖼️</span>
+            <p>Không có ảnh hiển thị</p>
+          </div>
 
           <div class="modal-info-grid">
             <div class="info-item">
@@ -582,13 +595,13 @@ import { ReportService } from '../../../services/report.service';
     .detail-btn:hover { background: linear-gradient(135deg, #6366f1, #4f46e5); }
     
     /* MODAL */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: flex-start; justify-content: center; backdrop-filter: blur(8px); animation: fadeIn 0.3s ease; padding-top: 40px; overflow-y: auto; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .modal-box { background: white; border-radius: 20px; width: 720px; max-width: 95vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.25); animation: slideUp 0.3s ease; }
-    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 28px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; background: white; z-index: 1; border-radius: 20px 20px 0 0; }
-    .modal-header h3 { margin: 0; font-size: 20px; font-weight: 700; color: #0f172a; }
-    .modal-close { background: #f1f5f9; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .modal-box { background: white; border-radius: 24px; width: 1000px; max-width: 95vw; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 40px; }
+    @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 28px 32px; border-bottom: 1px solid #f1f5f9; background: white; border-radius: 24px 24px 0 0; }
+    .modal-header h3 { margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; }
+    .modal-close { background: #f8fafc; border: none; border-radius: 12px; width: 40px; height: 40px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; color: #64748b; }
     .modal-close:hover { background: #fee2e2; color: #ef4444; }
     .modal-body { padding: 24px 28px; }
     .modal-images { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }

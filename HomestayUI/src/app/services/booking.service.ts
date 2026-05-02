@@ -27,6 +27,9 @@ export interface BookingDto {
   roomName: string;
   roomTypeName: string;
   userName?: string;
+  userId?: string;
+  hostId?: string;
+  hostName?: string;
   review?: ReviewDto;
 }
 

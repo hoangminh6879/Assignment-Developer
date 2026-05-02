@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BookingService, BookingDto } from '../../services/booking.service';
@@ -165,6 +165,14 @@ import { ReviewService, ReviewDto } from '../../services/review.service';
                     class="btn-action btn-response" 
                     (click)="openResponseModal(b)">
                     Phản hồi
+                  </button>
+
+                  <!-- Chat Button -->
+                  <button 
+                    *ngIf="role !== 'ADMIN'"
+                    class="btn-action btn-chat" 
+                    (click)="chatWithUser(b)">
+                    Nhắn tin
                   </button>
                 </div>
               </td>
@@ -334,6 +342,8 @@ import { ReviewService, ReviewDto } from '../../services/review.service';
     .btn-review:hover { background: #059669; }
     .btn-response { background: #4f46e5; color: white; }
     .btn-response:hover { background: #4338ca; }
+    .btn-chat { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
+    .btn-chat:hover { background: #dcfce7; }
 
     .star-rating { display: flex; gap: 10px; font-size: 32px; color: #e2e8f0; cursor: pointer; margin: 10px 0; }
     .star-rating span.active { color: #f39c12; }
@@ -354,6 +364,7 @@ import { ReviewService, ReviewDto } from '../../services/review.service';
 })
 export class BookingHistoryTabComponent implements OnInit {
   @Input() role: 'USER' | 'HOST' | 'ADMIN' = 'USER';
+  @Output() chatRequested = new EventEmitter<any>();
   bookings: BookingDto[] = [];
   paginatedBookings: BookingDto[] = [];
   title = 'Lịch sử đặt phòng';
@@ -620,5 +631,13 @@ export class BookingHistoryTabComponent implements OnInit {
         this.isSubmittingResponse = false;
       }
     });
+  }
+
+  chatWithUser(booking: BookingDto) {
+    if (this.role === 'USER') {
+      this.chatRequested.emit({ id: booking.hostId, username: booking.hostName });
+    } else if (this.role === 'HOST') {
+      this.chatRequested.emit({ id: booking.userId, username: booking.userName });
+    }
   }
 }

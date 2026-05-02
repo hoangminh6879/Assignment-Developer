@@ -268,31 +268,39 @@
 /* MODAL DETAIL */
 .modal-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 2000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
-  align-items: flex-start; /* Changed from center to top */
   justify-content: center;
-  backdrop-filter: blur(6px);
-  animation: fadeIn 0.2s ease;
-  padding: 40px 20px; /* Increased top padding */
-  overflow-y: auto; /* Ensure scrollability of overlay if content is too tall */
+  align-items: flex-start; /* Start from top as requested */
+  z-index: 10000;
+  backdrop-filter: blur(8px);
+  padding: 40px 20px;
+  overflow-y: auto;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-box {
   background: white;
+  width: 1000px;
+  max-width: 100%;
   border-radius: 24px;
-  width: 1000px; /* Increased from 760px */
-  max-width: 95vw;
-  max-height: 92vh; /* Increased from 88vh */
-  overflow-y: auto;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.3);
-  animation: slideUp 0.3s ease;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 40px;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(40px); opacity: 0; }
+@keyframes slideDown {
+  from { transform: translateY(-30px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
