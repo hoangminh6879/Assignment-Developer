@@ -36,5 +36,8 @@ public class BookingDto {
     private UUID userId;
     private String userName;
 
+    private UUID hostId;
+    private String hostName;
+
     private ReviewDto review;
 }

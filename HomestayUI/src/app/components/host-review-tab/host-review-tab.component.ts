@@ -50,9 +50,9 @@ import { NotificationService } from '../../services/notification.service';
           <!-- Card content remains the same but add homestay name badge -->
           <div class="review-header">
             <div class="user-info">
-              <div class="avatar">{{ r.userFullName.charAt(0) }}</div>
+              <div class="avatar">{{ r.userFullName?.charAt(0) || 'U' }}</div>
               <div>
-                <h4>{{ r.userFullName }}</h4>
+                <h4>{{ r.userFullName || 'Khách hàng' }}</h4>
                 <p class="date">{{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
               </div>
             </div>
