@@ -9,6 +9,7 @@ export interface BookingRequestDto {
   checkInDate: string;
   checkOutDate: string;
   paymentMethod: string;
+  voucherCode?: string;
 }
 
 import { ReviewDto } from './review.service';
@@ -23,6 +24,8 @@ export interface BookingDto {
   paymentMethod: string;
   createdAt: string;
   checkInCode: string;
+  discountAmount?: number;
+  appliedVoucherCode?: string;
   homestayName: string;
   roomName: string;
   roomTypeName: string;

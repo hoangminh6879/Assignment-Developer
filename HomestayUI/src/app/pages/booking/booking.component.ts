@@ -11,6 +11,7 @@ import { NavbarComponent } from '../../components/navbar/navbar.component';
 import { AuthService } from '../../services/auth.service';
 import { PaymentService } from '../../services/payment.service';
 import { UserService, UserProfileDto, ProfileUpdateRequest } from '../../services/user.service';
+import { VoucherService, VoucherDto, VoucherType } from '../../services/voucher.service';
 
 @Component({
   selector: 'app-booking',
@@ -128,9 +129,41 @@ import { UserService, UserProfileDto, ProfileUpdateRequest } from '../../service
                 <span>{{ pricePerNight | number }}đ / đêm</span>
               </div>
               <hr>
+              <!-- Redesigned Voucher Section -->
+              <div class="voucher-wrapper">
+                <div class="voucher-header">
+                  <div class="v-title">
+                    <span class="v-icon-main">🎟️</span>
+                    <label>Ưu đãi & Giảm giá</label>
+                  </div>
+                  <button class="btn-browse-vouchers" (click)="openVoucherModal()" [disabled]="discountAmount > 0">
+                    Chọn mã
+                  </button>
+                </div>
+                
+                <div class="voucher-input-group">
+                  <input type="text" [(ngModel)]="voucherCode" placeholder="Hoặc nhập mã trực tiếp..." [disabled]="discountAmount > 0" class="input-field">
+                  <button *ngIf="discountAmount === 0" (click)="applyVoucher()" [disabled]="!voucherCode" class="btn-apply-voucher">Áp dụng</button>
+                  <button *ngIf="discountAmount > 0" (click)="removeVoucher()" class="btn-remove-voucher">
+                    <i class="fas fa-times-circle"></i> Gỡ bỏ
+                  </button>
+                </div>
+                
+                <div class="active-voucher-badge animate-fade-in" *ngIf="discountAmount > 0">
+                  <div class="v-badge-info">
+                    <span class="v-sparkle">✨</span>
+                    <span>Đã giảm <strong>{{ discountAmount | number }}đ</strong></span>
+                  </div>
+                </div>
+                <p class="voucher-error" *ngIf="voucherError">❌ {{ voucherError }}</p>
+              </div>
+              <hr>
               <div class="total-row">
                 <span>Tổng cộng:</span>
-                <span class="total-price">{{ totalPrice | number }}đ</span>
+                <div class="price-stack">
+                  <span class="original-price" *ngIf="discountAmount > 0">{{ rawTotalPrice | number }}đ</span>
+                  <span class="total-price">{{ totalPrice | number }}đ</span>
+                </div>
               </div>
             </div>
             <button 
@@ -158,6 +191,7 @@ import { UserService, UserProfileDto, ProfileUpdateRequest } from '../../service
             <p><strong>Homestay:</strong> {{ homestay?.name }}</p>
             <p><strong>Ngày nhận:</strong> {{ checkInDate | date:'dd/MM/yyyy' }}</p>
             <p><strong>Ngày trả:</strong> {{ checkOutDate | date:'dd/MM/yyyy' }}</p>
+            <p *ngIf="discountAmount > 0"><strong>Giảm giá:</strong> <span class="discount-price">-{{ discountAmount | number }}đ</span></p>
             <p><strong>Tổng tiền:</strong> <span class="total-price-modal">{{ totalPrice | number }}đ</span></p>
             <p><strong>Thanh toán:</strong> {{ selectedPaymentMethod === 'VNPAY' ? 'VNPay' : 'Tại quầy' }}</p>
           </div>
@@ -196,6 +230,44 @@ import { UserService, UserProfileDto, ProfileUpdateRequest } from '../../service
           <button class="btn-confirm-final" [disabled]="isSubmitting" (click)="submitBooking()">
             {{ isSubmitting ? 'Đang xử lý...' : 'Xác nhận và Thanh toán' }}
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Voucher Selection Modal -->
+    <div class="modal-overlay" *ngIf="showVoucherModal" (click)="closeVoucherModal()">
+      <div class="voucher-modal-content animate-fade-in" (click)="$event.stopPropagation()">
+        <div class="v-modal-header">
+          <h2>Chọn mã giảm giá</h2>
+          <button class="close-btn" (click)="closeVoucherModal()">×</button>
+        </div>
+        
+        <div class="v-modal-body">
+          <div class="v-list-container" *ngIf="applicableVouchers.length > 0; else noVouchers">
+            <div class="v-option-card" *ngFor="let v of applicableVouchers" 
+                 [class.disabled]="rawTotalPrice < (v.minBookingAmount || 0)"
+                 (click)="selectVoucherFromList(v)">
+              <div class="v-side-accent" [class.global]="v.isGlobal"></div>
+              <div class="v-main-info">
+                <div class="v-code-tag">{{ v.code }}</div>
+                <div class="v-desc">
+                  Giảm {{ v.type === 'PERCENTAGE' ? v.value + '%' : (v.value | number) + 'đ' }}
+                  <span class="v-min-text" *ngIf="v.minBookingAmount">cho đơn từ {{ v.minBookingAmount | number }}đ</span>
+                </div>
+                <div class="v-expiry" *ngIf="v.expiryDate">HSD: {{ v.expiryDate | date:'dd/MM/yyyy' }}</div>
+              </div>
+              <div class="v-status-indicator">
+                <span class="v-check" *ngIf="rawTotalPrice >= (v.minBookingAmount || 0)">Sử dụng</span>
+                <span class="v-lock" *ngIf="rawTotalPrice < (v.minBookingAmount || 0)">Chưa đủ điều kiện</span>
+              </div>
+            </div>
+          </div>
+          <ng-template #noVouchers>
+            <div class="empty-vouchers">
+              <span class="icon">🎟️</span>
+              <p>Không có mã giảm giá nào khả dụng lúc này.</p>
+            </div>
+          </ng-template>
         </div>
       </div>
     </div>
@@ -259,6 +331,64 @@ import { UserService, UserProfileDto, ProfileUpdateRequest } from '../../service
     .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
     .disclaimer { margin-top: 15px; text-align: center; font-size: 12px; color: #94a3b8; }
 
+    /* Voucher Styles */
+    .voucher-section { margin: 20px 0; padding: 18px; background: #f8fafc; border-radius: 16px; border: 1px dashed #cbd5e1; }
+    .voucher-section label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .voucher-input-group { display: flex; gap: 10px; }
+    .voucher-input-group .input-field { background: white; }
+    .btn-apply-voucher { padding: 10px 20px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .btn-apply-voucher:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+    .btn-apply-voucher:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-remove-voucher { padding: 10px 20px; background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .btn-remove-voucher:hover { background: #fef2f2; transform: translateY(-1px); }
+    .voucher-success { color: #059669; font-size: 13px; font-weight: 700; margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+    .voucher-error { color: #dc2626; font-size: 13px; font-weight: 600; margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+    .price-stack { display: flex; flex-direction: column; align-items: flex-end; }
+    .original-price { font-size: 15px; text-decoration: line-through; color: #94a3b8; font-weight: 500; }
+    .discount-price { color: #059669; font-weight: 700; font-size: 14px; }
+
+    /* New Premium Voucher Styles */
+    .voucher-wrapper { margin: 25px 0; padding: 20px; background: #fdfdfd; border: 1px solid #eef2ff; border-radius: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+    .voucher-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .v-title { display: flex; align-items: center; gap: 8px; }
+    .v-icon-main { font-size: 18px; }
+    .v-title label { font-size: 14px; font-weight: 800; color: #1e293b; letter-spacing: -0.2px; }
+    .btn-browse-vouchers { background: none; border: none; color: #4f46e5; font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: all 0.2s; }
+    .btn-browse-vouchers:hover { background: #eef2ff; }
+    
+    .active-voucher-badge { margin-top: 15px; background: #ecfdf5; border: 1px solid #d1fae5; padding: 10px 15px; border-radius: 12px; }
+    .v-badge-info { display: flex; align-items: center; gap: 10px; color: #065f46; font-size: 13px; font-weight: 600; }
+    .v-sparkle { font-size: 16px; }
+    .v-badge-info strong { font-weight: 800; font-size: 15px; }
+
+    /* Voucher Modal Styles */
+    .voucher-modal-content { background: #f8fafc; border-radius: 32px; padding: 0; width: 500px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    .v-modal-header { padding: 25px 30px; background: white; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .v-modal-header h2 { margin: 0; font-size: 20px; font-weight: 800; color: #0f172a; }
+    .v-modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .v-list-container { display: flex; flex-direction: column; gap: 12px; }
+    
+    .v-option-card { background: white; border: 1px solid #e2e8f0; border-radius: 18px; display: flex; overflow: hidden; cursor: pointer; transition: all 0.2s; }
+    .v-option-card:not(.disabled):hover { border-color: #4f46e5; transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .v-option-card.disabled { opacity: 0.6; cursor: not-allowed; background: #f1f5f9; }
+    
+    .v-side-accent { width: 8px; }
+    .v-side-accent.global { background: #4f46e5; }
+    .v-side-accent:not(.global) { background: #10b981; }
+    
+    .v-main-info { flex: 1; padding: 15px 20px; }
+    .v-code-tag { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #4f46e5; font-size: 14px; margin-bottom: 4px; }
+    .v-desc { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .v-min-text { font-size: 12px; font-weight: 500; color: #64748b; display: block; }
+    .v-expiry { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+    
+    .v-status-indicator { padding: 15px; display: flex; align-items: center; font-size: 11px; font-weight: 800; text-transform: uppercase; border-left: 1px dashed #e2e8f0; }
+    .v-check { color: #10b981; }
+    .v-lock { color: #ef4444; text-align: center; width: 80px; line-height: 1.2; }
+    
+    .empty-vouchers { text-align: center; padding: 40px; color: #94a3b8; }
+    .empty-vouchers .icon { font-size: 48px; display: block; margin-bottom: 10px; opacity: 0.5; }
+
     .animate-fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -316,6 +446,12 @@ export class BookingComponent implements OnInit {
   isSubmitting = false;
   userProfile: any = {};
 
+  voucherCode = '';
+  discountAmount = 0;
+  voucherError = '';
+  applicableVouchers: VoucherDto[] = [];
+  showVoucherModal = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -325,6 +461,7 @@ export class BookingComponent implements OnInit {
     private bookingService: BookingService,
     private paymentService: PaymentService,
     private userService: UserService,
+    private voucherService: VoucherService,
     private notification: NotificationService
   ) {}
 
@@ -354,6 +491,9 @@ export class BookingComponent implements OnInit {
     // but I added getHomestayById to backend so I should update service.
     this.homestayService.getActiveHomestays().subscribe(data => {
       this.homestay = data.find(h => h.id === this.homestayId) || null;
+      if (this.homestay) {
+        this.loadApplicableVouchers(this.homestay.hostId!);
+      }
     });
 
     this.roomTypeService.getAllRoomTypes().subscribe(data => {
@@ -408,8 +548,63 @@ export class BookingComponent implements OnInit {
     return (this.homestay.pricePerNight || 0) + (room?.priceExtra || 0);
   }
 
-  get totalPrice(): number {
+  get rawTotalPrice(): number {
     return this.pricePerNight * this.totalNights;
+  }
+
+  get totalPrice(): number {
+    return Math.max(0, this.rawTotalPrice - this.discountAmount);
+  }
+
+  applyVoucher() {
+    this.voucherError = '';
+    if (!this.voucherCode || !this.homestay) return;
+
+    this.voucherService.validateVoucher(this.voucherCode, this.rawTotalPrice, this.homestay.hostId!)
+      .subscribe({
+        next: (res) => {
+          if (res.valid) {
+            this.discountAmount = res.discountAmount;
+            this.notification.success('Áp dụng mã giảm giá thành công!');
+          } else {
+            this.voucherError = 'Mã không hợp lệ';
+          }
+        },
+        error: (err) => {
+          this.voucherError = err.error?.message || 'Lỗi khi kiểm tra mã';
+          this.discountAmount = 0;
+        }
+      });
+  }
+
+  removeVoucher() {
+    this.discountAmount = 0;
+    this.voucherError = '';
+    this.voucherCode = '';
+  }
+
+  loadApplicableVouchers(hostId: string) {
+    this.voucherService.getApplicableVouchers(hostId).subscribe(data => {
+      this.applicableVouchers = data;
+    });
+  }
+
+  openVoucherModal() {
+    this.showVoucherModal = true;
+  }
+
+  closeVoucherModal() {
+    this.showVoucherModal = false;
+  }
+
+  selectVoucherFromList(v: any) {
+    if (this.rawTotalPrice < (v.minBookingAmount || 0)) {
+      this.notification.warning('Đơn hàng chưa đủ giá trị tối thiểu để sử dụng mã này.');
+      return;
+    }
+    this.voucherCode = v.code;
+    this.applyVoucher();
+    this.closeVoucherModal();
   }
 
   get canBook(): boolean {
@@ -464,7 +659,8 @@ export class BookingComponent implements OnInit {
       roomId: this.selectedRoomId!,
       checkInDate: this.checkInDate,
       checkOutDate: this.checkOutDate,
-      paymentMethod: this.selectedPaymentMethod
+      paymentMethod: this.selectedPaymentMethod,
+      voucherCode: this.discountAmount > 0 ? this.voucherCode : undefined
     };
 
     this.bookingService.createBooking(request).subscribe({

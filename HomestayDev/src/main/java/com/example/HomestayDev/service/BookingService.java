@@ -36,6 +36,7 @@ public class BookingService {
     private final EmailService emailService;
     private final ReviewService reviewService;
     private final NotificationService notificationService;
+    private final VoucherService voucherService;
 
     @Transactional
     public BookingDto createBooking(String username, BookingRequestDto request) {
@@ -77,6 +78,12 @@ public class BookingService {
         BigDecimal pricePerNight = homestay.getPricePerNight().add(room.getPriceExtra());
         BigDecimal totalPrice = pricePerNight.multiply(BigDecimal.valueOf(nights));
 
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (request.getVoucherCode() != null && !request.getVoucherCode().isEmpty()) {
+            discountAmount = voucherService.calculateDiscount(request.getVoucherCode(), totalPrice, homestay.getHost().getId());
+            totalPrice = totalPrice.subtract(discountAmount);
+        }
+
         String checkInCode = java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
 
         Booking booking = Booking.builder()
@@ -86,6 +93,8 @@ public class BookingService {
                 .checkInDate(request.getCheckInDate())
                 .checkOutDate(request.getCheckOutDate())
                 .totalPrice(totalPrice)
+                .discountAmount(discountAmount)
+                .appliedVoucherCode(request.getVoucherCode())
                 .status(BookingStatus.PENDING)
                 .paymentStatus(PaymentStatus.UNPAID)
                 .paymentMethod(PaymentMethod.valueOf(request.getPaymentMethod()))
@@ -93,6 +102,10 @@ public class BookingService {
                 .build();
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        if (request.getVoucherCode() != null && !request.getVoucherCode().isEmpty()) {
+            voucherService.incrementUsedCount(request.getVoucherCode());
+        }
 
         // Notify Host
         notificationService.createNotification(
@@ -399,6 +412,8 @@ public class BookingService {
                 .checkInDate(booking.getCheckInDate())
                 .checkOutDate(booking.getCheckOutDate())
                 .totalPrice(booking.getTotalPrice())
+                .discountAmount(booking.getDiscountAmount())
+                .appliedVoucherCode(booking.getAppliedVoucherCode())
                 .status(booking.getStatus())
                 .paymentStatus(booking.getPaymentStatus())
                 .paymentMethod(booking.getPaymentMethod() != null ? booking.getPaymentMethod().name() : null)

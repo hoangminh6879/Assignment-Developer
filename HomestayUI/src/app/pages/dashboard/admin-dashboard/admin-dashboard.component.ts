@@ -13,11 +13,12 @@ import { BookingHistoryTabComponent } from '../../../components/booking-history-
 import { StatisticsService, AdminStatistics } from '../../../services/statistics.service';
 import { ReportService } from '../../../services/report.service';
 import { ChatTabComponent } from '../chat-tab/chat-tab.component';
+import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/admin-voucher-tab.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, ChatTabComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, ChatTabComponent, AdminVoucherTabComponent],
   template: `
     <app-navbar></app-navbar>
     <div class="dashboard-page">
@@ -56,6 +57,9 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
             <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'; notificationService.markTypeAsRead('CHAT')">
               <span class="menu-icon">💬</span> Tin nhắn
               <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('CHAT') | async"></span>
+            </li>
+            <li [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">
+              <span class="menu-icon">🎟️</span> Quản lý Voucher
             </li>
           </ul>
         </aside>
@@ -371,6 +375,11 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
         <!-- CHAT TAB -->
         <div *ngIf="activeTab === 'chat'">
           <app-chat-tab></app-chat-tab>
+        </div>
+
+        <!-- VOUCHERS TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'vouchers'">
+          <app-admin-voucher-tab></app-admin-voucher-tab>
         </div>
         </main>
       </div>
