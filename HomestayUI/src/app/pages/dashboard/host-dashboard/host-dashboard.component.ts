@@ -47,8 +47,9 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
             <li [class.active]="activeTab === 'statistics'" (click)="activeTab = 'statistics'; loadAllStats()">
               <span class="menu-icon">📊</span> Thống kê của tôi
             </li>
-            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
+            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'; notificationService.markTypeAsRead('BOOKING')">
               <span class="menu-icon">📅</span> Quản lý Đặt phòng
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('BOOKING') | async"></span>
             </li>
             <li [class.active]="activeTab === 'checkin'" (click)="activeTab = 'checkin'">
               <span class="menu-icon">🔑</span> Mã nhận phòng
@@ -56,14 +57,16 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
             <li [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">
               <span class="menu-icon">💬</span> Quản lý Đánh giá
             </li>
-            <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'">
+            <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'; notificationService.markTypeAsRead('HOMESTAY')">
               <span class="menu-icon">🏠</span> Quản lý Homestay
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('HOMESTAY') | async"></span>
             </li>
             <li [class.active]="activeTab === 'rooms'" (click)="activeTab = 'rooms'">
               <span class="menu-icon">🛏️</span> Quản lý Phòng
             </li>
-            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'">
+            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'; notificationService.markTypeAsRead('CHAT')">
               <span class="menu-icon">💬</span> Tin nhắn
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('CHAT') | async"></span>
             </li>
           </ul>
         </aside>
@@ -815,7 +818,7 @@ export class HostDashboardComponent implements OnInit {
     private amenityService: AmenityService,
     private roomService: RoomService,
     private roomTypeService: RoomTypeService,
-    private notification: NotificationService,
+    public notificationService: NotificationService,
     private confirmDialog: ConfirmDialogService,
     private statsService: StatisticsService,
     public reportService: ReportService
@@ -967,26 +970,26 @@ export class HostDashboardComponent implements OnInit {
     if (this.isEditMode && this.currentEditId) {
       this.homestayService.updateHomestay(this.currentEditId, fd).subscribe({
         next: () => {
-          this.notification.success('Cập nhật thành công! Các thay đổi đã được áp dụng ngay lập tức.');
+          this.notificationService.success('Cập nhật thành công! Các thay đổi đã được áp dụng ngay lập tức.');
           this.closeForm();
           this.loadHomestays();
           this.isLoading = false;
         },
         error: (err) => {
-          this.notification.error(err.error?.message || err.message);
+          this.notificationService.error(err.error?.message || err.message);
           this.isLoading = false;
         }
       });
     } else {
       this.homestayService.createHomestay(fd).subscribe({
         next: () => {
-          this.notification.success('Thêm mới thành công! Đang chờ duyệt.');
+          this.notificationService.success('Thêm mới thành công! Đang chờ duyệt.');
           this.closeForm();
           this.loadHomestays();
           this.isLoading = false;
         },
         error: (err) => {
-          this.notification.error(err.error?.message || err.message);
+          this.notificationService.error(err.error?.message || err.message);
           this.isLoading = false;
         }
       });
@@ -1003,10 +1006,10 @@ export class HostDashboardComponent implements OnInit {
 
     this.homestayService.deleteHomestay(id).subscribe({
       next: () => {
-        this.notification.success('Đã xóa thành công!');
+        this.notificationService.success('Đã xóa thành công!');
         this.loadHomestays();
       },
-      error: (err) => this.notification.error(err.error?.message || err.message)
+      error: (err) => this.notificationService.error(err.error?.message || err.message)
     });
   }
 
@@ -1085,7 +1088,7 @@ export class HostDashboardComponent implements OnInit {
   submitRoomForm(event: Event) {
     event.preventDefault();
     if (!this.selectedHomestayForRoom || !this.roomFormData.roomTypeId) {
-      this.notification.warning('Vui lòng chọn Homestay và Loại phòng!');
+      this.notificationService.warning('Vui lòng chọn Homestay và Loại phòng!');
       return;
     }
     this.isLoading = true;
@@ -1106,26 +1109,26 @@ export class HostDashboardComponent implements OnInit {
     if (this.isRoomEditMode && this.currentRoomEditId) {
       this.roomService.updateRoom(this.currentRoomEditId, fd).subscribe({
         next: () => {
-          this.notification.success('Cập nhật phòng thành công!');
+          this.notificationService.success('Cập nhật phòng thành công!');
           this.closeRoomForm();
           this.loadRooms();
           this.isLoading = false;
         },
         error: (err) => {
-          this.notification.error(err.error?.message || err.message);
+          this.notificationService.error(err.error?.message || err.message);
           this.isLoading = false;
         }
       });
     } else {
       this.roomService.createRoom(this.selectedHomestayForRoom, fd).subscribe({
         next: () => {
-          this.notification.success('Thêm phòng thành công!');
+          this.notificationService.success('Thêm phòng thành công!');
           this.closeRoomForm();
           this.loadRooms();
           this.isLoading = false;
         },
         error: (err) => {
-          this.notification.error(err.error?.message || err.message);
+          this.notificationService.error(err.error?.message || err.message);
           this.isLoading = false;
         }
       });
@@ -1142,10 +1145,10 @@ export class HostDashboardComponent implements OnInit {
 
     this.roomService.deleteRoom(id).subscribe({
       next: () => {
-        this.notification.success('Đã xóa phòng!');
+        this.notificationService.success('Đã xóa phòng!');
         this.loadRooms();
       },
-      error: (err) => this.notification.error(err.error?.message || err.message)
+      error: (err) => this.notificationService.error(err.error?.message || err.message)
     });
   }
 

@@ -33,6 +33,7 @@ public class HomestayService {
     private final AmenityRepository amenityRepository;
     private final FileStorageService fileStorageService;
     private final ReviewRepository reviewRepository;
+    private final NotificationService notificationService;
 
     // PUBLIC
     public List<HomestayDto> getActiveHomestays() {
@@ -85,6 +86,22 @@ public class HomestayService {
         Homestay savedHomestay = homestayRepository.save(homestay);
 
         saveAmenitiesAndImages(savedHomestay, amenityIds, images);
+
+        // Notify Admin (or just system log for now, but usually we notify host that it's pending)
+        notificationService.createNotification(
+                host.getUsername(),
+                "Homestay '" + name + "' c\u1ee7a b\u1ea1n \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o v\u00e0 \u0111ang ch\u1edd qu\u1ea3n tr\u1ecb vi\u00ean ph\u00ea duy\u1ec7t.",
+                "HOMESTAY",
+                savedHomestay.getId().toString()
+        );
+
+        // Notify Admin
+        notificationService.createNotification(
+                "admin",
+                "C\u00f3 Homestay m\u1edbi \u0111ang ch\u1edd ph\u00ea duy\u1ec7t: " + name,
+                "HOMESTAY",
+                savedHomestay.getId().toString()
+        );
 
         return mapToDto(homestayRepository.findById(savedHomestay.getId()).get());
     }
@@ -187,7 +204,16 @@ public class HomestayService {
         homestay.setStatus(status);
         homestay.setAdminReason(adminReason);
 
-        return mapToDto(homestayRepository.save(homestay));
+        Homestay saved = homestayRepository.save(homestay);
+
+        // Notify Host
+        String message = status == HomestayStatus.ACTIVE ? 
+                "Chúc mừng! Homestay '" + homestay.getName() + "' của bạn đã được phê duyệt và hiển thị trên hệ thống." :
+                "Homestay '" + homestay.getName() + "' của bạn đã bị từ chối. Lý do: " + adminReason;
+        
+        notificationService.createNotification(homestay.getHost().getUsername(), message, "HOMESTAY", homestay.getId().toString());
+
+        return mapToDto(saved);
     }
 
     // MAPPER
