@@ -46,10 +46,22 @@ public class FileStorageService {
 
             Path targetLocation = this.fileStorageLocation.resolve(newFileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-
             return "/uploads/proofs/" + newFileName;
         } catch (IOException ex) {
             throw new RuntimeException("Could not store file " + originalFileName + ". Please try again!", ex);
+        }
+    }
+
+    public void deleteFile(String fileUrl) {
+        if (fileUrl == null || !fileUrl.startsWith("/uploads/proofs/")) {
+            return;
+        }
+        try {
+            String fileName = fileUrl.replace("/uploads/proofs/", "");
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+            Files.deleteIfExists(filePath);
+        } catch (IOException ex) {
+            System.err.println("Could not delete file: " + fileUrl);
         }
     }
 }

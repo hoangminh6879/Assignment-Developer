@@ -30,7 +30,7 @@ public class Homestay {
     private String name;
 
     @Nationalized
-    @Column(columnDefinition = "NVARCHAR(2000)")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
     @Nationalized

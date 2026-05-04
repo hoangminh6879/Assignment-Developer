@@ -79,11 +79,12 @@ public class HomestayController {
             @RequestParam("pricePerNight") BigDecimal pricePerNight,
             @RequestParam("maxGuests") Integer maxGuests,
             @RequestParam(value = "amenityIds", required = false) List<Long> amenityIds,
-            @RequestParam(value = "images", required = false) List<MultipartFile> images
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam(value = "deleteImageIds", required = false) List<UUID> deleteImageIds
     ) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return ResponseEntity.ok(homestayService.updateHomestay(
-                id, auth.getName(), name, description, address, city, pricePerNight, maxGuests, amenityIds, images));
+                id, auth.getName(), name, description, address, city, pricePerNight, maxGuests, amenityIds, images, deleteImageIds));
     }
 
     @DeleteMapping("/host/homestays/{id}")

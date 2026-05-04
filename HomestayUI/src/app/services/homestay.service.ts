@@ -24,6 +24,7 @@ export interface HomestayDto {
   hostName: string;
   images: HomestayImageDto[];
   amenities: AmenityDto[];
+  roomTypeNames: string[];
   viewCount?: number;
   averageRating?: number;
   reviewCount?: number;

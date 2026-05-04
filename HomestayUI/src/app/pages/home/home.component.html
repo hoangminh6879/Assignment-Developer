@@ -3,12 +3,60 @@
 <div class="home-container">
   <!-- Hero Section -->
   <section class="hero animate-fade-in">
-    <div class="hero-content">
-      <h1>Tìm Ngôi Nhà Thứ Hai Của Bạn</h1>
-      <p>Khám phá những homestay độc đáo và ấm cúng trên khắp Việt Nam</p>
-      <div class="search-bar">
-        <input type="text" placeholder="Bạn muốn đi đâu?">
-        <button class="btn-search">Tìm kiếm</button>
+    <div class="hero-content animate-fade-in">
+      <h1>Khám Phá Homestay Tuyệt Vời</h1>
+      <p>Tìm kiếm nơi dừng chân lý tưởng cho chuyến đi của bạn</p>
+
+      <div class="search-wrapper">
+        <div class="search-bar">
+          <input type="text" [(ngModel)]="searchQuery" (input)="applyFilters()" placeholder="Bạn muốn đi đâu?">
+          <div class="search-actions">
+            <button class="btn-filter-toggle" (click)="toggleFilters()" [class.active]="showFilters"
+              title="Bộ lọc nâng cao">
+              <i class="fa-solid fa-filter"></i>
+            </button>
+            <button class="btn-search" (click)="applyFilters()">Tìm kiếm</button>
+          </div>
+        </div>
+
+        <!-- ADVANCED FILTERS DROPDOWN -->
+        <div class="advanced-filters-panel" *ngIf="showFilters">
+          <div class="filter-grid">
+            <div class="filter-item">
+              <label>🏙️ Thành phố</label>
+              <select [(ngModel)]="searchCity" (change)="applyFilters()">
+                <option value="">Tất cả</option>
+                <option *ngFor="let city of cities" [value]="city">{{ city }}</option>
+              </select>
+            </div>
+
+            <div class="filter-item">
+              <label>🏠 Loại phòng</label>
+              <select [(ngModel)]="selectedRoomType" (change)="applyFilters()">
+                <option value="">Tất cả</option>
+                <option *ngFor="let rt of roomTypes" [value]="rt.name">{{ rt.name }}</option>
+              </select>
+            </div>
+
+            <div class="filter-item">
+              <label>💰 Giá tối đa</label>
+              <input type="number" [(ngModel)]="maxPrice" (input)="applyFilters()" placeholder="VD: 1000000">
+            </div>
+
+            <div class="filter-item">
+              <label>⭐ Đánh giá</label>
+              <select [(ngModel)]="minStars" (change)="applyFilters()">
+                <option [value]="0">Tất cả</option>
+                <option [value]="4">4+ sao</option>
+                <option [value]="4.5">4.5+ sao</option>
+                <option [value]="5">5 sao</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <button class="btn-clear" (click)="resetFilters()">Đặt lại tất cả</button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -22,31 +70,31 @@
 
     <div class="homestay-grid" *ngIf="featuredHomestays.length > 0; else noData">
       @for (home of featuredHomestays; track home.id) {
-        <div class="home-card" (click)="viewDetail(home)">
-          <div class="card-image">
-            <img *ngIf="home.images && home.images.length > 0" [src]="'http://localhost:9999' + home.images[0].url" [alt]="home.name">
-            <div *ngIf="!home.images || home.images.length === 0" class="no-image-placeholder">🏠</div>
-            <div class="badge">Đang mở</div>
+      <div class="home-card" (click)="viewDetail(home)">
+        <div class="card-image">
+          <img *ngIf="home.images && home.images.length > 0" [src]="'http://localhost:9999' + home.images[0].url"
+            [alt]="home.name">
+          <div *ngIf="!home.images || home.images.length === 0" class="no-image-placeholder">🏠</div>
+          <div class="badge">Đang mở</div>
+        </div>
+        <div class="card-body">
+          <div class="card-header">
+            <h3>{{ home.name }}</h3>
+            <span class="rating">★ {{ (home.averageRating || 0) | number:'1.1-1' }}</span>
           </div>
-          <div class="card-body">
-            <div class="card-header">
-              <h3>{{ home.name }}</h3>
-              <span class="rating">★ {{ (home.averageRating || 0) | number:'1.1-1' }}</span>
-            </div>
-            <p class="location">📍 {{ home.city }}</p>
-            <div class="amenities-preview">
-              <span *ngFor="let am of home.amenities | slice:0:3" class="am-icon" [title]="am.name">{{ am.iconUrl }}</span>
-              <span *ngIf="home.amenities.length > 3" class="am-icon">...</span>
-            </div>
-            <div class="card-footer">
-              <span class="price">{{ home.pricePerNight | number }}đ <span>/ đêm</span></span>
-              <div class="card-actions">
-                <button class="btn-action btn-view" (click)="viewDetail(home); $event.stopPropagation()">Chi tiết</button>
-                <button *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')" class="btn-action btn-book" [routerLink]="['/booking', home.id]" (click)="incrementView(home.id); $event.stopPropagation()">Đặt phòng</button>
-              </div>
+          <p class="location">📍 {{ home.city }}</p>
+          <p class="card-description">{{ home.description }}</p>
+          <div class="card-footer">
+            <span class="price">{{ home.pricePerNight | number }}đ <span>/ đêm</span></span>
+            <div class="card-actions">
+              <button class="btn-action btn-view" (click)="viewDetail(home); $event.stopPropagation()">Chi tiết</button>
+              <button *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')" class="btn-action btn-book"
+                [routerLink]="['/booking', home.id]" (click)="incrementView(home.id); $event.stopPropagation()">Đặt
+                phòng</button>
             </div>
           </div>
         </div>
+      </div>
       }
     </div>
     <ng-template #noData>
@@ -68,21 +116,16 @@
       <!-- SLIDESHOW -->
       <div class="slideshow" *ngIf="selectedHomestay.images && selectedHomestay.images.length > 0">
         <div class="slide-track">
-          <img
-            [src]="'http://localhost:9999' + selectedHomestay.images[slideIndex].url"
-            class="slide-img"
-            [alt]="selectedHomestay.name"
-          />
+          <img [src]="'http://localhost:9999' + selectedHomestay.images[slideIndex].url" class="slide-img"
+            [alt]="selectedHomestay.name" />
         </div>
-        <button class="slide-btn slide-prev" (click)="prevSlide()" *ngIf="selectedHomestay.images.length > 1">&#10094;</button>
-        <button class="slide-btn slide-next" (click)="nextSlide()" *ngIf="selectedHomestay.images.length > 1">&#10095;</button>
+        <button class="slide-btn slide-prev" (click)="prevSlide()"
+          *ngIf="selectedHomestay.images.length > 1">&#10094;</button>
+        <button class="slide-btn slide-next" (click)="nextSlide()"
+          *ngIf="selectedHomestay.images.length > 1">&#10095;</button>
         <div class="slide-dots" *ngIf="selectedHomestay.images.length > 1">
-          <span
-            *ngFor="let img of selectedHomestay.images; let i = index"
-            class="dot"
-            [class.active]="i === slideIndex"
-            (click)="goToSlide(i)"
-          ></span>
+          <span *ngFor="let img of selectedHomestay.images; let i = index" class="dot" [class.active]="i === slideIndex"
+            (click)="goToSlide(i)"></span>
         </div>
         <div class="slide-counter" *ngIf="selectedHomestay.images.length > 1">
           {{ slideIndex + 1 }} / {{ selectedHomestay.images.length }}
@@ -119,7 +162,8 @@
         <div class="info-item info-full" *ngIf="selectedHomestay.amenities && selectedHomestay.amenities.length > 0">
           <span class="info-label">✨ Tiện ích</span>
           <div class="amenity-tags">
-            <span class="amenity-tag" *ngFor="let am of selectedHomestay.amenities">{{ am.iconUrl }} {{ am.name }}</span>
+            <span class="amenity-tag" *ngFor="let am of selectedHomestay.amenities">{{ am.iconUrl }} {{ am.name
+              }}</span>
           </div>
         </div>
       </div> <!-- end modal-info-grid -->
@@ -127,14 +171,14 @@
       <!-- Reviews Section -->
       <div class="reviews-section">
         <h3>💬 Đánh giá từ khách hàng ({{ reviews.length }})</h3>
-        
+
         <div class="review-list" *ngIf="reviews.length > 0; else noReviews">
           <div class="review-item animate-fade-in" *ngFor="let review of reviews">
             <div class="review-header">
               <div class="user-meta">
-                <span class="avatar">{{ review.userFullName?.charAt(0) || 'U' }}</span>
+                <span class="avatar">{{ review.userFullName.charAt(0) || 'U' }}</span>
                 <div class="user-name-date">
-                  <strong>{{ review.userFullName || 'Khách hàng' }}</strong>
+                  <strong>{{ review.userFullName }}</strong>
                   <span class="date">{{ review.createdAt | date:'dd/MM/yyyy' }}</span>
                 </div>
               </div>
@@ -146,7 +190,7 @@
             <div class="review-images" *ngIf="review.imageUrls && review.imageUrls.length > 0">
               <img *ngFor="let url of review.imageUrls" [src]="'http://localhost:9999' + url" alt="Review Image">
             </div>
-            
+
             <!-- Host Response -->
             <div class="host-response" *ngIf="review.response">
               <div class="response-header">
@@ -159,7 +203,7 @@
             </div>
           </div>
         </div>
-        
+
         <ng-template #noReviews>
           <div class="empty-reviews">
             <p>Chưa có đánh giá nào cho homestay này.</p>
@@ -168,7 +212,8 @@
       </div>
     </div> <!-- end modal-body -->
     <div class="modal-footer" *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')">
-      <button class="btn-book-large" [routerLink]="['/booking', selectedHomestay.id]" (click)="closeDetail()">Đặt phòng ngay</button>
+      <button class="btn-book-large" [routerLink]="['/booking', selectedHomestay.id]" (click)="closeDetail()">Đặt phòng
+        ngay</button>
     </div>
   </div> <!-- end modal-box -->
 </div> <!-- end modal-overlay -->

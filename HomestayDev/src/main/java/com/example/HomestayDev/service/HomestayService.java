@@ -91,7 +91,8 @@ public class HomestayService {
 
     @Transactional
     public HomestayDto updateHomestay(UUID homestayId, String username, String name, String description, String address, String city,
-                                      BigDecimal pricePerNight, Integer maxGuests, List<Long> amenityIds, List<MultipartFile> images) {
+                                      BigDecimal pricePerNight, Integer maxGuests, List<Long> amenityIds, List<MultipartFile> images, 
+                                      List<UUID> deleteImageIds) {
         Homestay homestay = homestayRepository.findById(homestayId)
                 .orElseThrow(() -> new RuntimeException("Homestay not found"));
 
@@ -105,18 +106,25 @@ public class HomestayService {
         homestay.setCity(city);
         homestay.setPricePerNight(pricePerNight);
         homestay.setMaxGuests(maxGuests);
-        homestay.setStatus(HomestayStatus.PENDING); // Need to be re-approved
+        homestay.setStatus(HomestayStatus.ACTIVE); 
         homestay.setAdminReason(null);
 
         Homestay savedHomestay = homestayRepository.save(homestay);
 
-        // Delete old amenities and images
-        homestayAmenityRepository.deleteByHomestayId(homestayId);
-        // Note: we might not want to delete old images if new images aren't provided, 
-        // but for simplicity, if images are provided, we overwrite. If not, we keep old ones.
-        if (images != null && !images.isEmpty()) {
-            homestayImageRepository.deleteByHomestayId(homestayId);
+        // Delete specific images
+        if (deleteImageIds != null && !deleteImageIds.isEmpty()) {
+            for (UUID imgId : deleteImageIds) {
+                homestayImageRepository.findById(imgId).ifPresent(img -> {
+                    if (img.getHomestay().getId().equals(homestayId)) {
+                        fileStorageService.deleteFile(img.getUrl());
+                        homestayImageRepository.delete(img);
+                    }
+                });
+            }
         }
+
+        // Delete old amenities
+        homestayAmenityRepository.deleteByHomestayId(homestayId);
 
         saveAmenitiesAndImages(savedHomestay, amenityIds, images);
 
@@ -202,6 +210,14 @@ public class HomestayService {
                     .build()).collect(Collectors.toList());
         }
 
+        List<String> roomTypeNames = new ArrayList<>();
+        if (homestay.getRooms() != null) {
+            roomTypeNames = homestay.getRooms().stream()
+                    .map(room -> room.getRoomType().getName())
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
         List<Review> reviews = reviewRepository.findByBookingHomestayId(homestay.getId());
         Double avgRating = reviews.isEmpty() ? 0.0 : reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
         Integer reviewCount = reviews.size();
@@ -222,6 +238,7 @@ public class HomestayService {
                 .viewCount(homestay.getViewCount())
                 .images(images)
                 .amenities(amenities)
+                .roomTypeNames(roomTypeNames)
                 .averageRating(avgRating)
                 .reviewCount(reviewCount)
                 .build();
