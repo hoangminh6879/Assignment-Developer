@@ -39,20 +39,23 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
             <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
               <span class="menu-icon">🧾</span> Quản lý Đơn hàng
             </li>
-            <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'">
+            <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'; notificationService.markTypeAsRead('SYSTEM')">
               <span class="menu-icon">👑</span> Yêu cầu Host
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('SYSTEM') | async"></span>
             </li>
             <li [class.active]="activeTab === 'amenities'" (click)="activeTab = 'amenities'">
               <span class="menu-icon">✨</span> Tiện ích
             </li>
-            <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'">
+            <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'; notificationService.markTypeAsRead('HOMESTAY')">
               <span class="menu-icon">🏠</span> Duyệt Homestay
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('HOMESTAY') | async"></span>
             </li>
             <li [class.active]="activeTab === 'room-types'" (click)="activeTab = 'room-types'">
               <span class="menu-icon">🛏️</span> Loại phòng
             </li>
-            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'">
+            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'; notificationService.markTypeAsRead('CHAT')">
               <span class="menu-icon">💬</span> Tin nhắn
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('CHAT') | async"></span>
             </li>
           </ul>
         </aside>
@@ -521,6 +524,7 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
     .sidebar-menu li:hover { background: #f8fafc; color: #0f172a; }
     .sidebar-menu li.active { background: #4f46e5; color: white; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2); }
     .menu-icon { font-size: 18px; }
+    .nav-dot { position: absolute; top: 18px; right: 20px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 0 2px white; }
 
     .main-content { flex: 1; min-width: 0; }
     
@@ -745,6 +749,7 @@ export class AdminDashboardComponent implements OnInit {
     private homestayService: HomestayService,
     private roomTypeService: RoomTypeService,
     private notification: NotificationService,
+    public notificationService: NotificationService,
     private confirmDialog: ConfirmDialogService,
     private statsService: StatisticsService,
     public reportService: ReportService

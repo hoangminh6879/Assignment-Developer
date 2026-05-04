@@ -29,6 +29,7 @@ public class UpgradeRequestService {
     private final UserRepository userRepository;
     private final RuntimeService runtimeService;
     private final TaskService taskService;
+    private final NotificationService notificationService;
 
     /**
      * Creates a new host upgrade request and starts a Camunda process instance.
@@ -60,6 +61,22 @@ public class UpgradeRequestService {
         variables.put("userEmail", user.getEmail());
 
         runtimeService.startProcessInstanceByKey("hostUpgradeProcess", variables);
+
+        // Notify User
+        notificationService.createNotification(
+                user.getUsername(),
+                "Y\u00eau c\u1ea7u n\u00e2ng c\u1ea5p l\u00ean Ch\u1ee7 nh\u00e0 c\u1ee7a b\u1ea1n \u0111\u00e3 \u0111\u01b0\u1ee3c g\u1eedi v\u00e0 \u0111ang ch\u1edd ph\u00ea duy\u1ec7t.",
+                "SYSTEM",
+                request.getId().toString()
+        );
+        
+        // Notify Admin
+        notificationService.createNotification(
+                "admin",
+                "C\u00f3 y\u00eau c\u1ea7u n\u00e2ng c\u1ea5p Host m\u1edbi t\u1eeb " + username,
+                "SYSTEM",
+                request.getId().toString()
+        );
 
         log.info("[Camunda] Process started for upgradeRequest={}, user={}", request.getId(), username);
         return mapToDto(request);
@@ -101,6 +118,14 @@ public class UpgradeRequestService {
 
         taskService.complete(task.getId(), variables);
 
+        // Notify User
+        notificationService.createNotification(
+                request.getUser().getUsername(),
+                "Ch\u00fac m\u1eebng! Y\u00eau c\u1ea7u n\u00e2ng c\u1ea5p l\u00ean Ch\u1ee7 nh\u00e0 c\u1ee7a b\u1ea1n \u0111\u00e3 \u0111\u01b0\u1ee3c ph\u00ea duy\u1ec7t. Vui l\u00f2ng \u0111\u0103ng nh\u1eadp l\u1ea1i \u0111\u1ec3 tr\u1ea3i nghi\u1ec7m c\u00e1c t\u00ednh n\u0103ng m\u1edbi.",
+                "SYSTEM",
+                request.getId().toString()
+        );
+
         log.info("[Camunda] Task {} completed with APPROVED for requestId={}", task.getId(), requestId);
 
         // Reload from DB – status is updated by the delegate
@@ -128,6 +153,14 @@ public class UpgradeRequestService {
         variables.put("adminNote", adminNote != null ? adminNote : "");
 
         taskService.complete(task.getId(), variables);
+
+        // Notify User
+        notificationService.createNotification(
+                request.getUser().getUsername(),
+                "Y\u00eau c\u1ea7u n\u00e2ng c\u1ea5p l\u00ean Ch\u1ee7 nh\u00e0 c\u1ee7a b\u1ea1n \u0111\u00e3 b\u1ecb t\u1eeb ch\u1ed1i. L\u00fd do: " + adminNote,
+                "SYSTEM",
+                request.getId().toString()
+        );
 
         log.info("[Camunda] Task {} completed with REJECTED for requestId={}", task.getId(), requestId);
 
