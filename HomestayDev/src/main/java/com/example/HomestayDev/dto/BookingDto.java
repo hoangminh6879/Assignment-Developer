@@ -21,6 +21,8 @@ public class BookingDto {
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private BigDecimal totalPrice;
+    private BigDecimal discountAmount;
+    private String appliedVoucherCode;
     private BookingStatus status;
     private PaymentStatus paymentStatus;
     private String paymentMethod;

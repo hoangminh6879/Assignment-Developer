@@ -34,6 +34,13 @@ public class Booking {
     @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
 
+    @Column(name = "discount_amount")
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "applied_voucher_code")
+    private String appliedVoucherCode;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     private BookingStatus status = BookingStatus.PENDING;
