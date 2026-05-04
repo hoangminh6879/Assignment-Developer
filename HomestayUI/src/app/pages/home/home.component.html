@@ -61,11 +61,9 @@
 <!-- HOMESTAY DETAIL MODAL -->
 <div class="modal-overlay" *ngIf="selectedHomestay" (click)="closeDetail()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>🏠 {{ selectedHomestay.name }}</h3>
-      <button class="modal-close" (click)="closeDetail()">&#x2715;</button>
-    </div>
+    <button class="modal-close-btn" (click)="closeDetail()">&#x2715;</button>
     <div class="modal-body">
+      <h2 class="modal-title">🏠 {{ selectedHomestay.name }}</h2>
 
       <!-- SLIDESHOW -->
       <div class="slideshow" *ngIf="selectedHomestay.images && selectedHomestay.images.length > 0">

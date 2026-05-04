@@ -1,6 +1,7 @@
 package com.example.HomestayDev.service;
 
 import com.example.HomestayDev.model.Booking;
+import com.example.HomestayDev.model.User;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -74,4 +75,63 @@ public class EmailService {
                 + "</div>"
                 + "</div>";
     }
+
+    public void sendUpgradeApprovalEmail(User user) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(user.getEmail());
+            helper.setSubject("🎉 Chúc mừng! Yêu cầu nâng cấp tài khoản Host đã được phê duyệt");
+            String html = "<div style=\"font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#f9fafb;border-radius:12px;overflow:hidden;\">"
+                    + "<div style=\"background:linear-gradient(135deg,#10b981,#059669);padding:30px 20px;text-align:center;\">"
+                    + "  <h1 style=\"color:#fff;margin:0;font-size:24px;\">🏡 Tài Khoản Host Được Phê Duyệt!</h1>"
+                    + "</div>"
+                    + "<div style=\"padding:30px;background:#fff;\">"
+                    + "  <p style=\"font-size:16px;color:#374151;\">Xin chào <strong>" + user.getFirstName() + " " + user.getLastName() + "</strong>,</p>"
+                    + "  <p style=\"font-size:15px;color:#4b5563;line-height:1.6;\">Chúng tôi vui mừng thông báo rằng yêu cầu nâng cấp tài khoản lên <strong>Host</strong> của bạn đã được <strong style=\"color:#10b981;\">PHÊ DUYỆT</strong>.</p>"
+                    + "  <p style=\"font-size:15px;color:#4b5563;line-height:1.6;\">Từ bây giờ, bạn có thể đăng ký homestay và bắt đầu cho thuê trên nền tảng của chúng tôi.</p>"
+                    + "  <div style=\"text-align:center;margin:30px 0;\">"
+                    + "    <a href=\"http://localhost:4200/dashboard\" style=\"background:#10b981;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px;\">Truy cập Dashboard Host</a>"
+                    + "  </div>"
+                    + "</div>"
+                    + "<div style=\"background:#f3f4f6;padding:20px;text-align:center;\">"
+                    + "  <p style=\"margin:0;color:#6b7280;font-size:13px;\">© 2026 Homestay System. All rights reserved.</p>"
+                    + "</div></div>";
+            helper.setText(html, true);
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("Failed to send upgrade approval email: " + e.getMessage());
+        }
+    }
+
+    public void sendUpgradeRejectionEmail(User user, String adminNote) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(user.getEmail());
+            helper.setSubject("Thông báo về yêu cầu nâng cấp tài khoản Host");
+            String noteHtml = (adminNote != null && !adminNote.isBlank())
+                    ? "<div style=\"background:#fef2f2;border-left:4px solid #ef4444;padding:15px;border-radius:4px;margin:20px 0;\">"
+                      + "<p style=\"margin:0;color:#991b1b;font-size:14px;\"><strong>Lý do từ Admin:</strong> " + adminNote + "</p></div>"
+                    : "";
+            String html = "<div style=\"font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#f9fafb;border-radius:12px;overflow:hidden;\">"
+                    + "<div style=\"background:linear-gradient(135deg,#6b7280,#4b5563);padding:30px 20px;text-align:center;\">"
+                    + "  <h1 style=\"color:#fff;margin:0;font-size:24px;\">Yêu Cầu Nâng Cấp Tài Khoản</h1>"
+                    + "</div>"
+                    + "<div style=\"padding:30px;background:#fff;\">"
+                    + "  <p style=\"font-size:16px;color:#374151;\">Xin chào <strong>" + user.getFirstName() + " " + user.getLastName() + "</strong>,</p>"
+                    + "  <p style=\"font-size:15px;color:#4b5563;line-height:1.6;\">Rất tiếc, yêu cầu nâng cấp tài khoản lên Host của bạn đã <strong style=\"color:#ef4444;\">KHÔNG ĐƯỢC PHÊ DUYỆT</strong> lần này.</p>"
+                    + noteHtml
+                    + "  <p style=\"font-size:15px;color:#4b5563;line-height:1.6;\">Bạn có thể cập nhật thông tin và gửi lại yêu cầu sau khi đã bổ sung đầy đủ tài liệu cần thiết.</p>"
+                    + "</div>"
+                    + "<div style=\"background:#f3f4f6;padding:20px;text-align:center;\">"
+                    + "  <p style=\"margin:0;color:#6b7280;font-size:13px;\">© 2026 Homestay System. All rights reserved.</p>"
+                    + "</div></div>";
+            helper.setText(html, true);
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("Failed to send upgrade rejection email: " + e.getMessage());
+        }
+    }
 }
+

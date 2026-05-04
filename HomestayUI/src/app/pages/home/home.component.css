@@ -304,45 +304,37 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px 28px;
-  border-bottom: 1px solid #f1f5f9;
-  position: sticky;
-  top: 0;
-  background: white;
-  z-index: 100;
-  border-radius: 24px 24px 0 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.modal-header h3 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.modal-close {
+.modal-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
   background: #f1f5f9;
   border: none;
   border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
   color: #64748b;
+  z-index: 110;
 }
 
-.modal-close:hover {
+.modal-close-btn:hover {
   background: #fee2e2;
   color: #ef4444;
+  transform: rotate(90deg);
+}
+
+.modal-title {
+  margin: 0 0 24px 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  padding-right: 50px; /* Space for close button */
 }
 
 .modal-body {
@@ -371,7 +363,7 @@
 .slideshow {
   position: relative;
   width: 100%;
-  height: 280px;
+  height: 500px; /* Increased from 280px to show more of the image */
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 24px;
@@ -381,12 +373,15 @@
 .slide-track {
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .slide-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Changed from cover to show full image */
   display: block;
   transition: opacity 0.3s ease;
 }
