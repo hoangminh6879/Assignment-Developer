@@ -34,49 +34,57 @@ import { ReviewService, ReviewDto } from '../../services/review.service';
       </div>
 
       <!-- Booking Details Modal -->
-      <div class="modal-overlay" *ngIf="selectedBookingDetails">
+      <div class="modal-overlay" *ngIf="selectedBookingDetails as details">
         <div class="modal-content animate-fade-in">
           <button class="close-btn" (click)="closeDetails()">×</button>
           <h2>Chi tiết đơn đặt phòng</h2>
           <div class="modal-body">
             <div class="booking-summary-modal">
               <h3>Thông tin cơ bản</h3>
-              <p><strong>Khách hàng:</strong> {{ selectedBookingDetails.userName || 'N/A' }}</p>
-              <p><strong>Homestay:</strong> {{ selectedBookingDetails.homestayName }}</p>
-              <p><strong>Phòng:</strong> {{ selectedBookingDetails.roomTypeName }} - {{ selectedBookingDetails.roomName }}</p>
-              <p><strong>Thời gian:</strong> {{ selectedBookingDetails.checkInDate | date:'dd/MM/yyyy' }} - {{ selectedBookingDetails.checkOutDate | date:'dd/MM/yyyy' }}</p>
-              <p><strong>Đặt lúc:</strong> {{ selectedBookingDetails.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+              <p><strong>Khách hàng:</strong> {{ details.userName || 'N/A' }}</p>
+              <p><strong>Homestay:</strong> {{ details.homestayName }}</p>
+              <p><strong>Phòng:</strong> {{ details.roomTypeName }} - {{ details.roomName }}</p>
+              <p><strong>Thời gian:</strong> {{ details.checkInDate | date:'dd/MM/yyyy' }} - {{ details.checkOutDate | date:'dd/MM/yyyy' }}</p>
+              <p><strong>Đặt lúc:</strong> {{ details.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
             </div>
             
             <div class="booking-summary-modal" style="margin-top: 20px;">
               <h3>Thông tin thanh toán & Trạng thái</h3>
-              <p><strong>Tổng tiền:</strong> <span class="total-price-modal">{{ selectedBookingDetails.totalPrice | number }}đ</span></p>
-              <p><strong>Hình thức thanh toán:</strong> {{ selectedBookingDetails.paymentMethod === 'VNPAY' ? 'VNPay' : 'Tại quầy' }}</p>
+              <p *ngIf="details.appliedVoucherCode">
+                <strong>Mã giảm giá:</strong> 
+                <span class="v-code-badge">{{ details.appliedVoucherCode }}</span>
+              </p>
+              <p *ngIf="details.discountAmount && details.discountAmount > 0">
+                <strong>Số tiền giảm:</strong> 
+                <span class="discount-text">-{{ details.discountAmount | number }}đ</span>
+              </p>
+              <p><strong>Tổng tiền:</strong> <span class="total-price-modal">{{ details.totalPrice | number }}đ</span></p>
+              <p><strong>Hình thức thanh toán:</strong> {{ details.paymentMethod === 'VNPAY' ? 'VNPay' : 'Tại quầy' }}</p>
               <p>
                 <strong>Trạng thái thanh toán:</strong> 
-                <span class="badge" [ngClass]="selectedBookingDetails.paymentStatus.toLowerCase()">
-                  {{ selectedBookingDetails.paymentStatus === 'PAID' ? 'Đã trả' : 'Chưa trả' }}
+                <span class="badge" [ngClass]="details.paymentStatus?.toLowerCase() || ''">
+                  {{ details.paymentStatus === 'PAID' ? 'Đã trả' : 'Chưa trả' }}
                 </span>
                 <button 
-                  *ngIf="selectedBookingDetails.paymentMethod === 'VNPAY' && selectedBookingDetails.paymentStatus === 'UNPAID' && selectedBookingDetails.status === 'PENDING' && role === 'USER'"
+                  *ngIf="details.paymentMethod === 'VNPAY' && details.paymentStatus === 'UNPAID' && details.status === 'PENDING' && role === 'USER'"
                   class="btn-pay-now"
-                  (click)="payNow(selectedBookingDetails.id)"
+                  (click)="payNow(details.id)"
                   [disabled]="isPaying">
                   {{ isPaying ? 'Đang chuyển hướng...' : 'Thanh toán ngay' }}
                 </button>
               </p>
               <p>
                 <strong>Trạng thái đặt phòng:</strong> 
-                <span class="badge status-badge" [ngClass]="selectedBookingDetails.status.toLowerCase()">
-                  {{ selectedBookingDetails.status === 'CHECKED_IN' ? 'Đã nhận phòng' : selectedBookingDetails.status }}
+                <span class="badge status-badge" [ngClass]="details.status?.toLowerCase() || ''">
+                  {{ details.status === 'CHECKED_IN' ? 'Đã nhận phòng' : details.status }}
                 </span>
               </p>
             </div>
 
-            <div class="booking-summary-modal" style="margin-top: 20px; text-align: center;" *ngIf="selectedBookingDetails.checkInCode">
+            <div class="booking-summary-modal" style="margin-top: 20px; text-align: center;" *ngIf="details.checkInCode">
               <p style="margin: 0 0 10px; color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600;">Mã Đặt Phòng</p>
               <div style="display: inline-block; padding: 15px 30px; border-radius: 12px; background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%); border: 2px dashed #6366f1;">
-                <span style="color: #4f46e5; font-size: 28px; font-weight: 800; letter-spacing: 4px;">{{ selectedBookingDetails.checkInCode }}</span>
+                <span style="color: #4f46e5; font-size: 28px; font-weight: 800; letter-spacing: 4px;">{{ details.checkInCode }}</span>
               </div>
             </div>
           </div>
@@ -303,7 +311,8 @@ import { ReviewService, ReviewDto } from '../../services/review.service';
     .btn-cancel { background: #f1f5f9; color: #ef4444; border: 1px solid #fee2e2; }
     .btn-cancel:hover { background: #fee2e2; }
 
-    .code-badge { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 700; white-space: nowrap; }
+    .v-code-badge { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+    .discount-text { color: #10b981; font-weight: 700; }
     
     .status-badge { min-width: 100px; text-align: center; }
     .status-badge.pending { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }

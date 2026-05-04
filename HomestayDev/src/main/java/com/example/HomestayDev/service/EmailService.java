@@ -43,6 +43,13 @@ public class EmailService {
         String checkIn = booking.getCheckInDate().format(formatter);
         String checkOut = booking.getCheckOutDate().format(formatter);
         String price = String.format("%,d", booking.getTotalPrice().longValue());
+        
+        String discountHtml = "";
+        if (booking.getDiscountAmount() != null && booking.getDiscountAmount().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            String discountStr = String.format("%,d", booking.getDiscountAmount().longValue());
+            discountHtml = "      <tr><td style=\"padding: 8px 0; color: #6b7280; font-size: 14px;\">Mã giảm giá:</td><td style=\"padding: 8px 0; color: #10b981; font-weight: 600; font-size: 14px;\">" + booking.getAppliedVoucherCode() + "</td></tr>"
+                         + "      <tr><td style=\"padding: 8px 0; color: #6b7280; font-size: 14px;\">Giảm giá:</td><td style=\"padding: 8px 0; color: #10b981; font-weight: 600; font-size: 14px;\">-" + discountStr + " VNĐ</td></tr>";
+        }
 
         return "<div style=\"font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9fafb; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);\">"
                 + "<div style=\"background-color: #4f46e5; padding: 30px 20px; text-align: center;\">"
@@ -58,6 +65,7 @@ public class EmailService {
                 + "      <tr><td style=\"padding: 8px 0; color: #6b7280; font-size: 14px; width: 40%;\">Loại phòng:</td><td style=\"padding: 8px 0; color: #111827; font-weight: 500; font-size: 14px;\">" + booking.getRoom().getRoomType().getName() + " - " + booking.getRoom().getName() + "</td></tr>"
                 + "      <tr><td style=\"padding: 8px 0; color: #6b7280; font-size: 14px;\">Ngày nhận phòng:</td><td style=\"padding: 8px 0; color: #111827; font-weight: 500; font-size: 14px;\">" + checkIn + "</td></tr>"
                 + "      <tr><td style=\"padding: 8px 0; color: #6b7280; font-size: 14px;\">Ngày trả phòng:</td><td style=\"padding: 8px 0; color: #111827; font-weight: 500; font-size: 14px;\">" + checkOut + "</td></tr>"
+                + discountHtml
                 + "      <tr><td style=\"padding: 12px 0 0; color: #6b7280; font-size: 15px; border-top: 1px solid #e5e7eb; font-weight: 600;\">Tổng tiền:</td><td style=\"padding: 12px 0 0; color: #ef4444; font-weight: 700; font-size: 18px; border-top: 1px solid #e5e7eb;\">" + price + " VNĐ</td></tr>"
                 + "    </table>"
                 + "  </div>"

@@ -18,4 +18,5 @@ public class BookingRequestDto {
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private String paymentMethod;
+    private String voucherCode;
 }
