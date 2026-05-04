@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:activiti="http://activiti.org/bpmn"
+             xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.activiti.org/test">
+
+  <process id="hostUpgradeProcess" name="Host Upgrade Request Process" isExecutable="true"
+           camunda:historyTimeToLive="P180D">
+
+    <!-- Start Event -->
+    <startEvent id="start" name="Upgrade Request Submitted">
+      <outgoing>flow1</outgoing>
+    </startEvent>
+
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="reviewTask"/>
+
+    <!-- Admin Review UserTask -->
+    <userTask id="reviewTask" name="Review Host Upgrade Request"
+              camunda:candidateGroups="admin"
+              camunda:formKey="embedded:app:forms/review-upgrade-request.html">
+      <documentation>Admin reviews the host upgrade request and decides to approve or reject.</documentation>
+      <extensionElements>
+        <camunda:formData>
+          <camunda:formField id="approved" label="Phê duyệt?" type="boolean"/>
+          <camunda:formField id="adminNote" label="Ghi chú của Admin" type="string"/>
+        </camunda:formData>
+      </extensionElements>
+      <incoming>flow1</incoming>
+      <outgoing>flow2</outgoing>
+    </userTask>
+
+    <sequenceFlow id="flow2" sourceRef="reviewTask" targetRef="decisionGateway"/>
+
+    <!-- Decision Gateway -->
+    <exclusiveGateway id="decisionGateway" name="Approved?">
+      <incoming>flow2</incoming>
+      <outgoing>flowApprove</outgoing>
+      <outgoing>flowReject</outgoing>
+    </exclusiveGateway>
+
+    <!-- Approve path -->
+    <sequenceFlow id="flowApprove" name="Yes" sourceRef="decisionGateway" targetRef="approveTask">
+      <conditionExpression xsi:type="tFormalExpression">${approved == true}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Reject path -->
+    <sequenceFlow id="flowReject" name="No" sourceRef="decisionGateway" targetRef="rejectTask">
+      <conditionExpression xsi:type="tFormalExpression">${approved == false || approved == null}</conditionExpression>
+    </sequenceFlow>
+
+    <!-- Approve Service Task -->
+    <serviceTask id="approveTask" name="Approve &amp; Assign HOST Role"
+                 camunda:delegateExpression="${approveUpgradeDelegate}">
+      <incoming>flowApprove</incoming>
+      <outgoing>flow3</outgoing>
+    </serviceTask>
+
+    <!-- Reject Service Task -->
+    <serviceTask id="rejectTask" name="Reject Request &amp; Notify User"
+                 camunda:delegateExpression="${rejectUpgradeDelegate}">
+      <incoming>flowReject</incoming>
+      <outgoing>flow4</outgoing>
+    </serviceTask>
+
+    <sequenceFlow id="flow3" sourceRef="approveTask" targetRef="end"/>
+    <sequenceFlow id="flow4" sourceRef="rejectTask" targetRef="end"/>
+
+    <!-- End Event -->
+    <endEvent id="end" name="Process Completed">
+      <incoming>flow3</incoming>
+      <incoming>flow4</incoming>
+    </endEvent>
+
+  </process>
+
+  <!-- BPMN Diagram layout -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_hostUpgradeProcess">
+    <bpmndi:BPMNPlane id="BPMNPlane_hostUpgradeProcess" bpmnElement="hostUpgradeProcess">
+
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
+        <omgdc:Bounds x="152" y="182" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="128" y="225" width="86" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="reviewTask_di" bpmnElement="reviewTask">
+        <omgdc:Bounds x="250" y="160" width="200" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="decisionGateway_di" bpmnElement="decisionGateway" isMarkerVisible="true">
+        <omgdc:Bounds x="515" y="175" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="511" y="232" width="58" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="approveTask_di" bpmnElement="approveTask">
+        <omgdc:Bounds x="630" y="80" width="200" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="rejectTask_di" bpmnElement="rejectTask">
+        <omgdc:Bounds x="630" y="260" width="200" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="end_di" bpmnElement="end">
+        <omgdc:Bounds x="902" y="182" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="878" y="225" width="86" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="flow1_di" bpmnElement="flow1">
+        <omgdi:waypoint x="188" y="200"/>
+        <omgdi:waypoint x="250" y="200"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow2_di" bpmnElement="flow2">
+        <omgdi:waypoint x="450" y="200"/>
+        <omgdi:waypoint x="515" y="200"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flowApprove_di" bpmnElement="flowApprove">
+        <omgdi:waypoint x="540" y="175"/>
+        <omgdi:waypoint x="540" y="120"/>
+        <omgdi:waypoint x="630" y="120"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="546" y="143" width="22" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flowReject_di" bpmnElement="flowReject">
+        <omgdi:waypoint x="540" y="225"/>
+        <omgdi:waypoint x="540" y="300"/>
+        <omgdi:waypoint x="630" y="300"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="546" y="257" width="15" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow3_di" bpmnElement="flow3">
+        <omgdi:waypoint x="830" y="120"/>
+        <omgdi:waypoint x="920" y="120"/>
+        <omgdi:waypoint x="920" y="182"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow4_di" bpmnElement="flow4">
+        <omgdi:waypoint x="830" y="300"/>
+        <omgdi:waypoint x="920" y="300"/>
+        <omgdi:waypoint x="920" y="218"/>
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>
