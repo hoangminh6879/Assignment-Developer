@@ -15,10 +15,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.task.Task;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,6 +39,8 @@ public class HomestayService {
     private final FileStorageService fileStorageService;
     private final ReviewRepository reviewRepository;
     private final NotificationService notificationService;
+    private final RuntimeService runtimeService;
+    private final TaskService taskService;
 
     // PUBLIC
     public List<HomestayDto> getActiveHomestays() {
@@ -102,6 +109,13 @@ public class HomestayService {
                 "HOMESTAY",
                 savedHomestay.getId().toString()
         );
+
+        // Start Camunda Process
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("homestayId", savedHomestay.getId().toString());
+        variables.put("hostUsername", host.getUsername());
+        variables.put("homestayName", savedHomestay.getName());
+        runtimeService.startProcessInstanceByKey("homestayApprovalProcess", savedHomestay.getId().toString(), variables);
 
         return mapToDto(homestayRepository.findById(savedHomestay.getId()).get());
     }
@@ -201,19 +215,38 @@ public class HomestayService {
         Homestay homestay = homestayRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Homestay not found"));
 
-        homestay.setStatus(status);
-        homestay.setAdminReason(adminReason);
+        // Find Camunda Task
+        Task task = taskService.createTaskQuery()
+                .processInstanceBusinessKey(id.toString())
+                .taskDefinitionKey("reviewTask")
+                .singleResult();
 
-        Homestay saved = homestayRepository.save(homestay);
+        if (task == null) {
+            // Fallback for homestays without Camunda process
+            homestay.setStatus(status);
+            homestay.setAdminReason(adminReason);
+            Homestay saved = homestayRepository.save(homestay);
+            
+            String message = status == HomestayStatus.ACTIVE ? 
+                    "Ch\u00fac m\u1eebng! Homestay '" + homestay.getName() + "' c\u1ee7a b\u1ea1n \u0111\u00e3 \u0111\u01b0\u1ee3c ph\u00ea duy\u1ec7t v\u00e0 hi\u1ec3n th\u1ecb tr\u00ean h\u1ec7 th\u1ed1ng." :
+                    "Homestay '" + homestay.getName() + "' c\u1ee7a b\u1ea1n \u0111\u00e3 b\u1ecb t\u1eeb ch\u1ed1i. L\u00fd do: " + adminReason;
+            
+            notificationService.createNotification(homestay.getHost().getUsername(), message, "HOMESTAY", homestay.getId().toString());
+            return mapToDto(saved);
+        }
 
-        // Notify Host
-        String message = status == HomestayStatus.ACTIVE ? 
-                "Chúc mừng! Homestay '" + homestay.getName() + "' của bạn đã được phê duyệt và hiển thị trên hệ thống." :
-                "Homestay '" + homestay.getName() + "' của bạn đã bị từ chối. Lý do: " + adminReason;
-        
-        notificationService.createNotification(homestay.getHost().getUsername(), message, "HOMESTAY", homestay.getId().toString());
+        // Complete Camunda Task
+        Map<String, Object> variables = new HashMap<>();
+        boolean isApproved = (status == HomestayStatus.ACTIVE);
+        variables.put("approved", isApproved);
+        variables.put("adminReason", adminReason);
 
-        return mapToDto(saved);
+        taskService.complete(task.getId(), variables);
+
+        Homestay updatedHomestay = homestayRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Homestay not found after task completion"));
+
+        return mapToDto(updatedHomestay);
     }
 
     // MAPPER

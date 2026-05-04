@@ -24,7 +24,6 @@ public class AmenityService {
     public AmenityDto createAmenity(AmenityDto dto) {
         Amenity amenity = Amenity.builder()
                 .name(dto.getName())
-                .iconUrl(dto.getIconUrl())
                 .build();
         return mapToDto(amenityRepository.save(amenity));
     }
@@ -37,7 +36,6 @@ public class AmenityService {
         return AmenityDto.builder()
                 .id(amenity.getId())
                 .name(amenity.getName())
-                .iconUrl(amenity.getIconUrl())
                 .build();
     }
 }
