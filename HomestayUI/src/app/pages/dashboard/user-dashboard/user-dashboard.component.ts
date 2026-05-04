@@ -28,14 +28,16 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
             <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
               <span class="menu-icon">👤</span> Hồ sơ của tôi
             </li>
-            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
+            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'; notificationService.markTypeAsRead('BOOKING')">
               <span class="menu-icon">📅</span> Lịch sử đặt phòng
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('BOOKING') | async"></span>
             </li>
             <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'">
               <span class="menu-icon">🚀</span> Nâng cấp Host
             </li>
-            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'">
+            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'; notificationService.markTypeAsRead('CHAT')">
               <span class="menu-icon">💬</span> Tin nhắn
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('CHAT') | async"></span>
             </li>
           </ul>
         </aside>
@@ -105,6 +107,7 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
     .sidebar-menu li:hover { background: #f8fafc; color: #1a202c; }
     .sidebar-menu li.active { background: #4f46e5; color: white; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2); }
     .menu-icon { font-size: 18px; }
+    .nav-dot { position: absolute; top: 18px; right: 20px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 0 2px white; }
 
     .main-content { flex: 1; min-width: 0; }
     
@@ -151,7 +154,8 @@ export class UserDashboardComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private upgradeReqService: UpgradeRequestService,
-    private notification: NotificationService
+    private notification: NotificationService,
+    public notificationService: NotificationService
   ) {}
 
   ngOnInit() {

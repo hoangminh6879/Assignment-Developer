@@ -14,11 +14,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
         ex.printStackTrace();
         Map<String, String> response = new HashMap<>();
-        String errorMsg = ex.getClass().getSimpleName() + ": " + ex.getMessage();
-        if (ex.getCause() != null) {
-            errorMsg += " | Cause: " + ex.getCause().getClass().getSimpleName() + ": " + ex.getCause().getMessage();
-        }
+        String errorMsg = ex.getMessage();
         response.put("message", errorMsg);
-        return ResponseEntity.status(400).body(response);
+        response.put("error", ex.getClass().getSimpleName());
+        return ResponseEntity.status(500).body(response);
     }
 }

@@ -35,6 +35,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final ReviewService reviewService;
+    private final NotificationService notificationService;
 
     @Transactional
     public BookingDto createBooking(String username, BookingRequestDto request) {
@@ -92,6 +93,14 @@ public class BookingService {
                 .build();
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        // Notify Host
+        notificationService.createNotification(
+                homestay.getHost().getUsername(),
+                "B\u1ea1n c\u00f3 \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng m\u1edbi t\u1eeb " + user.getUsername() + " cho " + homestay.getName(),
+                "BOOKING",
+                savedBooking.getId().toString()
+        );
 
         return mapToDto(savedBooking);
     }
@@ -163,6 +172,14 @@ public class BookingService {
 
         bookingRepository.save(booking);
 
+        // Notify User
+        notificationService.createNotification(
+                booking.getUser().getUsername(),
+                "\u0110\u01a1n \u0111\u1eb7t ph\u00f2ng " + booking.getHomestay().getName() + " c\u1ee7a b\u1ea1n \u0111\u00e3 \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn!",
+                "BOOKING",
+                booking.getId().toString()
+        );
+
         return mapToDto(booking);
     }
 
@@ -208,7 +225,17 @@ public class BookingService {
             roomRepository.save(room);
         }
         
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Notify other party
+        String notifier = isOwner ? booking.getHomestay().getHost().getUsername() : booking.getUser().getUsername();
+        String message = isOwner ? 
+                "Kh\u00e1ch h\u00e0ng " + username + " \u0111\u00e3 h\u1ee7y \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng." : 
+                "Ch\u1ee7 nh\u00e0 \u0111\u00e3 h\u1ee7y \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng c\u1ee7a b\u1ea1n cho " + booking.getHomestay().getName();
+        
+        notificationService.createNotification(notifier, message, "BOOKING", booking.getId().toString());
+
+        return mapToDto(saved);
     }
 
     public Booking getBookingByCheckInCode(String code) {
@@ -260,7 +287,17 @@ public class BookingService {
             roomRepository.save(room);
         }
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Notify User
+        notificationService.createNotification(
+                booking.getUser().getUsername(),
+                "B\u1ea1n \u0111\u00e3 nh\u1eadn ph\u00f2ng th\u00e0nh c\u00f4ng t\u1ea1i " + booking.getHomestay().getName(),
+                "BOOKING",
+                booking.getId().toString()
+        );
+
+        return mapToDto(saved);
     }
 
     @Transactional
@@ -304,7 +341,17 @@ public class BookingService {
             roomRepository.save(room);
         }
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Notify User
+        notificationService.createNotification(
+                booking.getUser().getUsername(),
+                "C\u1ea3m \u01a1n b\u1ea1n \u0111\u00e3 l\u01b0u tr\u00fa t\u1ea1i " + booking.getHomestay().getName() + ". Ch\u00fac b\u1ea1n m\u1ed9t ng\u00e0y t\u1ed1t l\u00e0nh!",
+                "BOOKING",
+                booking.getId().toString()
+        );
+
+        return mapToDto(saved);
     }
 
     public BookingDto mapToDtoPublic(Booking booking) {
