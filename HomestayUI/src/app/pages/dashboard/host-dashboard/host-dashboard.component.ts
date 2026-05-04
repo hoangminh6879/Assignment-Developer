@@ -20,11 +20,11 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
   selector: 'app-host-dashboard',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    NavbarComponent, 
-    ProfileTabComponent, 
-    BookingHistoryTabComponent, 
+    CommonModule,
+    FormsModule,
+    NavbarComponent,
+    ProfileTabComponent,
+    BookingHistoryTabComponent,
     HostCheckinTabComponent,
     HostReviewTabComponent,
     ChatTabComponent
@@ -238,10 +238,10 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
               <thead>
                 <tr>
                   <th>Homestay</th>
-                  <th>Giá / Đêm</th>
-                  <th>Lượt xem</th>
-                  <th>Trạng thái</th>
-                  <th class="actions-col">Hành động</th>
+                  <th class="text-center">Giá / Đêm</th>
+                  <th class="text-center">Lượt xem</th>
+                  <th class="text-center">Trạng thái</th>
+                  <th class="text-center">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -249,21 +249,24 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
                   <td class="homestay-cell">
                     <img *ngIf="h.images && h.images.length > 0" [src]="'http://localhost:9999' + h.images[0].url" class="h-thumb" />
                     <div class="h-thumb-placeholder" *ngIf="!h.images || h.images.length === 0">🏠</div>
-                    <div>
-                      <div class="h-name">{{ h.name }}</div>
-                      <div class="h-city">{{ h.city }}</div>
+                    <div class="h-info-inline">
+                      <span class="h-name">{{ h.name }}</span>
+                      <span class="h-city-tag">{{ h.city }}</span>
                     </div>
                   </td>
-                  <td>{{ h.pricePerNight | number }}đ</td>
-                  <td style="font-weight: 600; color: #6366f1;">{{ h.viewCount | number }}</td>
-                  <td>
-                    <span class="badge" [ngClass]="h.status.toLowerCase()">{{ h.status }}</span>
-                    <div *ngIf="h.adminReason" class="admin-reason-text">Lý do: {{ h.adminReason }}</div>
-                  </td>
-                  <td class="actions-cell">
-                    <button class="btn-icon btn-edit" (click)="openEditForm(h)">Sửa</button>
-                    <button class="btn-icon btn-delete" (click)="deleteHomestay(h.id)">Xóa</button>
-                  </td>
+                   <td class="text-center" style="font-weight: 600; color: #334155;">{{ h.pricePerNight | number }}đ</td>
+                   <td class="text-center" style="font-weight: 700; color: #6366f1;">{{ h.viewCount | number }}</td>
+                   <td class="text-center">
+                     <div class="status-inline">
+                       <span class="badge" [ngClass]="h.status.toLowerCase()">{{ h.status }}</span>
+                       <span *ngIf="h.adminReason" class="admin-reason-inline" [title]="h.adminReason">⚠️ Lý do: {{ h.adminReason }}</span>
+                     </div>
+                   </td>
+                   <td class="actions-cell">
+                     <button class="btn-icon btn-view" (click)="openDetail(h)">Xem</button>
+                     <button class="btn-icon btn-edit" (click)="openEditForm(h)">Sửa</button>
+                     <button class="btn-icon btn-delete" (click)="deleteHomestay(h.id)">Xóa</button>
+                   </td>
                 </tr>
               </tbody>
             </table>
@@ -327,19 +330,29 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
             </div>
 
             <div class="form-group">
-              <label>Hình ảnh (Có thể chọn nhiều ảnh)</label>
+              <label>Hình ảnh hiện có</label>
+              <div class="image-preview-grid" *ngIf="existingImages.length > 0; else noExisting">
+                <div class="preview-wrapper" *ngFor="let img of existingImages">
+                  <img [src]="'http://localhost:9999' + img.url" class="preview-img" />
+                  <button type="button" class="preview-remove-btn" (click)="removeExistingImage(img.id)" title="Xóa ảnh này">✕</button>
+                </div>
+              </div>
+              <ng-template #noExisting>
+                <p class="small-text">Chưa có ảnh nào.</p>
+              </ng-template>
+            </div>
+
+            <div class="form-group">
+              <label>Thêm hình ảnh mới (Có thể chọn nhiều ảnh)</label>
               <input type="file" multiple (change)="onFilesSelected($event)" accept="image/*" class="input-file" />
               <div class="file-info" *ngIf="previewUrls.length > 0">
-                <p style="margin-bottom: 10px;">Đã chọn {{ previewUrls.length }} ảnh:</p>
+                <p style="margin-bottom: 10px;">Ảnh mới đã chọn ({{ previewUrls.length }}):</p>
                 <div class="image-preview-grid">
                   <div class="preview-wrapper" *ngFor="let url of previewUrls; let i = index">
                     <img [src]="url" class="preview-img" />
                     <button type="button" class="preview-remove-btn" (click)="removeImage(i)" title="Xóa ảnh này">✕</button>
                   </div>
                 </div>
-              </div>
-              <div class="file-info" *ngIf="isEditMode">
-                <small>* Nếu bạn chọn ảnh mới, các ảnh cũ sẽ bị xóa và thay thế.</small>
               </div>
             </div>
 
@@ -351,6 +364,70 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
           </form>
         </div>
         </div> <!-- END HOMESTAYS TAB -->
+
+        <div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetail()">
+          <div class="modal-box premium-modal" (click)="$event.stopPropagation()">
+            <button class="modal-close-btn" (click)="closeDetail()">✕</button>
+            
+            <div class="modal-header-banner" *ngIf="selectedHomestayForDetail?.images?.length">
+               <img [src]="'http://localhost:9999' + selectedHomestayForDetail?.images?.[0]?.url" class="header-bg-img" />
+               <div class="header-overlay">
+                 <span class="badge-large" [ngClass]="selectedHomestayForDetail?.status?.toLowerCase()">{{ selectedHomestayForDetail?.status }}</span>
+                 <h2>{{ selectedHomestayForDetail?.name }}</h2>
+               </div>
+            </div>
+
+            <div class="modal-body">
+              <div class="detail-grid-modern">
+                <div class="detail-card">
+                  <span class="d-label">📍 Vị trí</span>
+                  <span class="d-value">{{ selectedHomestayForDetail?.city }}</span>
+                  <p class="d-subtext">{{ selectedHomestayForDetail?.address }}</p>
+                </div>
+                <div class="detail-card">
+                  <span class="d-label">💰 Giá / Đêm</span>
+                  <span class="d-value price-text">{{ selectedHomestayForDetail?.pricePerNight | number }}đ</span>
+                </div>
+                <div class="detail-card">
+                  <span class="d-label">👥 Sức chứa</span>
+                  <span class="d-value">{{ selectedHomestayForDetail?.maxGuests }} khách</span>
+                </div>
+                <div class="detail-card">
+                  <span class="d-label">👁️ Lượt xem</span>
+                  <span class="d-value">{{ selectedHomestayForDetail?.viewCount || 0 }}</span>
+                </div>
+              </div>
+
+              <div class="detail-main-section">
+                <div class="section-title">📝 Mô tả chi tiết</div>
+                <div class="description-rich-text">
+                  {{ selectedHomestayForDetail?.description }}
+                </div>
+              </div>
+
+              <div class="detail-main-section">
+                <div class="section-title">✨ Tiện ích có sẵn</div>
+                <div class="amenity-modern-list">
+                  <div class="amenity-item-chip" *ngFor="let am of selectedHomestayForDetail?.amenities">
+                    <span class="am-icon-large">{{ am.iconUrl }}</span>
+                    <span class="am-name-text">{{ am.name }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-main-section" *ngIf="selectedHomestayForDetail?.images?.length">
+                <div class="section-title">🖼️ Bộ sưu tập hình ảnh</div>
+                <div class="image-gallery-modern">
+                  <img *ngFor="let img of selectedHomestayForDetail?.images" [src]="'http://localhost:9999' + img.url" class="gallery-img" />
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer-modern">
+              <button class="btn-edit-premium" (click)="closeDetail()">Đóng cửa sổ</button>
+            </div>
+          </div>
+        </div>
 
         <!-- ROOMS TAB -->
         <div *ngIf="activeTab === 'rooms'">
@@ -524,13 +601,14 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
     .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid #f1f5f9; }
     .modern-table { width: 100%; border-collapse: collapse; text-align: left; }
     .modern-table th { background: #f8fafc; padding: 15px 20px; color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
-    .modern-table td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+    .modern-table td { padding: 20px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
     
-    .homestay-cell { display: flex; align-items: center; gap: 12px; }
-    .h-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-    .h-thumb-placeholder { width: 50px; height: 50px; border-radius: 8px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-    .h-name { font-weight: 600; color: #0f172a; }
-    .h-city { font-size: 12px; color: #64748b; }
+    .homestay-cell { display: flex; align-items: center; gap: 15px; }
+    .h-thumb { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+    .h-thumb-placeholder { width: 48px; height: 48px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #94a3b8; }
+    .h-info-inline { display: flex; align-items: center; gap: 10px; }
+    .h-name { font-weight: 700; color: #1e293b; font-size: 15px; white-space: nowrap; }
+    .h-city-tag { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 10px; border-radius: 6px; font-weight: 600; }
     
     .badge { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
     .pending { background: #fffbeb; color: #92400e; }
@@ -541,15 +619,21 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
     .available { background: #dcfce7; color: #166534; }
     .booked { background: #dbeafe; color: #1e40af; }
     .unavailable { background: #fef3c7; color: #92400e; }
-    .admin-reason-text { font-size: 11px; color: #ef4444; margin-top: 4px; max-width: 200px; }
+    .status-inline { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .admin-reason-inline { font-size: 12px; color: #ef4444; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
     
-    .actions-col { text-align: right; }
-    .actions-cell { text-align: right; display: flex; gap: 8px; justify-content: flex-end; }
-    .btn-icon { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .btn-edit { background: #e0e7ff; color: #4338ca; }
-    .btn-edit:hover { background: #c7d2fe; }
-    .btn-delete { background: #fee2e2; color: #991b1b; }
-    .btn-delete:hover { background: #fecaca; }
+    .text-center { text-align: center !important; }
+    .actions-cell { text-align: center; display: flex; gap: 10px; justify-content: center; align-items: center; min-height: 56px; }
+    .btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 40px; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    
+    .btn-view { background: #f0fdf4; color: #15803d; border: 1.5px solid #dcfce7; }
+    .btn-view:hover { background: #dcfce7; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(22, 101, 52, 0.1); }
+    
+    .btn-edit { background: #eff6ff; color: #1d4ed8; border: 1.5px solid #dbeafe; }
+    .btn-edit:hover { background: #dbeafe; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(29, 78, 216, 0.1); }
+    
+    .btn-delete { background: #fff1f2; color: #be123c; border: 1.5px solid #ffe4e6; }
+    .btn-delete:hover { background: #ffe4e6; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(190, 18, 60, 0.1); }
 
     .btn-primary { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
     .btn-primary:hover { background: #059669; }
@@ -621,11 +705,72 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
     .dropdown-content a { color: #1e293b; padding: 12px 16px; text-decoration: none; display: block; font-size: 14px; cursor: pointer; transition: background 0.2s; }
     .dropdown-content a:hover { background-color: #f1f5f9; color: #6366f1; }
     .export-dropdown:hover .dropdown-content { display: block; }
+
+    /* PREMIUM MODAL STYLES */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: flex; align-items: flex-start; justify-content: center; z-index: 2000; backdrop-filter: blur(12px); padding: 40px 20px; overflow-y: auto; scrollbar-width: none; }
+    .modal-overlay::-webkit-scrollbar { display: none; }
+    
+    .premium-modal { background: white; width: 100%; max-width: 950px; border-radius: 32px; position: relative; display: flex; flex-direction: column; box-shadow: 0 40px 100px -20px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); animation: modalAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 40px; transform-origin: top; overflow: hidden; }
+    
+    @keyframes modalAppear {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-header-banner { position: relative; height: 280px; width: 100%; overflow: hidden; }
+    .header-bg-img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.75); }
+    .header-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px; background: linear-gradient(to top, rgba(15, 23, 42, 0.9), transparent); color: white; }
+    .header-overlay h2 { margin: 12px 0 0 0; font-size: 38px; font-weight: 900; text-shadow: 0 4px 12px rgba(0,0,0,0.4); letter-spacing: -0.5px; }
+    .badge-large { background: #10b981; color: white; padding: 8px 20px; border-radius: 50px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+    .badge-large.pending { background: #f59e0b; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); }
+    .badge-large.rejected { background: #ef4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
+
+    .modal-close-btn { position: absolute; top: 25px; right: 25px; background: rgba(255,255,255,0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; z-index: 100; transition: all 0.3s; }
+    .modal-close-btn:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg) scale(1.1); }
+
+    .modal-body { padding: 40px; overflow-y: auto; overflow-x: hidden; flex: 1; background: #ffffff; max-width: 100%; box-sizing: border-box; }
+    
+    .detail-grid-modern { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 45px; }
+    .detail-card { background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #f1f5f9; transition: all 0.3s; }
+    .detail-card:hover { transform: translateY(-5px); background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border-color: #e2e8f0; }
+    .d-label { display: block; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    .d-value { display: block; font-size: 22px; font-weight: 800; color: #0f172a; }
+    .d-subtext { margin: 6px 0 0 0; font-size: 14px; color: #64748b; font-weight: 500; }
+    .price-text { color: #10b981; }
+
+    .detail-main-section { margin-bottom: 45px; }
+    .section-title { font-size: 20px; font-weight: 900; color: #0f172a; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+    .description-rich-text { background: #f8fafc; padding: 30px; border-radius: 24px; border: 1px solid #f1f5f9; line-height: 1.9; color: #334155; font-size: 16px; white-space: pre-wrap; }
+
+    .amenity-modern-list { display: flex; flex-wrap: wrap; gap: 14px; }
+    .amenity-item-chip { background: #f8fafc; padding: 12px 24px; border-radius: 16px; border: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; transition: all 0.3s; cursor: default; }
+    .amenity-item-chip:hover { background: #ffffff; transform: translateY(-3px); border-color: #10b981; box-shadow: 0 8px 20px -5px rgba(16, 185, 129, 0.2); }
+    .am-icon-large { font-size: 24px; }
+    .am-name-text { font-size: 15px; font-weight: 700; color: #1e293b; }
+
+    .image-gallery-modern { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; width: 100%; box-sizing: border-box; }
+    .gallery-img { width: 100%; height: 180px; object-fit: cover; border-radius: 24px; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; border: 4px solid transparent; box-sizing: border-box; }
+    .gallery-img:hover { transform: scale(1.02); z-index: 2; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); border-color: #10b981; }
+
+    .modal-footer-modern { padding: 30px 40px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 18px; border-radius: 0 0 32px 32px; }
+    .btn-cancel-flat { background: #ffffff; border: 1px solid #e2e8f0; padding: 14px 35px; border-radius: 16px; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s; }
+    .btn-cancel-flat:hover { background: #f1f5f9; color: #0f172a; }
+    .btn-edit-premium { background: #10b981; color: white; border: none; padding: 14px 40px; border-radius: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4); transition: all 0.3s; font-size: 15px; }
+    .btn-edit-premium:hover { background: #059669; transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.5); }
+    .btn-icon-inside { font-size: 20px; }
+
+    .btn-view { background: #f0fdf4; color: #166534; }
+    .btn-view:hover { background: #dcfce7; }
   `]
 })
 export class HostDashboardComponent implements OnInit {
   activeTab = 'profile';
   chatRecipientUser: any = null;
+
+  // Detail Modal State
+  showDetailModal = false;
+  selectedHomestayForDetail: HomestayDto | null = null;
+
   homestays: HomestayDto[] = [];
   availableAmenities: AmenityDto[] = [];
 
@@ -640,7 +785,28 @@ export class HostDashboardComponent implements OnInit {
   selectedAmenityIds: number[] = [];
   selectedFiles: File[] = [];
   previewUrls: string[] = [];
+  existingImages: any[] = [];
+  deletedImageIds: string[] = [];
   currentEditId: string | null = null;
+
+  // Detail Modal Methods
+  openDetail(h: HomestayDto) {
+    this.selectedHomestayForDetail = h;
+    this.showDetailModal = true;
+  }
+
+  closeDetail() {
+    this.showDetailModal = false;
+    this.selectedHomestayForDetail = null;
+  }
+
+  editFromDetail() {
+    if (this.selectedHomestayForDetail) {
+      const h = this.selectedHomestayForDetail;
+      this.closeDetail();
+      this.openEditForm(h);
+    }
+  }
 
   hostStats: HostStatistics | null = null;
 
@@ -732,6 +898,8 @@ export class HostDashboardComponent implements OnInit {
       maxGuests: homestay.maxGuests
     };
     this.selectedAmenityIds = homestay.amenities.map(a => a.id);
+    this.existingImages = [...(homestay.images || [])];
+    this.deletedImageIds = [];
     this.selectedFiles = [];
     this.previewUrls = [];
     this.showForm = true;
@@ -767,6 +935,11 @@ export class HostDashboardComponent implements OnInit {
     this.selectedFiles.splice(index, 1);
   }
 
+  removeExistingImage(imgId: string) {
+    this.existingImages = this.existingImages.filter(img => img.id !== imgId);
+    this.deletedImageIds.push(imgId);
+  }
+
   submitForm(event: Event) {
     event.preventDefault();
     this.isLoading = true;
@@ -787,10 +960,14 @@ export class HostDashboardComponent implements OnInit {
       fd.append('images', file);
     });
 
+    this.deletedImageIds.forEach(id => {
+      fd.append('deleteImageIds', id);
+    });
+
     if (this.isEditMode && this.currentEditId) {
       this.homestayService.updateHomestay(this.currentEditId, fd).subscribe({
         next: () => {
-          this.notification.success('Cập nhật thành công! Trạng thái chuyển về Chờ duyệt.');
+          this.notification.success('Cập nhật thành công! Các thay đổi đã được áp dụng ngay lập tức.');
           this.closeForm();
           this.loadHomestays();
           this.isLoading = false;
