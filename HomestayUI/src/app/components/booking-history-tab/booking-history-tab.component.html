@@ -1,0 +1,250 @@
+<div class="booking-history-container">
+      <div class="tab-header">
+        <div class="header-text">
+          <h3>{{ title }}</h3>
+          <p>{{ subtitle }}</p>
+        </div>
+        
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label>Từ ngày</label>
+            <input type="date" [(ngModel)]="startDateFilter" (change)="onFilterChange()">
+          </div>
+          <div class="filter-group">
+            <label>Đến ngày</label>
+            <input type="date" [(ngModel)]="endDateFilter" (change)="onFilterChange()">
+          </div>
+          <button class="btn-reset" (click)="resetFilters()" *ngIf="startDateFilter || endDateFilter">Đặt lại</button>
+        </div>
+      </div>
+
+      <!-- Booking Details Modal -->
+      <div class="modal-overlay" *ngIf="selectedBookingDetails as details">
+        <div class="modal-content animate-fade-in">
+          <button class="close-btn" (click)="closeDetails()">×</button>
+          <h2>Chi tiết đơn đặt phòng</h2>
+          <div class="modal-body">
+            <div class="booking-summary-modal">
+              <h3>Thông tin cơ bản</h3>
+              <p><strong>Khách hàng:</strong> {{ details.userName || 'N/A' }}</p>
+              <p><strong>Homestay:</strong> {{ details.homestayName }}</p>
+              <p><strong>Phòng:</strong> {{ details.roomTypeName }} - {{ details.roomName }}</p>
+              <p><strong>Thời gian:</strong> {{ details.checkInDate | date:'dd/MM/yyyy' }} - {{ details.checkOutDate | date:'dd/MM/yyyy' }}</p>
+              <p><strong>Đặt lúc:</strong> {{ details.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+            
+            <div class="booking-summary-modal" style="margin-top: 20px;">
+              <h3>Thông tin thanh toán & Trạng thái</h3>
+              <p *ngIf="details.appliedVoucherCode">
+                <strong>Mã giảm giá:</strong> 
+                <span class="v-code-badge">{{ details.appliedVoucherCode }}</span>
+              </p>
+              <p *ngIf="details.discountAmount && details.discountAmount > 0">
+                <strong>Số tiền giảm:</strong> 
+                <span class="discount-text">-{{ details.discountAmount | number }}đ</span>
+              </p>
+              <p><strong>Tổng tiền:</strong> <span class="total-price-modal">{{ details.totalPrice | number }}đ</span></p>
+              <p><strong>Hình thức thanh toán:</strong> {{ details.paymentMethod === 'VNPAY' ? 'VNPay' : 'Tại quầy' }}</p>
+              <p>
+                <strong>Trạng thái thanh toán:</strong> 
+                <span class="badge" [ngClass]="details.paymentStatus?.toLowerCase() || ''">
+                  {{ details.paymentStatus === 'PAID' ? 'Đã trả' : 'Chưa trả' }}
+                </span>
+                <button 
+                  *ngIf="details.paymentMethod === 'VNPAY' && details.paymentStatus === 'UNPAID' && details.status === 'PENDING' && role === 'USER'"
+                  class="btn-pay-now"
+                  (click)="payNow(details.id)"
+                  [disabled]="isPaying">
+                  {{ isPaying ? 'Đang chuyển hướng...' : 'Thanh toán ngay' }}
+                </button>
+              </p>
+              <p>
+                <strong>Trạng thái đặt phòng:</strong> 
+                <span class="badge status-badge" [ngClass]="details.status?.toLowerCase() || ''">
+                  {{ details.status === 'CHECKED_IN' ? 'Đã nhận phòng' : details.status }}
+                </span>
+              </p>
+            </div>
+
+            <div class="booking-summary-modal" style="margin-top: 20px; text-align: center;" *ngIf="details.checkInCode">
+              <p style="margin: 0 0 10px; color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600;">Mã Đặt Phòng</p>
+              <div style="display: inline-block; padding: 15px 30px; border-radius: 12px; background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%); border: 2px dashed #6366f1;">
+                <span style="color: #4f46e5; font-size: 28px; font-weight: 800; letter-spacing: 4px;">{{ details.checkInCode }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container" *ngIf="paginatedBookings.length > 0; else emptyState">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th *ngIf="role !== 'USER'">Khách hàng</th>
+              <th>Homestay / Phòng</th>
+              <th>Thời gian</th>
+              <th>Tổng tiền</th>
+              <th>Thanh toán</th>
+              <th>Trạng thái</th>
+              <th class="actions-col">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of paginatedBookings" class="table-row">
+              <td *ngIf="role !== 'USER'">
+                <div class="user-info">
+                  <span class="user-name">{{ b.userName || 'N/A' }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="homestay-info">
+                  <div class="h-name-row">
+                    <strong>{{ b.homestayName }}</strong>
+                  </div>
+                  <div class="room-row">
+                    <span>🛏️ {{ b.roomTypeName }} - {{ b.roomName }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="date-info">
+                  <div>{{ b.checkInDate | date:'dd/MM/yyyy' }} - {{ b.checkOutDate | date:'dd/MM/yyyy' }}</div>
+                  <small class="created-at">Đặt lúc: {{ b.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
+                </div>
+              </td>
+              <td>
+                <div class="price-info">
+                  <span class="price">{{ b.totalPrice | number }}đ</span>
+                  <small class="method">{{ b.paymentMethod === 'VNPAY' ? 'VNPay' : 'Tại quầy' }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="b.paymentStatus.toLowerCase()">
+                  {{ b.paymentStatus === 'PAID' ? 'Đã trả' : 'Chưa trả' }}
+                </span>
+              </td>
+              <td>
+                <span class="badge status-badge" [ngClass]="b.status.toLowerCase()">
+                  {{ translateStatus(b.status) }}
+                </span>
+              </td>
+              <td class="actions-col">
+                <div class="action-buttons">
+                  <button class="btn-action btn-view" (click)="viewDetails(b)">Chi tiết</button>
+                  <button 
+                    *ngIf="role === 'HOST' && b.status === 'PENDING'" 
+                    class="btn-action btn-approve" 
+                    (click)="approve(b.id)">
+                    Duyệt
+                  </button>
+                  <button 
+                    *ngIf="(role === 'USER' || role === 'HOST') && b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && b.status !== 'CHECKED_IN'" 
+                    class="btn-action btn-cancel" 
+                    (click)="cancel(b.id)">
+                    {{ role === 'USER' ? 'Hủy đặt' : 'Từ chối' }}
+                  </button>
+                  
+                  <!-- Review Button for User -->
+                  <button 
+                    *ngIf="role === 'USER' && b.status === 'COMPLETED' && !b.review" 
+                    class="btn-action btn-review" 
+                    (click)="openReviewModal(b)">
+                    Đánh giá
+                  </button>
+
+                  <!-- Response Button for Host -->
+                  <button 
+                    *ngIf="role === 'HOST' && b.status === 'COMPLETED' && b.review && !b.review.response" 
+                    class="btn-action btn-response" 
+                    (click)="openResponseModal(b)">
+                    Phản hồi
+                  </button>
+
+                  <!-- Chat Button -->
+                  <button 
+                    *ngIf="role !== 'ADMIN'"
+                    class="btn-action btn-chat" 
+                    (click)="chatWithUser(b)">
+                    Nhắn tin
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Review Modal (User) -->
+      <div class="modal-overlay" *ngIf="showReviewModal">
+        <div class="modal-content animate-fade-in" style="max-width: 500px;">
+          <button class="close-btn" (click)="closeReviewModal()">×</button>
+          <h2>Đánh giá Homestay</h2>
+          <div class="review-form">
+            <div class="form-group">
+              <label>Xếp hạng sao</label>
+              <div class="star-rating">
+                <span *ngFor="let s of [1,2,3,4,5]" (click)="reviewRating = s" [class.active]="reviewRating >= s">★</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Bình luận</label>
+              <textarea [(ngModel)]="reviewComment" placeholder="Chia sẻ trải nghiệm của bạn..." class="review-textarea"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Hình ảnh đi kèm</label>
+              <input type="file" (change)="onReviewFilesSelected($event)" multiple accept="image/*" class="review-file-input">
+              <div class="image-preview-list" *ngIf="reviewImagePreviews.length > 0">
+                <img *ngFor="let p of reviewImagePreviews" [src]="p" alt="Preview">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modal-cancel" (click)="closeReviewModal()">Hủy</button>
+              <button class="btn-modal-submit" [disabled]="!reviewRating || isSubmittingReview" (click)="submitReview()">
+                {{ isSubmittingReview ? 'Đang gửi...' : 'Gửi đánh giá' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Response Modal (Host) -->
+      <div class="modal-overlay" *ngIf="showResponseModal">
+        <div class="modal-content animate-fade-in" style="max-width: 500px;">
+          <button class="close-btn" (click)="closeResponseModal()">×</button>
+          <h2>Phản hồi khách hàng</h2>
+          <div class="response-form">
+            <div class="review-summary-card" *ngIf="selectedBookingForReview?.review">
+              <div class="q-header">
+                <strong>{{ selectedBookingForReview?.userName }}</strong>
+                <span>★ {{ selectedBookingForReview?.review?.rating }}</span>
+              </div>
+              <p>"{{ selectedBookingForReview?.review?.comment }}"</p>
+            </div>
+            <div class="form-group" style="margin-top: 20px;">
+              <label>Nội dung phản hồi</label>
+              <textarea [(ngModel)]="hostResponse" placeholder="Cảm ơn khách hàng hoặc phản hồi góp ý..." class="review-textarea"></textarea>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-modal-cancel" (click)="closeResponseModal()">Hủy</button>
+              <button class="btn-modal-submit" [disabled]="!hostResponse || isSubmittingResponse" (click)="submitResponse()">
+                {{ isSubmittingResponse ? 'Đang gửi...' : 'Gửi phản hồi' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-controls" *ngIf="totalPages > 1">
+        <button class="page-btn" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">Trang trước</button>
+        <span class="page-info">Trang {{ currentPage }} / {{ totalPages }}</span>
+        <button class="page-btn" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">Trang sau</button>
+      </div>
+
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <span class="icon">📅</span>
+          <p>Chưa có đơn đặt phòng nào.</p>
+        </div>
+      </ng-template>
+    </div>

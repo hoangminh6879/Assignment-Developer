@@ -1,0 +1,109 @@
+<div class="voucher-tab">
+      <div class="card-header">
+        <h3>Mã giảm giá của tôi</h3>
+        <button class="btn-primary" (click)="openAddForm()">+ Tạo Voucher mới</button>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>Loại giảm giá:</label>
+          <select [(ngModel)]="filterType" (change)="applyFilters()" class="filter-select">
+            <option value="ALL">Tất cả</option>
+            <option value="PERCENTAGE">Phần trăm (%)</option>
+            <option value="FIXED_AMOUNT">Số tiền (đ)</option>
+          </select>
+        </div>
+        <div class="filter-info">
+          Hiển thị: <strong>{{ filteredVouchers.length }}</strong> voucher
+        </div>
+      </div>
+
+      <!-- Nút Sửa và Xóa sẽ được thêm vào góc thẻ -->
+
+      <div class="voucher-grid" *ngIf="!showForm; else formTemplate">
+        <div class="voucher-card" *ngFor="let v of filteredVouchers" [class.inactive]="!v.isActive">
+          <div class="v-header">
+            <span class="v-code">{{ v.code }}</span>
+            <div class="v-actions-top">
+              <button class="btn-icon" (click)="editVoucher(v)" title="Sửa"><i class="fas fa-edit"></i></button>
+              <button class="btn-icon delete" (click)="deleteVoucher(v.id!)" title="Xóa"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="v-body">
+            <p><strong>Giảm:</strong> <span class="v-value-text">{{ v.type === 'PERCENTAGE' ? v.value + '%' : (v.value | number) + 'đ' }}</span></p>
+            <p><strong>Loại:</strong> {{ v.type === 'PERCENTAGE' ? 'Giảm theo %' : 'Giảm theo số tiền' }}</p>
+            <p><strong>Tối thiểu:</strong> {{ (v.minBookingAmount || 0) | number }}đ</p>
+            <p *ngIf="v.type === 'PERCENTAGE'"><strong>Tối đa:</strong> {{ (v.maxDiscountAmount || 0) | number }}đ</p>
+            <p><strong>Đã dùng:</strong> {{ v.usedCount }} / {{ v.usageLimit || '∞' }}</p>
+            <p><strong>Hết hạn:</strong> {{ v.expiryDate ? (v.expiryDate | date:'dd/MM/yyyy') : 'Không' }}</p>
+          </div>
+          <div class="v-status">
+            <div class="status-info">
+              <span class="status-dot" [class.active]="v.isActive"></span>
+              {{ v.isActive ? 'Đang hoạt động' : 'Tạm ngưng' }}
+            </div>
+            <button class="btn-toggle" (click)="toggleStatus(v.id!)" [class.active]="v.isActive">
+              {{ v.isActive ? 'Tạm ngưng' : 'Kích hoạt' }}
+            </button>
+          </div>
+        </div>
+        <div *ngIf="vouchers.length === 0" class="empty-state">
+          <span class="empty-icon">🎟️</span>
+          <p>Bạn chưa tạo mã giảm giá nào.</p>
+        </div>
+      </div>
+
+      <ng-template #formTemplate>
+        <div class="voucher-form animate-fade-in">
+          <form (submit)="submitForm()">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Mã Code (Ví dụ: GIAM50K)</label>
+                <input type="text" [(ngModel)]="formData.code" name="code" required class="input-field" placeholder="Nhập mã...">
+              </div>
+              <div class="form-group">
+                <label>Loại giảm giá</label>
+                <select [(ngModel)]="formData.type" name="type" required class="input-field">
+                  <option [value]="VoucherType.PERCENTAGE">Phần trăm (%)</option>
+                  <option [value]="VoucherType.FIXED_AMOUNT">Số tiền cố định (đ)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Giá trị giảm ({{ formData.type === VoucherType.PERCENTAGE ? '%' : 'đ' }})</label>
+                <input type="number" [(ngModel)]="formData.value" name="value" required class="input-field">
+              </div>
+              <div class="form-group">
+                <label>Số tiền tối thiểu của đơn hàng</label>
+                <input type="number" [(ngModel)]="formData.minBookingAmount" name="minAmount" class="input-field">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" *ngIf="formData.type === VoucherType.PERCENTAGE">
+                <label>Giảm tối đa (VNĐ)</label>
+                <input type="number" [(ngModel)]="formData.maxDiscountAmount" name="maxDiscount" class="input-field">
+              </div>
+              <div class="form-group">
+                <label>Số lượng mã</label>
+                <input type="number" [(ngModel)]="formData.usageLimit" name="limit" class="input-field">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Ngày hết hạn</label>
+              <input type="date" [(ngModel)]="formData.expiryDate" name="expiry" class="input-field">
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="showForm = false">Hủy</button>
+              <button type="submit" class="btn-primary" [disabled]="isLoading">
+                {{ isLoading ? 'Đang lưu...' : (isEditing ? 'Cập nhật Voucher' : 'Tạo Voucher') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </ng-template>
+    </div>

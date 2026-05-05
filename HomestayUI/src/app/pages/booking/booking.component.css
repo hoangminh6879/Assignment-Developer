@@ -1,0 +1,149 @@
+.booking-page { min-height: 100vh; background: #f1f5f9; padding: 100px 20px 40px; }
+    .booking-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 380px; gap: 30px; }
+    
+    .selection-section { display: flex; flex-direction: column; gap: 24px; }
+    .homestay-info-card { background: white; border-radius: 20px; overflow: hidden; display: flex; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .h-img { width: 200px; height: 150px; object-fit: cover; }
+    .h-details { padding: 20px; flex: 1; }
+    .h-details h1 { margin: 0 0 10px; font-size: 24px; color: #1e293b; }
+    .h-details p { margin: 0; color: #64748b; font-size: 15px; }
+    .price-base { margin-top: 15px; font-weight: 700; color: #10b981; }
+
+    .booking-form-card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .step { margin-bottom: 40px; }
+    .step h3 { margin-bottom: 20px; color: #0f172a; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+    
+    .date-inputs { display: flex; gap: 20px; }
+    .date-group { flex: 1; }
+    .date-group label { display: block; font-size: 13px; font-weight: 600; color: #64748b; margin-bottom: 6px; }
+    .input-field { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; }
+    .date-error { margin-top: 10px; padding: 10px 14px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; color: #c2410c; font-size: 13px; font-weight: 500; }
+
+    .room-types-list { display: flex; gap: 12px; flex-wrap: wrap; }
+    .rt-item { padding: 15px 25px; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; font-weight: 600; }
+    .rt-item:hover { border-color: #cbd5e1; background: #f8fafc; }
+    .rt-item.active { border-color: #4f46e5; background: #eef2ff; color: #4f46e5; }
+
+    .available-rooms { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .room-card { padding: 20px; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s; }
+    .room-card:hover { border-color: #cbd5e1; }
+    .room-card.selected { border-color: #10b981; background: #f0fdf4; }
+    .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .room-name { font-weight: 700; font-size: 16px; }
+    .room-price-extra { color: #10b981; font-weight: 600; }
+    .room-meta { font-size: 14px; color: #64748b; }
+    .empty-rooms { padding: 20px; background: #fffbeb; border-radius: 10px; color: #92400e; text-align: center; }
+
+    .payment-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .payment-item { padding: 15px; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; display: flex; align-items: center; gap: 15px; transition: all 0.2s; }
+    .payment-item:hover { border-color: #cbd5e1; }
+    .payment-item.active { border-color: #4f46e5; background: #eef2ff; }
+    .pay-icon { font-size: 24px; }
+    .pay-text strong { display: block; font-size: 15px; color: #1e293b; }
+    .pay-text p { margin: 2px 0 0; font-size: 12px; color: #64748b; }
+
+    .summary-section { }
+    .summary-card { background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+    .sticky { position: sticky; top: 100px; }
+    .summary-card h2 { margin: 0 0 25px; font-size: 20px; }
+    .summary-list { display: flex; flex-direction: column; gap: 15px; }
+    .summary-item { display: flex; justify-content: space-between; color: #64748b; font-size: 15px; }
+    .total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .total-row span { font-weight: 600; color: #0f172a; }
+    .total-price { font-size: 24px; font-weight: 800; color: #4f46e5; }
+    .btn-confirm { width: 100%; margin-top: 30px; background: #4f46e5; color: white; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn-confirm:hover:not(:disabled) { background: #4338ca; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3); }
+    .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+    .disclaimer { margin-top: 15px; text-align: center; font-size: 12px; color: #94a3b8; }
+
+    /* Voucher Styles */
+    .voucher-section { margin: 20px 0; padding: 18px; background: #f8fafc; border-radius: 16px; border: 1px dashed #cbd5e1; }
+    .voucher-section label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .voucher-input-group { display: flex; gap: 10px; }
+    .voucher-input-group .input-field { background: white; }
+    .btn-apply-voucher { padding: 10px 20px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .btn-apply-voucher:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+    .btn-apply-voucher:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-remove-voucher { padding: 10px 20px; background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .btn-remove-voucher:hover { background: #fef2f2; transform: translateY(-1px); }
+    .voucher-success { color: #059669; font-size: 13px; font-weight: 700; margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+    .voucher-error { color: #dc2626; font-size: 13px; font-weight: 600; margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+    .price-stack { display: flex; flex-direction: column; align-items: flex-end; }
+    .original-price { font-size: 15px; text-decoration: line-through; color: #94a3b8; font-weight: 500; }
+    .discount-price { color: #059669; font-weight: 700; font-size: 14px; }
+
+    /* New Premium Voucher Styles */
+    .voucher-wrapper { margin: 25px 0; padding: 20px; background: #fdfdfd; border: 1px solid #eef2ff; border-radius: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+    .voucher-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .v-title { display: flex; align-items: center; gap: 8px; }
+    .v-icon-main { font-size: 18px; }
+    .v-title label { font-size: 14px; font-weight: 800; color: #1e293b; letter-spacing: -0.2px; }
+    .btn-browse-vouchers { background: none; border: none; color: #4f46e5; font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: all 0.2s; }
+    .btn-browse-vouchers:hover { background: #eef2ff; }
+    
+    .active-voucher-badge { margin-top: 15px; background: #ecfdf5; border: 1px solid #d1fae5; padding: 10px 15px; border-radius: 12px; }
+    .v-badge-info { display: flex; align-items: center; gap: 10px; color: #065f46; font-size: 13px; font-weight: 600; }
+    .v-sparkle { font-size: 16px; }
+    .v-badge-info strong { font-weight: 800; font-size: 15px; }
+
+    /* Voucher Modal Styles */
+    .voucher-modal-content { background: #f8fafc; border-radius: 32px; padding: 0; width: 500px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    .v-modal-header { padding: 25px 30px; background: white; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    .v-modal-header h2 { margin: 0; font-size: 20px; font-weight: 800; color: #0f172a; }
+    .v-modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .v-list-container { display: flex; flex-direction: column; gap: 12px; }
+    
+    .v-option-card { background: white; border: 1px solid #e2e8f0; border-radius: 18px; display: flex; overflow: hidden; cursor: pointer; transition: all 0.2s; }
+    .v-option-card:not(.disabled):hover { border-color: #4f46e5; transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .v-option-card.disabled { opacity: 0.6; cursor: not-allowed; background: #f1f5f9; }
+    
+    .v-side-accent { width: 8px; }
+    .v-side-accent.global { background: #4f46e5; }
+    .v-side-accent:not(.global) { background: #10b981; }
+    
+    .v-main-info { flex: 1; padding: 15px 20px; }
+    .v-code-tag { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #4f46e5; font-size: 14px; margin-bottom: 4px; }
+    .v-desc { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .v-min-text { font-size: 12px; font-weight: 500; color: #64748b; display: block; }
+    .v-expiry { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+    
+    .v-status-indicator { padding: 15px; display: flex; align-items: center; font-size: 11px; font-weight: 800; text-transform: uppercase; border-left: 1px dashed #e2e8f0; }
+    .v-check { color: #10b981; }
+    .v-lock { color: #ef4444; text-align: center; width: 80px; line-height: 1.2; }
+    
+    .empty-vouchers { text-align: center; padding: 40px; color: #94a3b8; }
+    .empty-vouchers .icon { font-size: 48px; display: block; margin-bottom: 10px; opacity: 0.5; }
+
+    .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Modal Styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-content { background: white; border-radius: 24px; padding: 30px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 28px; cursor: pointer; color: #64748b; line-height: 1; transition: color 0.2s; }
+    .close-btn:hover { color: #0f172a; }
+    .modal-content h2 { margin: 0 0 20px; font-size: 24px; color: #0f172a; }
+    .modal-body { display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; }
+    .booking-summary-modal { background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; }
+    .booking-summary-modal h3 { margin: 0 0 15px; font-size: 16px; color: #1e293b; }
+    .booking-summary-modal p { margin: 0 0 10px; color: #475569; font-size: 14px; }
+    .booking-summary-modal strong { color: #0f172a; }
+    .total-price-modal { font-size: 18px; font-weight: 800; color: #4f46e5; }
+    .user-info-form h3 { margin: 0 0 10px; font-size: 16px; color: #1e293b; }
+    .info-note { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .full-width { grid-column: span 2; }
+    .form-group label { font-size: 13px; font-weight: 600; color: #475569; }
+    .modal-footer { margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+    .btn-cancel { padding: 12px 24px; border-radius: 12px; background: #f1f5f9; color: #475569; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-cancel:hover { background: #e2e8f0; }
+    .btn-confirm-final { padding: 12px 30px; border-radius: 12px; background: #4f46e5; color: white; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-confirm-final:hover:not(:disabled) { background: #4338ca; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3); }
+    .btn-confirm-final:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    @media (max-width: 992px) {
+      .booking-container { grid-template-columns: 1fr; }
+      .summary-card { position: static; }
+      .modal-body { grid-template-columns: 1fr; }
+    }
