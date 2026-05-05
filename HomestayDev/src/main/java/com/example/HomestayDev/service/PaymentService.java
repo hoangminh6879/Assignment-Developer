@@ -25,6 +25,7 @@ public class PaymentService {
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     public String createVNPayUrl(UUID bookingId, HttpServletRequest request) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -133,6 +134,7 @@ public class PaymentService {
 
                         if (booking.getPaymentStatus() == PaymentStatus.UNPAID) {
                             booking.setPaymentStatus(PaymentStatus.PAID);
+                            // Giữ PENDING - Host cần duyệt thủ công trong vòng 3 giờ
                             bookingRepository.save(booking);
 
                             Payment payment = Payment.builder()
@@ -143,6 +145,27 @@ public class PaymentService {
                                     .booking(booking)
                                     .build();
                             paymentRepository.save(payment);
+
+                            // Thông báo cho Host
+                            notificationService.createNotification(
+                                    booking.getHomestay().getHost().getUsername(),
+                                    "🏠 Khách hàng " + booking.getUser().getUsername()
+                                            + " đã thanh toán thành công qua VNPay cho đơn đặt phòng tại "
+                                            + booking.getHomestay().getName()
+                                            + ". Hãy duyệt đơn trong vòng 3 giờ, nếu không đơn sẽ tự động bị hủy và hoàn tiền cho khách.",
+                                    "BOOKING",
+                                    booking.getId().toString()
+                            );
+
+                            // Thông báo cho khách
+                            notificationService.createNotification(
+                                    booking.getUser().getUsername(),
+                                    "✅ Thanh toán VNPay thành công cho đơn đặt phòng tại "
+                                            + booking.getHomestay().getName()
+                                            + ". Đơn đang chờ chủ nhà xác nhận (tối đa 3 giờ).",
+                                    "BOOKING",
+                                    booking.getId().toString()
+                            );
                         }
                         return true;
                     } catch (Exception e) {
