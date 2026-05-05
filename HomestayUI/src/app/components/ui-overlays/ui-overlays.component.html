@@ -1,0 +1,45 @@
+<!-- TOAST CONTAINER -->
+    <div class="toast-container">
+      <div
+        *ngFor="let toast of toasts"
+        class="toast toast-{{ toast.type }}"
+        (click)="notification.remove(toast.id)"
+      >
+        <div class="toast-icon">
+          <span *ngIf="toast.type === 'success'">✅</span>
+          <span *ngIf="toast.type === 'error'">❌</span>
+          <span *ngIf="toast.type === 'warning'">⚠️</span>
+          <span *ngIf="toast.type === 'info'">ℹ️</span>
+        </div>
+        <div class="toast-content">
+          <div class="toast-title">{{ toast.title }}</div>
+          <div class="toast-message">{{ toast.message }}</div>
+        </div>
+        <button class="toast-close" (click)="notification.remove(toast.id)">✕</button>
+      </div>
+    </div>
+
+    <!-- CONFIRM DIALOG -->
+    <div class="confirm-overlay" *ngIf="(confirmState$ | async)?.open" (click)="$event.stopPropagation()">
+      <div class="confirm-box">
+        <div class="confirm-icon" [ngClass]="(confirmState$ | async)?.options?.type || 'warning'">
+          <span *ngIf="(confirmState$ | async)?.options?.type === 'danger'">🗑️</span>
+          <span *ngIf="(confirmState$ | async)?.options?.type === 'info'">❓</span>
+          <span *ngIf="!(confirmState$ | async)?.options?.type || (confirmState$ | async)?.options?.type === 'warning'">⚠️</span>
+        </div>
+        <h3 class="confirm-title">{{ (confirmState$ | async)?.options?.title || 'Xác nhận' }}</h3>
+        <p class="confirm-message">{{ (confirmState$ | async)?.options?.message }}</p>
+        <div class="confirm-actions">
+          <button class="btn-cancel" (click)="confirm.respond(false)">
+            {{ (confirmState$ | async)?.options?.cancelText || 'Hủy' }}
+          </button>
+          <button
+            class="btn-confirm"
+            [ngClass]="(confirmState$ | async)?.options?.type === 'danger' ? 'btn-danger' : 'btn-primary'"
+            (click)="confirm.respond(true)"
+          >
+            {{ (confirmState$ | async)?.options?.confirmText || 'Xác nhận' }}
+          </button>
+        </div>
+      </div>
+    </div>

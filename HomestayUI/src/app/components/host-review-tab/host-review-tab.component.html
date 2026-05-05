@@ -1,0 +1,89 @@
+<div class="review-manager">
+      <div class="review-stats">
+        <div class="stat-mini">
+          <span class="label">Tổng đánh giá</span>
+          <span class="value">{{ reviews.length }}</span>
+        </div>
+        <div class="stat-mini">
+          <span class="label">Chưa phản hồi</span>
+          <span class="value">{{ getUnrespondedCount() }}</span>
+        </div>
+      </div>
+
+      <!-- Filters Section -->
+      <div class="filters-bar animate-fade-in">
+        <div class="filter-group">
+          <label>Homestay</label>
+          <select [(ngModel)]="filterHomestayId" class="filter-input">
+            <option value="">Tất cả homestay</option>
+            <option *ngFor="let h of myHomestays" [value]="h.id">{{ h.name }}</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Từ ngày</label>
+          <input type="date" [(ngModel)]="filterStartDate" class="filter-input">
+        </div>
+        <div class="filter-group">
+          <label>Đến ngày</label>
+          <input type="date" [(ngModel)]="filterEndDate" class="filter-input">
+        </div>
+        <div class="filter-group">
+          <label>&nbsp;</label>
+          <button class="btn-reset" (click)="resetFilters()">🔄 Đặt lại</button>
+        </div>
+      </div>
+
+      <div class="review-list" *ngIf="getFilteredReviews().length > 0; else emptyState">
+        <div class="review-card animate-fade-in" *ngFor="let r of getFilteredReviews()">
+          <!-- Card content remains the same but add homestay name badge -->
+          <div class="review-header">
+            <div class="user-info">
+              <div class="avatar">{{ r.userFullName.charAt(0) || 'U' }}</div>
+              <div>
+                <h4>{{ r.userFullName }}</h4>
+                <p class="date">{{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <span class="homestay-badge">{{ getHomestayName(r.bookingId) }}</span>
+              <div class="rating-badge">★ {{ r.rating }}</div>
+            </div>
+          </div>
+
+          <div class="review-body">
+            <p class="comment">{{ r.comment }}</p>
+            <div class="review-photos" *ngIf="r.imageUrls?.length">
+              <img *ngFor="let img of r.imageUrls" [src]="'http://localhost:9999' + img" alt="Review photo" />
+            </div>
+          </div>
+
+          <div class="review-footer">
+            <!-- Existing Response -->
+            <div class="existing-response" *ngIf="r.response">
+              <div class="response-header">
+                <strong>🏠 Phản hồi của bạn</strong>
+                <span class="date">{{ r.responseCreatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <p class="response-text">{{ r.response }}</p>
+            </div>
+
+            <!-- Response Form -->
+            <div class="response-form" *ngIf="!r.response">
+              <textarea [(ngModel)]="responseTexts[r.id]" placeholder="Viết phản hồi cho khách hàng..." class="response-input"></textarea>
+              <div class="form-actions">
+                <button class="btn-submit" [disabled]="!responseTexts[r.id]" (click)="submitResponse(r.id)">
+                  Gửi phản hồi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <span class="icon">💬</span>
+          <p>Chưa có đánh giá nào cho các homestay của bạn.</p>
+        </div>
+      </ng-template>
+    </div>

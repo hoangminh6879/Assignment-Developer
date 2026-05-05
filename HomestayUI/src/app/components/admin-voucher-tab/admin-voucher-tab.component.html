@@ -1,0 +1,131 @@
+<div class="voucher-tab">
+      <div class="card-header">
+        <h3>Quản lý Toàn bộ Voucher</h3>
+        <button class="btn-primary" (click)="openAddForm()">+ Tạo Voucher Hệ thống</button>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label>Phạm vi:</label>
+          <select [(ngModel)]="filters.scope" (change)="applyFilters()" class="filter-select">
+            <option value="ALL">Tất cả</option>
+            <option value="GLOBAL">Hệ thống</option>
+            <option value="HOST">Host</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Loại giảm giá:</label>
+          <select [(ngModel)]="filters.type" (change)="applyFilters()" class="filter-select">
+            <option value="ALL">Tất cả</option>
+            <option value="PERCENTAGE">Phần trăm (%)</option>
+            <option value="FIXED_AMOUNT">Số tiền (đ)</option>
+          </select>
+        </div>
+        <div class="filter-info">
+          Hiển thị: <strong>{{ filteredVouchers.length }}</strong> voucher
+        </div>
+      </div>
+
+      <div class="voucher-grid" *ngIf="!showForm; else formTemplate">
+        <div class="voucher-card" *ngFor="let v of filteredVouchers" [class.inactive]="!v.isActive" [class.global-card]="v.isGlobal">
+          <div class="v-header">
+            <span class="v-code">{{ v.code }}</span>
+            <div class="v-scope-badge" [class.global]="v.isGlobal">
+              {{ v.isGlobal ? 'Hệ thống' : 'Cá nhân' }}
+            </div>
+          </div>
+          
+          <div class="v-body">
+            <p><strong>Người tạo:</strong> <span>{{ v.hostName || 'Hệ thống' }}</span></p>
+            <p><strong>Giảm:</strong> <span class="v-value-text">{{ v.type === 'PERCENTAGE' ? v.value + '%' : (v.value | number) + 'đ' }}</span></p>
+            <p><strong>Loại:</strong> {{ v.type === 'PERCENTAGE' ? 'Giảm theo %' : 'Giảm theo số tiền' }}</p>
+            <p><strong>Đã dùng:</strong> {{ v.usedCount }} / {{ v.usageLimit || '∞' }}</p>
+            <p><strong>Hết hạn:</strong> {{ v.expiryDate ? (v.expiryDate | date:'dd/MM/yyyy') : 'Không' }}</p>
+          </div>
+
+          <div class="v-footer">
+            <div class="v-status-badge" [class.active]="v.isActive">
+              <span class="status-dot" [class.active]="v.isActive"></span>
+              {{ v.isActive ? 'Hoạt động' : 'Tạm ngưng' }}
+            </div>
+            
+            <div class="v-actions">
+              <!-- Admin chỉ quản lý được Voucher Global -->
+              <ng-container *ngIf="v.isGlobal; else viewOnly">
+                <button class="btn-icon-small" (click)="toggleStatus(v.id!)" [title]="v.isActive ? 'Tạm ngưng' : 'Kích hoạt'">
+                  <i class="fas" [ngClass]="v.isActive ? 'fa-pause' : 'fa-play'"></i>
+                </button>
+                <button class="btn-icon-small" (click)="editVoucher(v)" title="Sửa"><i class="fas fa-edit"></i></button>
+                <button class="btn-icon-small delete" (click)="deleteVoucher(v.id!)" title="Xóa"><i class="fas fa-trash"></i></button>
+              </ng-container>
+              <ng-template #viewOnly>
+                <span class="view-only-label">Chỉ xem</span>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="vouchers.length === 0" class="empty-state">
+          <span class="empty-icon">🎟️</span>
+          <p>Chưa có mã giảm giá nào trên hệ thống.</p>
+        </div>
+      </div>
+
+      <ng-template #formTemplate>
+        <div class="voucher-form animate-fade-in">
+          <div class="form-header">
+            <h4>{{ isEditing ? 'Cập nhật mã giảm giá' : 'Tạo mã giảm giá cho toàn hệ thống' }}</h4>
+            <p>{{ isEditing ? 'Chỉnh sửa thông tin voucher đã chọn.' : 'Mã này sẽ áp dụng được cho tất cả Homestay.' }}</p>
+          </div>
+          <form (submit)="submitForm()">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Mã Code</label>
+                <input type="text" [(ngModel)]="formData.code" name="code" required class="input-field" placeholder="Ví dụ: ADMINHOT">
+              </div>
+              <div class="form-group">
+                <label>Loại giảm giá</label>
+                <select [(ngModel)]="formData.type" name="type" required class="input-field">
+                  <option [value]="VoucherType.PERCENTAGE">Phần trăm (%)</option>
+                  <option [value]="VoucherType.FIXED_AMOUNT">Số tiền cố định (đ)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Giá trị giảm</label>
+                <input type="number" [(ngModel)]="formData.value" name="value" required class="input-field">
+              </div>
+              <div class="form-group">
+                <label>Số tiền tối thiểu</label>
+                <input type="number" [(ngModel)]="formData.minBookingAmount" name="minAmount" class="input-field">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" *ngIf="formData.type === VoucherType.PERCENTAGE">
+                <label>Giảm tối đa (VNĐ)</label>
+                <input type="number" [(ngModel)]="formData.maxDiscountAmount" name="maxDiscount" class="input-field">
+              </div>
+              <div class="form-group">
+                <label>Số lượng mã</label>
+                <input type="number" [(ngModel)]="formData.usageLimit" name="limit" class="input-field">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Ngày hết hạn</label>
+              <input type="date" [(ngModel)]="formData.expiryDate" name="expiry" class="input-field">
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="showForm = false">Hủy</button>
+              <button type="submit" class="btn-primary" [disabled]="isLoading">
+                {{ isLoading ? 'Đang lưu...' : (isEditing ? 'Cập nhật Voucher' : 'Tạo Global Voucher') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </ng-template>
+    </div>
