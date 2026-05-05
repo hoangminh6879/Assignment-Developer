@@ -9,5 +9,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CheckoutRequestDto {
     private String citizenId;
-    private boolean confirmPayment;
 }

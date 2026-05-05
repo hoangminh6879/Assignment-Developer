@@ -240,11 +240,11 @@ import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/
                   </td>
                   <td class="date-cell">{{ req.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
                   <td class="actions-cell">
-                    <button class="btn-icon btn-approve" title="Phê duyệt" (click)="approve(req.id)">
-                      <i class="icon">✓</i> Duyệt
+                    <button class="action-btn approve-btn" title="Phê duyệt" (click)="approve(req.id)">
+                      <span class="btn-icon-wrap">✅</span> Duyệt
                     </button>
-                    <button class="btn-icon btn-reject" title="Từ chối" (click)="reject(req.id)">
-                      <i class="icon">✕</i> Từ chối
+                    <button class="action-btn reject-btn" title="Từ chối" (click)="reject(req.id)">
+                      <span class="btn-icon-wrap">🗑️</span> Từ chối
                     </button>
                   </td>
                 </tr>

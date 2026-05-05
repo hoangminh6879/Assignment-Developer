@@ -16,6 +16,7 @@ import { StatisticsService, HostStatistics } from '../../../services/statistics.
 import { ReportService } from '../../../services/report.service';
 import { ChatTabComponent } from '../chat-tab/chat-tab.component';
 import { HostVoucherTabComponent } from '../../../components/host-voucher-tab/host-voucher-tab.component';
+import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.component';
 
 @Component({
   selector: 'app-host-dashboard',
@@ -29,7 +30,8 @@ import { HostVoucherTabComponent } from '../../../components/host-voucher-tab/ho
     HostCheckinTabComponent,
     HostReviewTabComponent,
     ChatTabComponent,
-    HostVoucherTabComponent
+    HostVoucherTabComponent,
+    WalletTabComponent
   ],
   template: `
     <app-navbar></app-navbar>
@@ -72,6 +74,9 @@ import { HostVoucherTabComponent } from '../../../components/host-voucher-tab/ho
             </li>
             <li [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">
               <span class="menu-icon">🎟️</span> Quản lý Voucher
+            </li>
+            <li [class.active]="activeTab === 'wallet'" (click)="activeTab = 'wallet'">
+              <span class="menu-icon">💳</span> Ví doanh thu
             </li>
           </ul>
         </aside>
@@ -574,6 +579,11 @@ import { HostVoucherTabComponent } from '../../../components/host-voucher-tab/ho
         <!-- VOUCHERS TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'vouchers'">
           <app-host-voucher-tab></app-host-voucher-tab>
+        </div>
+
+        <!-- WALLET TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'wallet'">
+          <app-wallet-tab></app-wallet-tab>
         </div>
         </main>
       </div>
