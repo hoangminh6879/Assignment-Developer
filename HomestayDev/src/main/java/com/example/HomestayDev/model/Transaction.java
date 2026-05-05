@@ -1,0 +1,47 @@
+package com.example.HomestayDev.model;
+
+import com.example.HomestayDev.model.enums.TransactionType;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "transactions")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Transaction {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "wallet_id", nullable = false)
+    private Wallet wallet;
+
+    @Column(nullable = false)
+    private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionType type;
+
+    @Column(columnDefinition = "nvarchar(500)")
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.NVARCHAR)
+    private String description;
+
+    @Column(name = "balance_after")
+    private BigDecimal balanceAfter;
+
+    @Column(name = "vnpay_txn_ref")
+    private String vnpayTxnRef;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+}
