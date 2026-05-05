@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bookings" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bookings" pageWidth="842" pageHeight="595" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.rows" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.remove.empty.space.between.columns" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.detect.cell.type" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
+	<property name="net.sf.jasperreports.export.xls.ignore.graphics" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
 	<parameter name="title" class="java.lang.String"/>
+	<parameter name="exportDate" class="java.lang.String"/>
 	<field name="bookingCode" class="java.lang.String"/>
 	<field name="homestayName" class="java.lang.String"/>
 	<field name="customerName" class="java.lang.String"/>
@@ -9,142 +16,135 @@
 	<field name="totalPrice" class="java.lang.Double"/>
 	<field name="status" class="java.lang.String"/>
 	<title>
-		<band height="90">
+		<band height="100">
 			<rectangle>
-				<reportElement x="0" y="0" width="555" height="70" backcolor="#4F46E5"/>
-				<graphicElement>
-					<pen lineWidth="0.0"/>
-				</graphicElement>
+				<reportElement x="0" y="0" width="802" height="70" backcolor="#475569"/>
+				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
-			<staticText>
-				<reportElement x="0" y="10" width="555" height="30" forecolor="#FFFFFF"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font size="20" isBold="true"/>
-				</textElement>
-				<text><![CDATA[BAO CAO DAT PHONG]]></text>
-			</staticText>
 			<textField>
-				<reportElement x="0" y="40" width="555" height="20" forecolor="#E0E7FF"/>
+				<reportElement x="0" y="10" width="802" height="35" forecolor="#0000FF"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font size="10"/>
+					<font fontName="Arial" size="22" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Ngay xuat: " + new java.util.Date()]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{title}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="45" width="802" height="20" forecolor="#E0E7FF"/>
+				<textElement textAlignment="Center">
+					<font fontName="Arial" size="10" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Hệ thống HomestayDev - Ngày xuất: " + $P{exportDate}]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>
 	<columnHeader>
-		<band height="35">
+		<band height="40">
 			<rectangle>
-				<reportElement x="0" y="0" width="555" height="35" backcolor="#F8FAFC"/>
-				<graphicElement>
-					<pen lineWidth="0.5" lineColor="#CBD5E1"/>
-				</graphicElement>
+				<reportElement x="0" y="0" width="802" height="40" backcolor="#F1F5F9"/>
+				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
 			<staticText>
-				<reportElement x="5" y="0" width="70" height="35" forecolor="#475569"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9" isBold="true"/>
-				</textElement>
-				<text><![CDATA[MA DON]]></text>
+				<reportElement x="10" y="0" width="100" height="40" forecolor="#475569"/>
+				<textElement verticalAlignment="Middle"><font fontName="Arial" size="10" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
+				<text><![CDATA[MÃ ĐƠN]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="75" y="0" width="115" height="35" forecolor="#475569"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9" isBold="true"/>
-				</textElement>
-				<text><![CDATA[HOMESTAY]]></text>
+				<reportElement x="110" y="0" width="180" height="40" forecolor="#475569"/>
+				<textElement verticalAlignment="Middle"><font fontName="Arial" size="10" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
+				<text><![CDATA[TÊN HOMESTAY]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="190" y="0" width="110" height="35" forecolor="#475569"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9" isBold="true"/>
-				</textElement>
-				<text><![CDATA[KHACH HANG]]></text>
+				<reportElement x="290" y="0" width="150" height="40" forecolor="#475569"/>
+				<textElement verticalAlignment="Middle"><font fontName="Arial" size="10" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
+				<text><![CDATA[KHÁCH HÀNG]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="300" y="0" width="70" height="35" forecolor="#475569"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9" isBold="true"/>
-				</textElement>
-				<text><![CDATA[NHAN PHONG]]></text>
+				<reportElement x="440" y="0" width="100" height="40" forecolor="#475569"/>
+				<textElement verticalAlignment="Middle" textAlignment="Center"><font fontName="Arial" size="10" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
+				<text><![CDATA[NGÀY NHẬN]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="370" y="0" width="70" height="35" forecolor="#475569"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9" isBold="true"/>
-				</textElement>
-				<text><![CDATA[TRA PHONG]]></text>
+				<reportElement x="540" y="0" width="100" height="40" forecolor="#475569"/>
+				<textElement verticalAlignment="Middle" textAlignment="Center"><font fontName="Arial" size="10" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
+				<text><![CDATA[NGÀY TRẢ]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="440" y="0" width="65" height="35" forecolor="#475569"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9" isBold="true"/>
-				</textElement>
-				<text><![CDATA[TONG TIEN]]></text>
+				<reportElement x="640" y="0" width="80" height="40" forecolor="#475569"/>
+				<textElement verticalAlignment="Middle" textAlignment="Right"><font fontName="Arial" size="10" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
+				<text><![CDATA[TỔNG TIỀN]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="505" y="0" width="50" height="35" forecolor="#475569"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9" isBold="true"/>
-				</textElement>
-				<text><![CDATA[TRANG THAI]]></text>
+				<reportElement x="720" y="0" width="72" height="40" forecolor="#475569"/>
+				<textElement verticalAlignment="Middle" textAlignment="Center"><font fontName="Arial" size="10" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
+				<text><![CDATA[TRẠNG THÁI]]></text>
 			</staticText>
 		</band>
 	</columnHeader>
 	<detail>
-		<band height="30">
+		<band height="35">
 			<line>
-				<reportElement x="0" y="29" width="555" height="1" forecolor="#F1F5F9"/>
+				<reportElement x="0" y="34" width="802" height="1" forecolor="#E2E8F0"/>
 			</line>
 			<textField>
-				<reportElement x="5" y="0" width="70" height="30"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9"/>
-				</textElement>
+				<reportElement x="10" y="0" width="100" height="35"/>
+				<textElement verticalAlignment="Middle"><font fontName="Arial" size="9" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
 				<textFieldExpression><![CDATA[$F{bookingCode}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="75" y="0" width="115" height="30"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9"/>
-				</textElement>
+				<reportElement x="110" y="0" width="180" height="35"/>
+				<textElement verticalAlignment="Middle"><font fontName="Arial" size="9" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
 				<textFieldExpression><![CDATA[$F{homestayName}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="190" y="0" width="110" height="30"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9"/>
-				</textElement>
+				<reportElement x="290" y="0" width="150" height="35"/>
+				<textElement verticalAlignment="Middle"><font fontName="Arial" size="9" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
 				<textFieldExpression><![CDATA[$F{customerName}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="300" y="0" width="70" height="30"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9"/>
-				</textElement>
+				<reportElement x="440" y="0" width="100" height="35"/>
+				<textElement verticalAlignment="Middle" textAlignment="Center"><font fontName="Arial" size="9" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
 				<textFieldExpression><![CDATA[$F{checkInDate}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="370" y="0" width="70" height="30"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9"/>
-				</textElement>
+				<reportElement x="540" y="0" width="100" height="35"/>
+				<textElement verticalAlignment="Middle" textAlignment="Center"><font fontName="Arial" size="9" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
 				<textFieldExpression><![CDATA[$F{checkOutDate}]]></textFieldExpression>
 			</textField>
-			<textField>
-				<reportElement x="440" y="0" width="65" height="30"/>
-				<textElement verticalAlignment="Middle">
-					<font size="9"/>
-				</textElement>
+			<textField pattern="#,##0">
+				<reportElement x="640" y="0" width="80" height="35"/>
+				<textElement verticalAlignment="Middle" textAlignment="Right"><font fontName="Arial" size="9" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
 				<textFieldExpression><![CDATA[$F{totalPrice}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="505" y="0" width="50" height="30"/>
-				<textElement verticalAlignment="Middle">
-					<font size="8" isBold="true"/>
-				</textElement>
+				<reportElement x="720" y="0" width="72" height="35"/>
+				<textElement verticalAlignment="Middle" textAlignment="Center"><font fontName="Arial" size="8" isBold="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/></textElement>
 				<textFieldExpression><![CDATA[$F{status}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
+	<pageFooter>
+		<band height="30">
+			<textField>
+				<reportElement x="682" y="10" width="80" height="20" forecolor="#94A3B8"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Trang "+$V{PAGE_NUMBER}+" /"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="762" y="10" width="40" height="20" forecolor="#94A3B8"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<noData>
+		<band height="50">
+			<staticText>
+				<reportElement x="0" y="0" width="802" height="50" forecolor="#EF4444"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Arial" size="14" isItalic="true" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+				</textElement>
+				<text><![CDATA[KHÔNG CÓ DỮ LIỆU ĐƠN HÀNG TRONG KHOẢNG THỜI GIAN NÀY]]></text>
+			</staticText>
+		</band>
+	</noData>
 </jasperReport>

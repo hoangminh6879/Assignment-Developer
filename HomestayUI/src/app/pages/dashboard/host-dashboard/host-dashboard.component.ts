@@ -17,6 +17,7 @@ import { ReportService } from '../../../services/report.service';
 import { ChatTabComponent } from '../chat-tab/chat-tab.component';
 import { HostVoucherTabComponent } from '../../../components/host-voucher-tab/host-voucher-tab.component';
 import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.component';
+import { ReportModalComponent } from '../../../components/report-modal/report-modal.component';
 
 @Component({
   selector: 'app-host-dashboard',
@@ -31,10 +32,12 @@ import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.co
     HostReviewTabComponent,
     ChatTabComponent,
     HostVoucherTabComponent,
-    WalletTabComponent
+    WalletTabComponent,
+    ReportModalComponent
   ],
   template: `
     <app-navbar></app-navbar>
+    <app-report-modal *ngIf="showReportModal" [role]="'HOST'" [reportType]="currentReportType" (close)="showReportModal = false"></app-report-modal>
     <div class="dashboard-page">
       <div class="dashboard-layout">
         
@@ -45,21 +48,14 @@ import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.co
             <p class="subtitle">Kênh quản lý</p>
           </div>
           <ul class="sidebar-menu">
-            <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
-              <span class="menu-icon">👤</span> Hồ sơ của tôi
-            </li>
             <li [class.active]="activeTab === 'statistics'" (click)="activeTab = 'statistics'; loadAllStats()">
               <span class="menu-icon">📊</span> Thống kê của tôi
             </li>
-            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'; notificationService.markTypeAsRead('BOOKING')">
-              <span class="menu-icon">📅</span> Quản lý Đặt phòng
-              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('BOOKING') | async"></span>
+            <li [class.active]="activeTab === 'wallet'" (click)="activeTab = 'wallet'">
+              <span class="menu-icon">💳</span> Ví doanh thu
             </li>
             <li [class.active]="activeTab === 'checkin'" (click)="activeTab = 'checkin'">
               <span class="menu-icon">🔑</span> Mã nhận phòng
-            </li>
-            <li [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">
-              <span class="menu-icon">💬</span> Quản lý Đánh giá
             </li>
             <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'; notificationService.markTypeAsRead('HOMESTAY')">
               <span class="menu-icon">🏠</span> Quản lý Homestay
@@ -68,15 +64,22 @@ import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.co
             <li [class.active]="activeTab === 'rooms'" (click)="activeTab = 'rooms'">
               <span class="menu-icon">🛏️</span> Quản lý Phòng
             </li>
-            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'; notificationService.markTypeAsRead('CHAT')">
-              <span class="menu-icon">💬</span> Tin nhắn
-              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('CHAT') | async"></span>
+            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'; notificationService.markTypeAsRead('BOOKING')">
+              <span class="menu-icon">📅</span> Quản lý Đặt phòng
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('BOOKING') | async"></span>
             </li>
             <li [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">
               <span class="menu-icon">🎟️</span> Quản lý Voucher
             </li>
-            <li [class.active]="activeTab === 'wallet'" (click)="activeTab = 'wallet'">
-              <span class="menu-icon">💳</span> Ví doanh thu
+            <li [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">
+              <span class="menu-icon">💬</span> Quản lý Đánh giá
+            </li>
+            <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'; notificationService.markTypeAsRead('CHAT')">
+              <span class="menu-icon">💬</span> Tin nhắn
+              <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('CHAT') | async"></span>
+            </li>
+            <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+              <span class="menu-icon">👤</span> Hồ sơ của tôi
             </li>
           </ul>
         </aside>
@@ -87,13 +90,9 @@ import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.co
         <!-- STATISTICS TAB -->
         <div *ngIf="activeTab === 'statistics'">
           <div class="tab-header-actions">
-            <div class="export-dropdown">
-              <button class="btn-export">📥 Xuất báo cáo thống kê</button>
-              <div class="dropdown-content">
-                <a (click)="reportService.exportStatsPdf()">PDF/XLSX</a>
-                <a (click)="reportService.exportStatsJasper()">Jasper Report</a>
-              </div>
-            </div>
+            <button class="btn-export-premium" (click)="openReportModal('STATS')">
+              <span class="btn-icon">📥</span> Xuất báo cáo thống kê
+            </button>
           </div>
           <div class="stats-overview">
             <div class="stat-card-premium green">
@@ -190,13 +189,9 @@ import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.co
         <div class="card glass-card" *ngIf="activeTab === 'bookings'">
           <div class="card-header">
             <h3>Danh sách Đặt phòng</h3>
-            <div class="export-dropdown">
-              <button class="btn-primary">📤 Xuất báo cáo</button>
-              <div class="dropdown-content">
-                <a (click)="reportService.exportBookingsPdf()">PDF/XLSX</a>
-                <a (click)="reportService.exportBookingsJasper()">Jasper Report</a>
-              </div>
-            </div>
+            <button class="btn-export-premium" (click)="openReportModal('BOOKINGS')">
+              <span class="btn-icon">📤</span> Xuất báo cáo
+            </button>
           </div>
           <app-booking-history-tab role="HOST"></app-booking-history-tab>
         </div>
@@ -718,10 +713,29 @@ import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.co
     .revenue-cell { font-weight: 800; color: #10b981; font-size: 16px; }
     .empty-state-simple { text-align: center; padding: 40px; color: #94a3b8; font-style: italic; }
 
-    /* EXPORT DROPDOWN */
-    .tab-header-actions { display: flex; justify-content: flex-end; margin-bottom: 15px; }
-    .btn-export { background: #6366f1; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .btn-export:hover { background: #4f46e5; transform: translateY(-2px); }
+    /* EXPORT PREMIUM BUTTON */
+    .tab-header-actions { display: flex; justify-content: flex-end; margin-bottom: 25px; }
+    
+    .btn-export-premium {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white; border: none; padding: 14px 28px; border-radius: 16px;
+      font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; align-items: center; gap: 12px; font-size: 15px;
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+      position: relative; overflow: hidden;
+    }
+    .btn-export-premium::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: all 0.5s;
+    }
+    .btn-export-premium:hover::after { left: 100%; }
+    .btn-export-premium:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.5);
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    }
+    .btn-export-premium .btn-icon { font-size: 20px; }
 
     .export-dropdown { position: relative; display: inline-block; }
     .dropdown-content { display: none; position: absolute; right: 0; background-color: white; min-width: 240px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1); z-index: 100; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
@@ -787,8 +801,15 @@ import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.co
   `]
 })
 export class HostDashboardComponent implements OnInit {
-  activeTab = 'profile';
+  activeTab = 'statistics';
   chatRecipientUser: any = null;
+  showReportModal = false;
+  currentReportType: 'STATS' | 'BOOKINGS' = 'STATS';
+
+  openReportModal(type: 'STATS' | 'BOOKINGS') {
+    this.currentReportType = type;
+    this.showReportModal = true;
+  }
 
   // Detail Modal State
   showDetailModal = false;
