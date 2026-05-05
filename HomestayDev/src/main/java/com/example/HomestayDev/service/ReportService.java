@@ -45,27 +45,23 @@ public class ReportService {
             // Since I can't guarantee the path to a .ttf here, I will use non-accented text 
             // but make the design much more premium.
             
-            // Header Section
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 24, new Color(79, 70, 229));
-            Paragraph title = new Paragraph("BAO CAO DANH SACH DAT PHONG", titleFont);
+            com.lowagie.text.pdf.BaseFont baseFont = com.lowagie.text.pdf.BaseFont.createFont("C:\\Windows\\Fonts\\arial.ttf", com.lowagie.text.pdf.BaseFont.IDENTITY_H, com.lowagie.text.pdf.BaseFont.EMBEDDED);
+            Font titleFont = new Font(baseFont, 22, Font.BOLD, new Color(79, 70, 229));
+            Font headFont = new Font(baseFont, 11, Font.BOLD, Color.WHITE);
+            Font dataFont = new Font(baseFont, 10, Font.NORMAL, Color.BLACK);
+
+            Paragraph title = new Paragraph("DANH SÁCH ĐƠN ĐẶT PHÒNG", titleFont);
             title.setAlignment(Paragraph.ALIGN_CENTER);
             document.add(title);
-
-            Font subTitleFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Color.GRAY);
-            Paragraph subTitle = new Paragraph("He thong HomestayDev - Ngay xuat: " + java.time.LocalDate.now(), subTitleFont);
-            subTitle.setAlignment(Paragraph.ALIGN_CENTER);
-            document.add(subTitle);
             document.add(new Paragraph(" "));
 
-            // Table styling
             PdfPTable table = new PdfPTable(7);
             table.setWidthPercentage(100);
             table.setSpacingBefore(20);
-            table.setWidths(new float[] {1.2f, 2.5f, 2.5f, 1.8f, 1.8f, 1.8f, 1.8f});
+            table.setWidths(new float[] {1.5f, 2.5f, 2.5f, 1.8f, 1.8f, 1.8f, 1.5f});
 
-            // Table Header
-            Font headFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, Color.WHITE);
-            String[] headers = {"MA DON", "HOMESTAY", "KHACH HANG", "NGAY NHAN", "NGAY TRA", "TONG TIEN", "TRANG THAI"};
+            String[] headers = {"MÃ ĐƠN", "HOMESTAY", "KHÁCH HÀNG", "NGÀY NHẬN", "NGÀY TRẢ", "TỔNG TIỀN", "TRẠNG THÁI"};
+            System.out.println("Generating PDF for " + bookings.size() + " bookings");
             for (String header : headers) {
                 PdfPCell cell = new PdfPCell(new Phrase(header, headFont));
                 cell.setBackgroundColor(new Color(79, 70, 229));
@@ -75,11 +71,8 @@ public class ReportService {
                 table.addCell(cell);
             }
 
-            // Table Data
-            Font dataFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.BLACK);
             for (Booking b : bookings) {
                 String code = b.getCheckInCode() != null ? b.getCheckInCode() : b.getId().toString().substring(0, 8);
-                
                 table.addCell(createStyledCell(code, dataFont));
                 table.addCell(createStyledCell(b.getHomestay().getName(), dataFont));
                 table.addCell(createStyledCell(b.getUser().getFirstName() + " " + b.getUser().getLastName(), dataFont));
@@ -88,18 +81,18 @@ public class ReportService {
                 table.addCell(createStyledCell(String.format("%,.0f VND", b.getTotalPrice().doubleValue()), dataFont));
                 
                 String status = b.getStatus().toString();
-                PdfPCell statusCell = createStyledCell(status, dataFont);
-                if ("COMPLETED".equals(status)) {
-                    statusCell.setPhrase(new Phrase(status, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(16, 185, 129))));
-                } else if ("CANCELLED".equals(status)) {
-                    statusCell.setPhrase(new Phrase(status, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, new Color(239, 68, 68))));
-                }
-                table.addCell(statusCell);
+                table.addCell(createStyledCell(status, dataFont));
             }
 
-            document.add(table);
+            if (bookings.isEmpty()) {
+                Paragraph noData = new Paragraph("KHÔNG CÓ DỮ LIỆU ĐƠN HÀNG TRONG KHOẢNG THỜI GIAN NÀY", new Font(baseFont, 12, Font.ITALIC, Color.RED));
+                noData.setAlignment(Paragraph.ALIGN_CENTER);
+                document.add(noData);
+            } else {
+                document.add(table);
+            }
             document.close();
-        } catch (DocumentException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -145,36 +138,55 @@ public class ReportService {
 
     // --- JASPER REPORT EXPORT ---
     public byte[] exportBookingsJasper(List<Booking> bookings, String format) throws JRException {
-        // Simple DTO for Jasper
         List<Map<String, Object>> data = bookings.stream().map(b -> {
             Map<String, Object> map = new HashMap<>();
             map.put("bookingCode", b.getCheckInCode() != null ? b.getCheckInCode() : b.getId().toString().substring(0, 8));
-            map.put("homestayName", b.getHomestay().getName());
-            map.put("customerName", b.getUser().getFirstName() + " " + b.getUser().getLastName());
-            map.put("checkInDate", b.getCheckInDate().toString());
-            map.put("checkOutDate", b.getCheckOutDate().toString());
-            map.put("totalPrice", b.getTotalPrice().doubleValue());
-            map.put("status", b.getStatus().toString());
+            map.put("homestayName", b.getHomestay() != null ? b.getHomestay().getName() : "N/A");
+            map.put("customerName", b.getUser() != null ? b.getUser().getFirstName() + " " + b.getUser().getLastName() : "N/A");
+            map.put("checkInDate", b.getCheckInDate() != null ? b.getCheckInDate().toString() : "N/A");
+            map.put("checkOutDate", b.getCheckOutDate() != null ? b.getCheckOutDate().toString() : "N/A");
+            map.put("totalPrice", b.getTotalPrice() != null ? b.getTotalPrice().doubleValue() : 0.0);
+            map.put("status", b.getStatus() != null ? b.getStatus().toString() : "N/A");
             return map;
         }).toList();
 
-        // In a real app, you'd load a .jrxml file. 
-        // For this demo, we'll use a very simple dynamic report if possible, 
-        // but Jasper usually needs a template. 
-        // I will provide a basic template placeholder logic.
-        
-        // Load the template (we'll need to create this file)
-        JasperReport jasperReport = JasperCompileManager.compileReport(getClass().getResourceAsStream("/reports/bookings.jrxml"));
-        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(data);
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("title", "Báo cáo Đặt phòng");
+        // Load the template
+        try {
+            var reportStream = getClass().getResourceAsStream("/reports/bookings.jrxml");
+            if (reportStream == null) {
+                System.err.println("CRITICAL: /reports/bookings.jrxml NOT FOUND");
+                throw new RuntimeException("Jasper template /reports/bookings.jrxml not found");
+            }
+            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
+            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(data);
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("title", "DANH SÁCH ĐẶT PHÒNG");
+            parameters.put("exportDate", java.time.LocalDateTime.now().toString());
 
-        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
 
-        if ("pdf".equalsIgnoreCase(format)) {
-            return JasperExportManager.exportReportToPdf(jasperPrint);
-        } else {
-            return JasperExportManager.exportReportToPdf(jasperPrint); 
+            if ("xlsx".equalsIgnoreCase(format)) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                net.sf.jasperreports.export.SimpleXlsxReportConfiguration configuration = new net.sf.jasperreports.export.SimpleXlsxReportConfiguration();
+                configuration.setOnePagePerSheet(false);
+                configuration.setRemoveEmptySpaceBetweenRows(true);
+                configuration.setDetectCellType(true);
+                configuration.setWhitePageBackground(false);
+
+                net.sf.jasperreports.export.SimpleOutputStreamExporterOutput exporterOutput = new net.sf.jasperreports.export.SimpleOutputStreamExporterOutput(baos);
+                net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter exporter = new net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter();
+                exporter.setExporterInput(new net.sf.jasperreports.export.SimpleExporterInput(jasperPrint));
+                exporter.setExporterOutput(exporterOutput);
+                exporter.setConfiguration(configuration);
+                exporter.exportReport();
+                return baos.toByteArray();
+            } else {
+                return JasperExportManager.exportReportToPdf(jasperPrint);
+            }
+        } catch (Exception e) {
+            System.err.println("JASPER ERROR: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error generating Jasper report: " + e.getMessage());
         }
     }
 
@@ -187,8 +199,15 @@ public class ReportService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, new Color(99, 102, 241));
-            Paragraph title = new Paragraph("BAO CAO THONG KE CHU NHA", titleFont);
+            // Load a font that supports Vietnamese
+            com.lowagie.text.pdf.BaseFont baseFont = com.lowagie.text.pdf.BaseFont.createFont("C:\\Windows\\Fonts\\arial.ttf", com.lowagie.text.pdf.BaseFont.IDENTITY_H, com.lowagie.text.pdf.BaseFont.EMBEDDED);
+            Font titleFont = new Font(baseFont, 22, Font.BOLD, new Color(79, 70, 229));
+            Font headerFont = new Font(baseFont, 12, Font.BOLD, Color.WHITE);
+            Font dataFont = new Font(baseFont, 11, Font.NORMAL, Color.BLACK);
+            Font labelFont = new Font(baseFont, 10, Font.NORMAL, Color.GRAY);
+            Font cardValueFont = new Font(baseFont, 16, Font.BOLD, Color.BLACK);
+
+            Paragraph title = new Paragraph("BÁO CÁO THỐNG KÊ CHỦ NHÀ", titleFont);
             title.setAlignment(Paragraph.ALIGN_CENTER);
             document.add(title);
             document.add(new Paragraph(" "));
@@ -196,48 +215,49 @@ public class ReportService {
             // Overview Cards
             PdfPTable overviewTable = new PdfPTable(3);
             overviewTable.setWidthPercentage(100);
-            overviewTable.addCell(createStatCell("Tong Doanh Thu", stats.getTotalRevenue().toString() + " VND"));
-            overviewTable.addCell(createStatCell("Tong Luot Dat", stats.getTotalBookings().toString()));
-            overviewTable.addCell(createStatCell("Tong Homestay", stats.getTotalHomestays().toString()));
+            overviewTable.addCell(createStatCell("Tổng Doanh Thu", (stats.getTotalRevenue() != null ? String.format("%,d", stats.getTotalRevenue().longValue()) : "0") + " VND", labelFont, cardValueFont));
+            overviewTable.addCell(createStatCell("Tổng Lượt Đặt", (stats.getTotalBookings() != null ? stats.getTotalBookings().toString() : "0"), labelFont, cardValueFont));
+            overviewTable.addCell(createStatCell("Tổng Homestay", (stats.getTotalHomestays() != null ? stats.getTotalHomestays().toString() : "0"), labelFont, cardValueFont));
             document.add(overviewTable);
             document.add(new Paragraph(" "));
 
-            document.add(new Paragraph("Hieu suat chi tiet tung Homestay:", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+            document.add(new Paragraph("Hiệu suất chi tiết từng Homestay:", new Font(baseFont, 14, Font.BOLD)));
             PdfPTable table = new PdfPTable(3);
             table.setWidthPercentage(100);
             table.setSpacingBefore(10);
             
-            String[] headers = {"Ten Homestay", "Luot dat", "Doanh thu"};
+            String[] headers = {"Tên Homestay", "Lượt đặt", "Doanh thu"};
             for (String h : headers) {
-                PdfPCell cell = new PdfPCell(new Phrase(h, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.WHITE)));
+                PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
                 cell.setBackgroundColor(new Color(79, 70, 229));
                 cell.setPadding(8);
                 table.addCell(cell);
             }
 
-            Font dataFont = FontFactory.getFont(FontFactory.HELVETICA, 11);
-            for (StatisticsDto.HomestayStats s : stats.getHomestayStats()) {
-                table.addCell(createStyledCell(s.getHomestayName(), dataFont));
-                table.addCell(createStyledCell(s.getBookingCount().toString(), dataFont));
-                table.addCell(createStyledCell(s.getTotalRevenue().toString() + " VND", dataFont));
+            if (stats.getHomestayStats() != null) {
+                for (StatisticsDto.HomestayStats s : stats.getHomestayStats()) {
+                    table.addCell(createStyledCell(s.getHomestayName(), dataFont));
+                    table.addCell(createStyledCell(s.getBookingCount().toString(), dataFont));
+                    table.addCell(createStyledCell(String.format("%,d", s.getTotalRevenue().longValue()) + " VND", dataFont));
+                }
             }
             document.add(table);
 
             document.close();
-        } catch (DocumentException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-    private PdfPCell createStatCell(String label, String value) {
+    private PdfPCell createStatCell(String label, String value, Font labelFont, Font valueFont) {
         PdfPCell cell = new PdfPCell();
         cell.setPadding(15);
         cell.setBackgroundColor(new Color(248, 250, 252));
         cell.setBorderColor(new Color(226, 232, 240));
-        cell.addElement(new Paragraph(label, FontFactory.getFont(FontFactory.HELVETICA, 10, Color.GRAY)));
-        cell.addElement(new Paragraph(value, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, Color.BLACK)));
+        cell.addElement(new Paragraph(label, labelFont));
+        cell.addElement(new Paragraph(value, valueFont));
         return cell;
     }
 
@@ -249,44 +269,51 @@ public class ReportService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, new Color(79, 70, 229));
-            Paragraph title = new Paragraph("BAO CAO THONG KE QUAN TRI", titleFont);
+            com.lowagie.text.pdf.BaseFont baseFont = com.lowagie.text.pdf.BaseFont.createFont("C:\\Windows\\Fonts\\arial.ttf", com.lowagie.text.pdf.BaseFont.IDENTITY_H, com.lowagie.text.pdf.BaseFont.EMBEDDED);
+            Font titleFont = new Font(baseFont, 22, Font.BOLD, new Color(79, 70, 229));
+            Font headerFont = new Font(baseFont, 12, Font.BOLD, Color.WHITE);
+            Font dataFont = new Font(baseFont, 11, Font.NORMAL, Color.BLACK);
+            Font labelFont = new Font(baseFont, 10, Font.NORMAL, Color.GRAY);
+            Font cardValueFont = new Font(baseFont, 16, Font.BOLD, Color.BLACK);
+
+            Paragraph title = new Paragraph("BÁO CÁO THỐNG KÊ QUẢN TRỊ", titleFont);
             title.setAlignment(Paragraph.ALIGN_CENTER);
             document.add(title);
             document.add(new Paragraph(" "));
 
             PdfPTable overviewTable = new PdfPTable(4);
             overviewTable.setWidthPercentage(100);
-            overviewTable.addCell(createStatCell("Doanh Thu HT", stats.getTotalRevenue().toString() + " VND"));
-            overviewTable.addCell(createStatCell("Tong Don Hang", stats.getTotalBookings().toString()));
-            overviewTable.addCell(createStatCell("Tong Homestay", stats.getTotalHomestays().toString()));
-            overviewTable.addCell(createStatCell("Tong Nguoi Dung", stats.getTotalUsers().toString()));
+            overviewTable.addCell(createStatCell("Doanh Thu HT", (stats.getTotalRevenue() != null ? String.format("%,d", stats.getTotalRevenue().longValue()) : "0") + " VND", labelFont, cardValueFont));
+            overviewTable.addCell(createStatCell("Tổng Đơn Hàng", (stats.getTotalBookings() != null ? stats.getTotalBookings().toString() : "0"), labelFont, cardValueFont));
+            overviewTable.addCell(createStatCell("Tổng Homestay", (stats.getTotalHomestays() != null ? stats.getTotalHomestays().toString() : "0"), labelFont, cardValueFont));
+            overviewTable.addCell(createStatCell("Tổng Người Dùng", (stats.getTotalUsers() != null ? stats.getTotalUsers().toString() : "0"), labelFont, cardValueFont));
             document.add(overviewTable);
             document.add(new Paragraph(" "));
 
-            document.add(new Paragraph("Top 5 Homestay doanh thu cao nhat:", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+            document.add(new Paragraph("Top 5 Homestay doanh thu cao nhất:", new Font(baseFont, 14, Font.BOLD)));
             PdfPTable table = new PdfPTable(3);
             table.setWidthPercentage(100);
             table.setSpacingBefore(10);
             
-            String[] headers = {"Ten Homestay", "Don hang", "Doanh thu"};
+            String[] headers = {"Tên Homestay", "Đơn hàng", "Doanh thu"};
             for (String h : headers) {
-                PdfPCell cell = new PdfPCell(new Phrase(h, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.WHITE)));
+                PdfPCell cell = new PdfPCell(new Phrase(h, headerFont));
                 cell.setBackgroundColor(new Color(59, 130, 246));
                 cell.setPadding(8);
                 table.addCell(cell);
             }
 
-            Font dataFont = FontFactory.getFont(FontFactory.HELVETICA, 11);
-            for (StatisticsDto.HomestayStats s : stats.getTopHomestays()) {
-                table.addCell(createStyledCell(s.getHomestayName(), dataFont));
-                table.addCell(createStyledCell(s.getBookingCount().toString(), dataFont));
-                table.addCell(createStyledCell(s.getTotalRevenue().toString() + " VND", dataFont));
+            if (stats.getTopHomestays() != null) {
+                for (StatisticsDto.HomestayStats s : stats.getTopHomestays()) {
+                    table.addCell(createStyledCell(s.getHomestayName(), dataFont));
+                    table.addCell(createStyledCell(s.getBookingCount().toString(), dataFont));
+                    table.addCell(createStyledCell(String.format("%,d", s.getTotalRevenue().longValue()) + " VND", dataFont));
+                }
             }
             document.add(table);
 
             document.close();
-        } catch (DocumentException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -294,23 +321,100 @@ public class ReportService {
     }
 
     // --- JASPER STATS EXPORT ---
-    public byte[] exportStatsJasper(StatisticsDto.HostStatistics stats) throws JRException {
-        List<Map<String, Object>> data = stats.getHomestayStats().stream().map(s -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("homestayName", s.getHomestayName());
-            map.put("bookingCount", s.getBookingCount());
-            map.put("revenue", s.getTotalRevenue().doubleValue());
-            return map;
-        }).toList();
+    public byte[] exportStatsJasper(StatisticsDto.HostStatistics stats, String format) throws JRException {
+        try {
+            List<Map<String, Object>> data = stats.getHomestayStats() != null ? stats.getHomestayStats().stream().map(s -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("homestayName", s.getHomestayName());
+                map.put("bookingCount", s.getBookingCount());
+                map.put("revenue", s.getTotalRevenue().doubleValue());
+                return map;
+            }).toList() : List.of();
 
-        JasperReport jasperReport = JasperCompileManager.compileReport(getClass().getResourceAsStream("/reports/stats.jrxml"));
-        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(data);
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("title", "BAO CAO THONG KE DOANH THU");
-        parameters.put("totalRevenue", stats.getTotalRevenue().doubleValue());
-        parameters.put("totalBookings", stats.getTotalBookings());
+            var reportStream = getClass().getResourceAsStream("/reports/stats.jrxml");
+            if (reportStream == null) {
+                System.err.println("CRITICAL: /reports/stats.jrxml NOT FOUND");
+                throw new RuntimeException("Jasper template /reports/stats.jrxml not found");
+            }
+            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
+            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(data);
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("title", "BÁO CÁO THỐNG KÊ DOANH THU");
+            parameters.put("totalRevenue", stats.getTotalRevenue() != null ? stats.getTotalRevenue().doubleValue() : 0.0);
+            parameters.put("totalBookings", stats.getTotalBookings() != null ? stats.getTotalBookings() : 0L);
+            parameters.put("totalHomestays", stats.getTotalHomestays() != null ? stats.getTotalHomestays() : 0L);
+            parameters.put("exportDate", java.time.LocalDateTime.now().toString());
 
-        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
-        return JasperExportManager.exportReportToPdf(jasperPrint);
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+            System.out.println("Jasper: Report filled successfully (Host Stats) for " + format);
+            return exportToBytes(jasperPrint, format);
+        } catch (Exception e) {
+            System.err.println("JASPER STATS ERROR: " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error generating stats report: " + e.getMessage(), e);
+        }
     }
+
+    public byte[] exportAdminStatsJasper(StatisticsDto.AdminStatistics stats, String format) throws JRException {
+        try {
+            List<Map<String, Object>> data = stats.getTopHomestays() != null ? stats.getTopHomestays().stream().map(s -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("homestayName", s.getHomestayName());
+                map.put("bookingCount", s.getBookingCount());
+                map.put("revenue", s.getTotalRevenue().doubleValue());
+                return map;
+            }).toList() : List.of();
+
+            var reportStream = getClass().getResourceAsStream("/reports/stats.jrxml");
+            if (reportStream == null) {
+                System.err.println("CRITICAL: /reports/stats.jrxml NOT FOUND");
+                throw new RuntimeException("Jasper template /reports/stats.jrxml not found");
+            }
+            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
+            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(data);
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("title", "BÁO CÁO THỐNG KÊ QUẢN TRỊ");
+            parameters.put("totalRevenue", stats.getTotalRevenue() != null ? stats.getTotalRevenue().doubleValue() : 0.0);
+            parameters.put("totalBookings", stats.getTotalBookings() != null ? stats.getTotalBookings() : 0L);
+            parameters.put("totalHomestays", stats.getTotalHomestays() != null ? stats.getTotalHomestays() : 0L);
+            parameters.put("totalUsers", stats.getTotalUsers() != null ? stats.getTotalUsers() : 0L);
+            parameters.put("exportDate", java.time.LocalDateTime.now().toString());
+
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+            System.out.println("Jasper: Report filled successfully for " + format);
+            return exportToBytes(jasperPrint, format);
+        } catch (Exception e) {
+            System.err.println("JASPER ADMIN STATS ERROR: " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error generating admin stats report: " + e.getMessage(), e);
+        }
+    }
+
+    private byte[] exportToBytes(JasperPrint jasperPrint, String format) throws JRException {
+        try {
+            if ("xlsx".equalsIgnoreCase(format)) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                net.sf.jasperreports.export.SimpleXlsxReportConfiguration configuration = new net.sf.jasperreports.export.SimpleXlsxReportConfiguration();
+                configuration.setOnePagePerSheet(false);
+                configuration.setRemoveEmptySpaceBetweenRows(true);
+                configuration.setRemoveEmptySpaceBetweenColumns(true);
+                configuration.setDetectCellType(true);
+                configuration.setWhitePageBackground(false);
+
+                net.sf.jasperreports.export.SimpleOutputStreamExporterOutput exporterOutput = new net.sf.jasperreports.export.SimpleOutputStreamExporterOutput(baos);
+                net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter exporter = new net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter();
+                exporter.setExporterInput(new net.sf.jasperreports.export.SimpleExporterInput(jasperPrint));
+                exporter.setExporterOutput(exporterOutput);
+                exporter.setConfiguration(configuration);
+                exporter.exportReport();
+                return baos.toByteArray();
+            } else {
+                return JasperExportManager.exportReportToPdf(jasperPrint);
+            }
+        } catch (Exception e) {
+            System.err.println("EXPORT TO BYTES ERROR: " + e.getMessage());
+            throw e;
+        }
+    }
+
 }
