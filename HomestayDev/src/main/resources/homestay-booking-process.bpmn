@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="Camunda Modeler"
+                  exporterVersion="5.0.0">
+
+  <bpmn:process id="homestay-booking-process" name="Homestay Booking Process" isExecutable="true" camunda:historyTimeToLive="P180D">
+    
+    <bpmn:startEvent id="StartEvent_1" name="Booking Created">
+      <bpmn:outgoing>Flow_Start</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:subProcess id="SubProcess_ActivePhase" name="Active Phase">
+      <bpmn:incoming>Flow_Start</bpmn:incoming>
+      <bpmn:outgoing>Flow_SubProcess_End</bpmn:outgoing>
+
+      <bpmn:startEvent id="Event_SubStart">
+        <bpmn:outgoing>Flow_Sub1</bpmn:outgoing>
+      </bpmn:startEvent>
+
+      <bpmn:exclusiveGateway id="Gateway_PaymentMethod" name="Payment Method?">
+        <bpmn:incoming>Flow_Sub1</bpmn:incoming>
+        <bpmn:outgoing>Flow_VNPAY</bpmn:outgoing>
+        <bpmn:outgoing>Flow_WALLET</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+
+      <bpmn:sequenceFlow id="Flow_Sub1" sourceRef="Event_SubStart" targetRef="Gateway_PaymentMethod" />
+
+      <!-- VNPAY PATH -->
+      <bpmn:receiveTask id="Task_WaitPayment" name="Wait for VNPay Payment" messageRef="Message_VNPaySuccess">
+        <bpmn:incoming>Flow_VNPAY</bpmn:incoming>
+        <bpmn:outgoing>Flow_WaitPayment_End</bpmn:outgoing>
+      </bpmn:receiveTask>
+
+      <bpmn:sequenceFlow id="Flow_VNPAY" name="VNPAY" sourceRef="Gateway_PaymentMethod" targetRef="Task_WaitPayment">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${paymentMethod == 'VNPAY'}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+
+      <!-- 1 Hour Timer for VNPay -->
+      <bpmn:boundaryEvent id="Event_Timer1H" name="1 Hour" attachedToRef="Task_WaitPayment">
+        <bpmn:outgoing>Flow_Timer1H</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_1">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT1H</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:boundaryEvent>
+
+      <bpmn:serviceTask id="Task_AutoCancelVNPay" name="Auto Cancel VNPay" camunda:delegateExpression="${autoCancelVNPayDelegate}">
+        <bpmn:incoming>Flow_Timer1H</bpmn:incoming>
+        <bpmn:outgoing>Flow_AutoCancelVNPay_End</bpmn:outgoing>
+      </bpmn:serviceTask>
+
+      <bpmn:sequenceFlow id="Flow_Timer1H" sourceRef="Event_Timer1H" targetRef="Task_AutoCancelVNPay" />
+      
+      <bpmn:endEvent id="EndEvent_AutoCancelVNPay">
+        <bpmn:incoming>Flow_AutoCancelVNPay_End</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_AutoCancelVNPay_End" sourceRef="Task_AutoCancelVNPay" targetRef="EndEvent_AutoCancelVNPay" />
+
+      <!-- JOIN PAYMENT -->
+      <bpmn:exclusiveGateway id="Gateway_JoinPayment">
+        <bpmn:incoming>Flow_WaitPayment_End</bpmn:incoming>
+        <bpmn:incoming>Flow_WALLET</bpmn:incoming>
+        <bpmn:outgoing>Flow_Join_To_Approval</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+
+      <bpmn:sequenceFlow id="Flow_WALLET" name="WALLET" sourceRef="Gateway_PaymentMethod" targetRef="Gateway_JoinPayment">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${paymentMethod == 'WALLET'}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      
+      <bpmn:sequenceFlow id="Flow_WaitPayment_End" sourceRef="Task_WaitPayment" targetRef="Gateway_JoinPayment" />
+
+      <!-- HOST APPROVAL -->
+      <bpmn:userTask id="Task_HostApproval" name="Host Approval" camunda:assignee="${hostUsername}">
+        <bpmn:incoming>Flow_Join_To_Approval</bpmn:incoming>
+        <bpmn:outgoing>Flow_Approval_End</bpmn:outgoing>
+      </bpmn:userTask>
+
+      <bpmn:sequenceFlow id="Flow_Join_To_Approval" sourceRef="Gateway_JoinPayment" targetRef="Task_HostApproval" />
+
+      <!-- 3 Hour Timer for Host Approval -->
+      <bpmn:boundaryEvent id="Event_Timer3H" name="3 Hours" attachedToRef="Task_HostApproval">
+        <bpmn:outgoing>Flow_Timer3H</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_2">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT3H</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:boundaryEvent>
+
+      <bpmn:serviceTask id="Task_AutoCancelUnapproved" name="Auto Cancel &#38; Refund" camunda:delegateExpression="${autoCancelUnapprovedDelegate}">
+        <bpmn:incoming>Flow_Timer3H</bpmn:incoming>
+        <bpmn:outgoing>Flow_AutoCancelUnapproved_End</bpmn:outgoing>
+      </bpmn:serviceTask>
+
+      <bpmn:sequenceFlow id="Flow_Timer3H" sourceRef="Event_Timer3H" targetRef="Task_AutoCancelUnapproved" />
+
+      <bpmn:endEvent id="EndEvent_AutoCancelUnapproved">
+        <bpmn:incoming>Flow_AutoCancelUnapproved_End</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_AutoCancelUnapproved_End" sourceRef="Task_AutoCancelUnapproved" targetRef="EndEvent_AutoCancelUnapproved" />
+
+      <!-- DECISION GATEWAY -->
+      <bpmn:exclusiveGateway id="Gateway_ApprovalDecision" name="Approved?">
+        <bpmn:incoming>Flow_Approval_End</bpmn:incoming>
+        <bpmn:outgoing>Flow_Approved</bpmn:outgoing>
+        <bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+
+      <bpmn:sequenceFlow id="Flow_Approval_End" sourceRef="Task_HostApproval" targetRef="Gateway_ApprovalDecision" />
+
+      <bpmn:endEvent id="EndEvent_HostRejected">
+        <bpmn:incoming>Flow_Rejected</bpmn:incoming>
+      </bpmn:endEvent>
+
+      <bpmn:sequenceFlow id="Flow_Rejected" name="No" sourceRef="Gateway_ApprovalDecision" targetRef="EndEvent_HostRejected">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${isApproved == false}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+
+      <!-- CHECK-IN -->
+      <bpmn:userTask id="Task_WaitCheckIn" name="Wait for Check-In" camunda:assignee="${hostUsername}">
+        <bpmn:incoming>Flow_Approved</bpmn:incoming>
+        <bpmn:outgoing>Flow_CheckIn_End</bpmn:outgoing>
+      </bpmn:userTask>
+
+      <bpmn:sequenceFlow id="Flow_Approved" name="Yes" sourceRef="Gateway_ApprovalDecision" targetRef="Task_WaitCheckIn">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${isApproved == true}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+
+      <bpmn:endEvent id="EndEvent_SubSuccess">
+        <bpmn:incoming>Flow_CheckIn_End</bpmn:incoming>
+      </bpmn:endEvent>
+
+      <bpmn:sequenceFlow id="Flow_CheckIn_End" sourceRef="Task_WaitCheckIn" targetRef="EndEvent_SubSuccess" />
+    </bpmn:subProcess>
+
+    <bpmn:sequenceFlow id="Flow_Start" sourceRef="StartEvent_1" targetRef="SubProcess_ActivePhase" />
+
+    <!-- MANUAL CANCEL BOUNDARY EVENT -->
+    <bpmn:boundaryEvent id="Event_ManualCancel" name="Manual Cancel" attachedToRef="SubProcess_ActivePhase">
+      <bpmn:outgoing>Flow_ManualCancel</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1" messageRef="Message_CancelBooking" />
+    </bpmn:boundaryEvent>
+
+    <bpmn:endEvent id="EndEvent_ManualCancel" name="Cancelled Manually">
+      <bpmn:incoming>Flow_ManualCancel</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_ManualCancel" sourceRef="Event_ManualCancel" targetRef="EndEvent_ManualCancel" />
+
+    <!-- AFTER ACTIVE PHASE (CHECK OUT) -->
+    <bpmn:userTask id="Task_WaitCheckOut" name="Wait for Check-Out" camunda:assignee="${hostUsername}">
+      <bpmn:incoming>Flow_SubProcess_End</bpmn:incoming>
+      <bpmn:outgoing>Flow_CheckOut_End</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:sequenceFlow id="Flow_SubProcess_End" sourceRef="SubProcess_ActivePhase" targetRef="Task_WaitCheckOut" />
+
+    <bpmn:endEvent id="EndEvent_ProcessCompleted" name="Completed">
+      <bpmn:incoming>Flow_CheckOut_End</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_CheckOut_End" sourceRef="Task_WaitCheckOut" targetRef="EndEvent_ProcessCompleted" />
+
+  </bpmn:process>
+
+  <bpmn:message id="Message_VNPaySuccess" name="VNPaySuccessMessage" />
+  <bpmn:message id="Message_CancelBooking" name="CancelBookingMessage" />
+
+</bpmn:definitions>

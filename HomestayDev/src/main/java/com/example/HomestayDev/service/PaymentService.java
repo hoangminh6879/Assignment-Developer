@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.camunda.bpm.engine.RuntimeService;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -26,6 +27,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final EmailService emailService;
     private final NotificationService notificationService;
+    private final RuntimeService runtimeService;
 
     public String createVNPayUrl(UUID bookingId, HttpServletRequest request) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -145,6 +147,15 @@ public class PaymentService {
                                     .booking(booking)
                                     .build();
                             paymentRepository.save(payment);
+
+                            // CAMUNDA: Correlate VNPaySuccessMessage
+                            try {
+                                runtimeService.createMessageCorrelation("Message_VNPaySuccess")
+                                        .processInstanceBusinessKey(booking.getId().toString())
+                                        .correlate();
+                            } catch (Exception e) {
+                                System.err.println("[Camunda] Could not correlate Message_VNPaySuccess: " + e.getMessage());
+                            }
 
                             // Thông báo cho Host
                             notificationService.createNotification(
