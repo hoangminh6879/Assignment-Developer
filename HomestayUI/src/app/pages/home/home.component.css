@@ -23,37 +23,47 @@
 
 .hero-content p {
   font-size: 1.2rem;
-  margin-bottom: 40px;
+  margin-bottom: 35px;
 }
 
 .search-wrapper {
   position: relative;
-  max-width: 800px;
+  max-width: 850px;
   margin: 0 auto;
-  z-index: 1000;
+  width: 100%;
+  z-index: 10;
 }
 
 .search-bar {
   background: white;
-  padding: 8px 8px 8px 25px;
-  border-radius: 50px;
+  padding: 10px 10px 10px 25px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.12);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.search-bar:focus-within {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+.search-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-icon {
+  font-size: 18px;
+  color: #94a3b8;
 }
 
 .search-bar input {
   flex: 1;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   outline: none;
-  color: #333;
+  color: #1e293b;
+  font-weight: 500;
 }
 
 .search-actions {
@@ -63,44 +73,53 @@
 }
 
 .btn-filter-toggle {
-  background: white;
+  background: #f8fafc;
   border: none;
-  width: 45px;
-  height: 45px;
-  border-radius: 25%;
+  padding: 0 20px;
+  height: 48px;
+  border-radius: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   transition: all 0.2s;
-  color: #64748b;
+  color: #475569;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btn-filter-toggle i {
+  font-size: 14px;
 }
 
 .btn-filter-toggle:hover {
-  background: #e2e8f0;
-  color: #333;
+  background: #f1f5f9;
+  color: #1e293b;
 }
 
 .btn-filter-toggle.active {
-  background: #ff5a5f;
+  background: #4f46e5;
   color: white;
 }
 
 .btn-search {
-  background: #ff5a5f;
+  background: #0f172a;
   color: white;
   border: none;
-  padding: 12px 35px;
-  border-radius: 50px;
+  padding: 0 35px;
+  height: 48px;
+  border-radius: 14px;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .btn-search:hover {
-  background: #ff385c;
-  box-shadow: 0 4px 15px rgba(255, 90, 95, 0.4);
+  background: #1e293b;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
 }
 
 /* ADVANCED FILTERS PANEL */

@@ -9,11 +9,15 @@
 
       <div class="search-wrapper">
         <div class="search-bar">
-          <input type="text" [(ngModel)]="searchQuery" (input)="applyFilters()" placeholder="Bạn muốn đi đâu?">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" [(ngModel)]="searchQuery" (input)="applyFilters()" placeholder="Bạn muốn đi đâu?">
+          </div>
           <div class="search-actions">
             <button class="btn-filter-toggle" (click)="toggleFilters()" [class.active]="showFilters"
               title="Bộ lọc nâng cao">
               <i class="fa-solid fa-filter"></i>
+              <span>Bộ lọc</span>
             </button>
             <button class="btn-search" (click)="applyFilters()">Tìm kiếm</button>
           </div>
