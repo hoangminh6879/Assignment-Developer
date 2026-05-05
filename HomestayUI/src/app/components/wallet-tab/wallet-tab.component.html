@@ -1,0 +1,60 @@
+<div class="wallet-container">
+  <div class="wallet-header">
+    <div class="balance-card animate-fade-in">
+      <div class="card-bg-gradient"></div>
+      <div class="card-content">
+        <span class="label">Số dư hiện tại</span>
+        <h2 class="balance">{{ (wallet?.balance || 0) | number }}đ</h2>
+        <div class="card-footer">
+          <span class="wallet-id">ID: #{{ wallet?.id || '---' }}</span>
+          <span class="chip">Active</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="deposit-card animate-fade-in">
+      <h3>Nạp tiền vào ví</h3>
+      <p>Nạp thêm tiền để thanh toán các dịch vụ homestay nhanh chóng.</p>
+      <div class="deposit-input-group">
+        <input type="number" [(ngModel)]="depositAmount" placeholder="Nhập số tiền (VNĐ)" class="deposit-input" />
+        <button (click)="onDeposit()" [disabled]="isLoading || depositAmount < 10000" class="btn-deposit">
+          {{ isLoading ? 'Đang xử lý...' : 'Nạp tiền ngay' }}
+        </button>
+      </div>
+      <small class="hint">* Nạp tối thiểu 10.000đ qua cổng VNPay</small>
+    </div>
+  </div>
+
+  <div class="transactions-section">
+    <div class="section-header">
+      <h3>Lịch sử giao dịch</h3>
+      <button class="btn-refresh" (click)="loadData()">🔄 Làm mới</button>
+    </div>
+
+    <div class="transaction-list" *ngIf="transactions.length > 0; else emptyState">
+      <div *ngFor="let tx of transactions" class="transaction-item">
+        <div class="tx-icon" [ngClass]="tx.type.toLowerCase()">
+          <span *ngIf="tx.type === 'DEPOSIT'">💰</span>
+          <span *ngIf="tx.type === 'PAYMENT'">💸</span>
+          <span *ngIf="tx.type === 'REFUND'">↩️</span>
+          <span *ngIf="tx.type === 'RECEIPT'">💹</span>
+          <span *ngIf="tx.type === 'WITHDRAWAL'">🏧</span>
+        </div>
+        <div class="tx-info">
+          <p class="tx-desc">{{ tx.description }}</p>
+          <span class="tx-date">{{ tx.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div class="tx-amount" [ngClass]="tx.amount >= 0 ? 'positive' : 'negative'">
+          {{ tx.amount >= 0 ? '+' : '' }}{{ tx.amount | number }}đ
+          <small class="tx-balance-after">Dư: {{ tx.balanceAfter | number }}đ</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="empty-state">
+      <p>Chưa có giao dịch nào được thực hiện.</p>
+    </div>
+  </ng-template>
+</div>

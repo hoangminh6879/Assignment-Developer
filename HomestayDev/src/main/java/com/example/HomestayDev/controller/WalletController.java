@@ -43,8 +43,7 @@ public class WalletController {
         Wallet wallet = walletService.getWalletByUserId(user.getId());
         return ResponseEntity.ok(Map.of(
                 "id", wallet.getId(),
-                "balance", wallet.getBalance()
-        ));
+                "balance", wallet.getBalance()));
     }
 
     @GetMapping("/transactions")
@@ -69,7 +68,8 @@ public class WalletController {
     }
 
     @GetMapping("/vnpay-return")
-    public void vnpayReturn(@RequestParam Map<String, String> allParams, HttpServletResponse response) throws Exception {
+    public void vnpayReturn(@RequestParam Map<String, String> allParams, HttpServletResponse response)
+            throws Exception {
         boolean success = walletService.processDepositReturn(allParams);
         if (success) {
             response.sendRedirect("http://localhost:4200/payment-result?status=success");

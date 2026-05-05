@@ -8,11 +8,12 @@ import { NotificationService } from '../../../services/notification.service';
 import { ProfileTabComponent } from '../../../components/profile-tab/profile-tab.component';
 import { BookingHistoryTabComponent } from '../../../components/booking-history-tab/booking-history-tab.component';
 import { ChatTabComponent } from '../chat-tab/chat-tab.component';
+import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.component';
 
 @Component({
   selector: 'app-user-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, ChatTabComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, ChatTabComponent, WalletTabComponent],
   template: `
     <app-navbar></app-navbar>
     <div class="dashboard-page">
@@ -31,6 +32,9 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
             <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'; notificationService.markTypeAsRead('BOOKING')">
               <span class="menu-icon">📅</span> Lịch sử đặt phòng
               <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('BOOKING') | async"></span>
+            </li>
+            <li [class.active]="activeTab === 'wallet'" (click)="activeTab = 'wallet'">
+              <span class="menu-icon">💳</span> Ví của tôi
             </li>
             <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'">
               <span class="menu-icon">🚀</span> Nâng cấp Host
@@ -53,6 +57,11 @@ import { ChatTabComponent } from '../chat-tab/chat-tab.component';
         <!-- BOOKINGS TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'bookings'">
           <app-booking-history-tab role="USER" (chatRequested)="onChatRequested($event)"></app-booking-history-tab>
+        </div>
+
+        <!-- WALLET TAB -->
+        <div class="card glass-card" *ngIf="activeTab === 'wallet'">
+          <app-wallet-tab></app-wallet-tab>
         </div>
 
         <!-- UPGRADES TAB -->

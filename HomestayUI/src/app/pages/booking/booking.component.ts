@@ -12,6 +12,7 @@ import { AuthService } from '../../services/auth.service';
 import { PaymentService } from '../../services/payment.service';
 import { UserService, UserProfileDto, ProfileUpdateRequest } from '../../services/user.service';
 import { VoucherService, VoucherDto, VoucherType } from '../../services/voucher.service';
+import { WalletService, WalletDto } from '../../services/wallet.service';
 
 @Component({
   selector: 'app-booking',
@@ -102,12 +103,12 @@ import { VoucherService, VoucherDto, VoucherType } from '../../services/voucher.
                 </div>
                 <div 
                   class="payment-item" 
-                  [class.active]="selectedPaymentMethod === 'AT_COUNTER'"
-                  (click)="selectedPaymentMethod = 'AT_COUNTER'">
-                  <span class="pay-icon">💵</span>
+                  [class.active]="selectedPaymentMethod === 'WALLET'"
+                  (click)="selectedPaymentMethod = 'WALLET'">
+                  <span class="pay-icon">👛</span>
                   <div class="pay-text">
-                    <strong>Tại quầy</strong>
-                    <p>Thanh toán khi nhận phòng</p>
+                    <strong>Ví của tôi</strong>
+                    <p>Số dư: {{ (wallet?.balance || 0) | number }}đ</p>
                   </div>
                 </div>
               </div>
@@ -193,7 +194,7 @@ import { VoucherService, VoucherDto, VoucherType } from '../../services/voucher.
             <p><strong>Ngày trả:</strong> {{ checkOutDate | date:'dd/MM/yyyy' }}</p>
             <p *ngIf="discountAmount > 0"><strong>Giảm giá:</strong> <span class="discount-price">-{{ discountAmount | number }}đ</span></p>
             <p><strong>Tổng tiền:</strong> <span class="total-price-modal">{{ totalPrice | number }}đ</span></p>
-            <p><strong>Thanh toán:</strong> {{ selectedPaymentMethod === 'VNPAY' ? 'VNPay' : 'Tại quầy' }}</p>
+            <p><strong>Thanh toán:</strong> {{ selectedPaymentMethod === 'VNPAY' ? 'VNPay' : 'Ví điện tử' }}</p>
           </div>
 
           <div class="user-info-form">
@@ -429,6 +430,7 @@ export class BookingComponent implements OnInit {
   homestay: HomestayDto | null = null;
   roomTypes: RoomTypeDto[] = [];
   availableRooms: RoomDto[] = [];
+  wallet: any = null;
   
   checkInDate = '';
   checkOutDate = '';
@@ -462,6 +464,7 @@ export class BookingComponent implements OnInit {
     private paymentService: PaymentService,
     private userService: UserService,
     private voucherService: VoucherService,
+    private walletService: WalletService,
     private notification: NotificationService
   ) {}
 
@@ -480,6 +483,11 @@ export class BookingComponent implements OnInit {
         error: (err) => {
           console.error('Lỗi khi lấy profile', err);
         }
+      });
+
+      this.walletService.getMyWallet().subscribe({
+        next: (w: WalletDto) => this.wallet = w,
+        error: (err: any) => console.error('Lỗi khi lấy ví', err)
       });
     }
 
@@ -611,6 +619,11 @@ export class BookingComponent implements OnInit {
     if (!this.selectedRoomId || !this.checkInDate || !this.checkOutDate || !this.selectedPaymentMethod) return false;
     if (this.totalNights <= 0) return false;
     if (new Date(this.checkOutDate) <= new Date(this.checkInDate)) return false;
+    
+    if (this.selectedPaymentMethod === 'WALLET' && this.wallet && this.wallet.balance < this.totalPrice) {
+      return false;
+    }
+    
     return true;
   }
 
@@ -619,6 +632,11 @@ export class BookingComponent implements OnInit {
 
     if (!this.authService.hasRole('USER')) {
       this.notification.warning('Chỉ người dùng mới có thể đặt phòng.');
+      return;
+    }
+
+    if (this.selectedPaymentMethod === 'WALLET' && (!this.wallet || this.wallet.balance < this.totalPrice)) {
+      this.notification.error('Số dư ví không đủ. Vui lòng nạp thêm tiền!');
       return;
     }
     
@@ -681,8 +699,12 @@ export class BookingComponent implements OnInit {
               this.isSubmitting = false;
             }
           });
+        } else if (this.selectedPaymentMethod === 'WALLET') {
+          this.notification.success('Thanh toán bằng ví thành công! Vui lòng chờ chủ nhà xác nhận.');
+          this.closeConfirmationModal();
+          this.router.navigate(['/dashboard/user']);
+          this.isSubmitting = false;
         } else {
-          // If At Counter, just show success and go to dashboard
           this.notification.success('Đặt phòng thành công! Chúng tôi sẽ sớm liên hệ với bạn.');
           this.closeConfirmationModal();
           this.router.navigate(['/dashboard/user']);
