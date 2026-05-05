@@ -14,13 +14,15 @@ import { StatisticsService, AdminStatistics } from '../../../services/statistics
 import { ReportService } from '../../../services/report.service';
 import { ChatTabComponent } from '../chat-tab/chat-tab.component';
 import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/admin-voucher-tab.component';
+import { ReportModalComponent } from '../../../components/report-modal/report-modal.component';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, ChatTabComponent, AdminVoucherTabComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, ProfileTabComponent, BookingHistoryTabComponent, ChatTabComponent, AdminVoucherTabComponent, ReportModalComponent],
   template: `
     <app-navbar></app-navbar>
+    <app-report-modal *ngIf="showReportModal" [role]="'ADMIN'" [reportType]="currentReportType" (close)="showReportModal = false"></app-report-modal>
     <div class="dashboard-page">
       <div class="dashboard-layout">
         
@@ -31,14 +33,8 @@ import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/
             <p class="subtitle">Trung tâm điều khiển</p>
           </div>
           <ul class="sidebar-menu">
-            <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
-              <span class="menu-icon">👤</span> Hồ sơ cá nhân
-            </li>
             <li [class.active]="activeTab === 'statistics'" (click)="activeTab = 'statistics'; loadAdminStats()">
               <span class="menu-icon">📊</span> Thống kê
-            </li>
-            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
-              <span class="menu-icon">🧾</span> Quản lý Đơn hàng
             </li>
             <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'; notificationService.markTypeAsRead('SYSTEM')">
               <span class="menu-icon">👑</span> Yêu cầu Host
@@ -46,6 +42,9 @@ import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/
             </li>
             <li [class.active]="activeTab === 'amenities'" (click)="activeTab = 'amenities'">
               <span class="menu-icon">✨</span> Tiện ích
+            </li>
+            <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'">
+              <span class="menu-icon">🧾</span> Quản lý Đơn hàng
             </li>
             <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'; notificationService.markTypeAsRead('HOMESTAY')">
               <span class="menu-icon">🏠</span> Duyệt Homestay
@@ -61,6 +60,9 @@ import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/
             <li [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">
               <span class="menu-icon">🎟️</span> Quản lý Voucher
             </li>
+            <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+              <span class="menu-icon">👤</span> Hồ sơ cá nhân
+            </li>
           </ul>
         </aside>
 
@@ -70,13 +72,9 @@ import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/
         <!-- STATISTICS TAB -->
         <div *ngIf="activeTab === 'statistics'">
           <div class="tab-header-actions">
-            <div class="export-dropdown">
-              <button class="btn-export">📥 Xuất báo cáo quản trị</button>
-              <div class="dropdown-content">
-                <a (click)="reportService.exportAdminStatsPdf()">PDF/XLSX</a>
-                <a (click)="reportService.exportStatsJasper()">Jasper Report</a>
-              </div>
-            </div>
+            <button class="btn-export-premium" (click)="openReportModal('STATS')">
+              <span class="btn-icon">📥</span> Xuất báo cáo quản trị
+            </button>
           </div>
           <div class="stats-overview">
             <div class="stat-card-premium blue">
@@ -194,13 +192,9 @@ import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/
         <div class="card glass-card" *ngIf="activeTab === 'bookings'">
           <div class="card-header">
             <h3>Quản lý Đơn hàng</h3>
-            <div class="export-dropdown">
-              <button class="btn-primary">📤 Xuất báo cáo hệ thống</button>
-              <div class="dropdown-content">
-                <a (click)="reportService.exportBookingsPdf()">PDF/XLSX</a>
-                <a (click)="reportService.exportBookingsJasper()">Jasper Report</a>
-              </div>
-            </div>
+            <button class="btn-export-premium" (click)="openReportModal('BOOKINGS')">
+              <span class="btn-icon">📤</span> Xuất báo cáo hệ thống
+            </button>
           </div>
           <app-booking-history-tab role="ADMIN"></app-booking-history-tab>
         </div>
@@ -713,6 +707,21 @@ import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/
     .status-progress-bar.cancelled { background: #ef4444; }
     .status-count { font-size: 14px; font-weight: 700; color: #1e293b; min-width: 30px; text-align: right; }
 
+    /* EXPORT PREMIUM BUTTON */
+    .btn-export-premium {
+      background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+      color: white; border: none; padding: 12px 24px; border-radius: 12px;
+      font-weight: 700; cursor: pointer; transition: all 0.3s;
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+    }
+    .btn-export-premium:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 20px -5px rgba(79, 70, 229, 0.4);
+      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+    }
+    .btn-export-premium .btn-icon { font-size: 18px; }
+
     /* EXPORT DROPDOWN */
     .tab-header-actions { display: flex; justify-content: flex-end; margin-bottom: 15px; }
     .btn-export { background: #4f46e5; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
@@ -726,8 +735,15 @@ import { AdminVoucherTabComponent } from '../../../components/admin-voucher-tab/
   `]
 })
 export class AdminDashboardComponent implements OnInit {
-  activeTab = 'profile';
+  activeTab = 'statistics';
   pendingRequests: UpgradeRequestDto[] = [];
+  showReportModal = false;
+  currentReportType: 'STATS' | 'BOOKINGS' = 'STATS';
+
+  openReportModal(type: 'STATS' | 'BOOKINGS') {
+    this.currentReportType = type;
+    this.showReportModal = true;
+  }
 
   amenities: AmenityDto[] = [];
   newAmenityName = '';

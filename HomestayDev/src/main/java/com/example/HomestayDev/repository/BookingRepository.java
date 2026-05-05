@@ -55,4 +55,9 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     @Query("SELECT SUBSTRING(CAST(b.createdAt AS string), 1, 7) as m, SUM(b.totalPrice) FROM Booking b WHERE b.homestay.host.username = :username AND b.status = 'COMPLETED' GROUP BY m ORDER BY m ASC")
     List<Object[]> getMonthlyRevenueHost(@Param("username") String username);
+    @Query("SELECT b FROM Booking b WHERE b.homestay.host.username = :username AND b.createdAt BETWEEN :startDate AND :endDate")
+    List<Booking> findByHostAndDateRange(@Param("username") String username, @Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+
+    @Query("SELECT b FROM Booking b WHERE b.createdAt BETWEEN :startDate AND :endDate")
+    List<Booking> findAllByDateRange(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
 }

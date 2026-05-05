@@ -36,12 +36,12 @@ import { WalletTabComponent } from '../../../components/wallet-tab/wallet-tab.co
             <li [class.active]="activeTab === 'wallet'" (click)="activeTab = 'wallet'">
               <span class="menu-icon">💳</span> Ví của tôi
             </li>
-            <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'">
-              <span class="menu-icon">🚀</span> Nâng cấp Host
-            </li>
             <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'; notificationService.markTypeAsRead('CHAT')">
               <span class="menu-icon">💬</span> Tin nhắn
               <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('CHAT') | async"></span>
+            </li>
+            <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'">
+              <span class="menu-icon">🚀</span> Nâng cấp Host
             </li>
           </ul>
         </aside>
@@ -156,7 +156,7 @@ export class UserDashboardComponent implements OnInit {
   chatRecipientUser: any = null;
   requestStatus: UpgradeRequestDto | null = null;
   isLoading = false;
-  
+
   userNote = '';
   selectedFile: File | null = null;
 
@@ -165,7 +165,7 @@ export class UserDashboardComponent implements OnInit {
     private upgradeReqService: UpgradeRequestService,
     private notification: NotificationService,
     public notificationService: NotificationService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
