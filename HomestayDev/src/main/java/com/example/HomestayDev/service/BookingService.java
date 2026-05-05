@@ -16,7 +16,9 @@ import com.example.HomestayDev.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.camunda.bpm.engine.RuntimeService;
+import org.camunda.bpm.engine.TaskService;
+import org.camunda.bpm.engine.task.Task;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -39,6 +41,8 @@ public class BookingService {
     private final NotificationService notificationService;
     private final VoucherService voucherService;
     private final WalletService walletService;
+    private final RuntimeService runtimeService;
+    private final TaskService taskService;
 
     @Transactional
     public BookingDto createBooking(String username, BookingRequestDto request) {
@@ -125,6 +129,15 @@ public class BookingService {
                 savedBooking.getId().toString()
         );
 
+        // START CAMUNDA PROCESS
+        java.util.Map<String, Object> variables = new java.util.HashMap<>();
+        variables.put("bookingId", savedBooking.getId().toString());
+        variables.put("paymentMethod", savedBooking.getPaymentMethod().name());
+        variables.put("hostUsername", homestay.getHost().getUsername());
+        variables.put("userUsername", user.getUsername());
+        
+        runtimeService.startProcessInstanceByKey("homestay-booking-process", savedBooking.getId().toString(), variables);
+
         return mapToDto(savedBooking);
     }
 
@@ -210,6 +223,17 @@ public class BookingService {
                 booking.getId().toString()
         );
 
+        // CAMUNDA: Complete Host Approval Task
+        Task task = taskService.createTaskQuery()
+                .processInstanceBusinessKey(booking.getId().toString())
+                .taskDefinitionKey("Task_HostApproval")
+                .singleResult();
+        if (task != null) {
+            java.util.Map<String, Object> vars = new java.util.HashMap<>();
+            vars.put("isApproved", true);
+            taskService.complete(task.getId(), vars);
+        }
+
         return mapToDto(booking);
     }
 
@@ -294,6 +318,26 @@ public class BookingService {
             );
         }
 
+        // CAMUNDA: Complete Host Approval Task with rejection OR Trigger Message Boundary Event
+        Task task = taskService.createTaskQuery()
+                .processInstanceBusinessKey(saved.getId().toString())
+                .taskDefinitionKey("Task_HostApproval")
+                .singleResult();
+        if (isHost && task != null) {
+            java.util.Map<String, Object> vars = new java.util.HashMap<>();
+            vars.put("isApproved", false);
+            taskService.complete(task.getId(), vars);
+        } else {
+            // Trigger Manual Cancel Message
+            try {
+                runtimeService.createMessageCorrelation("CancelBookingMessage")
+                        .processInstanceBusinessKey(saved.getId().toString())
+                        .correlate();
+            } catch (Exception e) {
+                System.err.println("[Camunda] Could not correlate CancelBookingMessage: " + e.getMessage());
+            }
+        }
+
         return mapToDto(saved);
     }
 
@@ -356,6 +400,15 @@ public class BookingService {
                 booking.getId().toString()
         );
 
+        // CAMUNDA: Complete Wait Check-In Task
+        Task task = taskService.createTaskQuery()
+                .processInstanceBusinessKey(booking.getId().toString())
+                .taskDefinitionKey("Task_WaitCheckIn")
+                .singleResult();
+        if (task != null) {
+            taskService.complete(task.getId());
+        }
+
         return mapToDto(saved);
     }
 
@@ -404,6 +457,15 @@ public class BookingService {
                 booking.getId().toString()
         );
 
+        // CAMUNDA: Complete Wait Check-Out Task
+        Task task = taskService.createTaskQuery()
+                .processInstanceBusinessKey(booking.getId().toString())
+                .taskDefinitionKey("Task_WaitCheckOut")
+                .singleResult();
+        if (task != null) {
+            taskService.complete(task.getId());
+        }
+
         return mapToDto(saved);
     }
 
@@ -423,80 +485,65 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    // ===== SCHEDULED JOBS =====
+    // ===== CAMUNDA DELEGATE HANDLERS =====
 
-    /** Hủy các đơn VNPAY chưa thanh toán sau 1 giờ (giữ link thanh toán) */
-    @Scheduled(fixedRate = 60000)
     @Transactional
-    public void autoCancelExpiredVNPayBookings() {
-        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
-        List<Booking> expiredBookings = bookingRepository.findExpiredVNPayBookings(oneHourAgo);
-
-        for (Booking booking : expiredBookings) {
+    public void handleAutoCancelVNPay(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElse(null);
+        if (booking != null && booking.getStatus() == BookingStatus.PENDING && booking.getPaymentStatus() == PaymentStatus.UNPAID) {
             booking.setStatus(BookingStatus.CANCELLED);
             Room room = booking.getRoom();
             if (room != null) {
                 room.setStatus(RoomStatus.AVAILABLE);
                 roomRepository.save(room);
             }
-        }
-
-        if (!expiredBookings.isEmpty()) {
-            bookingRepository.saveAll(expiredBookings);
-            System.out.println("[AutoCancel] Hủy " + expiredBookings.size() + " đơn VNPay chưa thanh toán.");
+            bookingRepository.save(booking);
+            System.out.println("[Camunda] Auto-canceled VNPay booking: " + bookingId);
         }
     }
 
-    /** Hủy các đơn đã PAID nhưng Host không duyệt sau 3 giờ - hoàn tiền */
-    @Scheduled(fixedRate = 300000) // 5 phút/lần
     @Transactional
-    public void autoCancelAndRefundExpiredPaidBookings() {
-        LocalDateTime threeHoursAgo = LocalDateTime.now().minusHours(3);
-        List<Booking> expiredBookings = bookingRepository.findExpiredPaidPendingBookings(threeHoursAgo);
+    public void handleAutoCancelUnapproved(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElse(null);
+        if (booking != null && booking.getStatus() == BookingStatus.PENDING && booking.getPaymentStatus() == PaymentStatus.PAID) {
+            booking.setStatus(BookingStatus.CANCELLED);
+            booking.setPaymentStatus(PaymentStatus.REFUNDED);
 
-        for (Booking booking : expiredBookings) {
-            try {
-                booking.setStatus(BookingStatus.CANCELLED);
-                booking.setPaymentStatus(PaymentStatus.REFUNDED);
-
-                Room room = booking.getRoom();
-                if (room != null) {
-                    room.setStatus(RoomStatus.AVAILABLE);
-                    roomRepository.save(room);
-                }
-
-                // Hoàn tiền vào Ví của khách
-                walletService.refundToWallet(
-                        booking.getUser().getId(),
-                        booking.getTotalPrice(),
-                        "Hoàn tiền tự động: Chủ nhà không duyệt đơn đặt phòng tại " + booking.getHomestay().getName() + " trong 3 giờ"
-                );
-
-                bookingRepository.save(booking);
-
-                // Thông báo cho User (khách)
-                notificationService.createNotification(
-                        booking.getUser().getUsername(),
-                        "\ud83d\udd14 \u0110\u01a1n \u0111\u1eb7t ph\u00f2ng t\u1ea1i " + booking.getHomestay().getName()
-                                + " \u0111\u00e3 b\u1ecb h\u1ee7y t\u1ef1 \u0111\u1ed9ng v\u00ec ch\u1ee7 nh\u00e0 kh\u00f4ng duy\u1ec7t trong 3 gi\u1edd. "
-                                + "S\u1ed1 ti\u1ec1n " + formatVND(booking.getTotalPrice()) + "\u0111 \u0111\u00e3 \u0111\u01b0\u1ee3c ho\u00e0n v\u00e0o V\u00ed c\u1ee7a b\u1ea1n.",
-                        "BOOKING",
-                        booking.getId().toString()
-                );
-
-                // Thông báo cho Host
-                notificationService.createNotification(
-                        booking.getHomestay().getHost().getUsername(),
-                        "⚠️ Đơn đặt phòng của " + booking.getUser().getUsername() + " tại " + booking.getHomestay().getName()
-                                + " đã bị hủy tự động do quá thời gian duyệt (3 giờ). Tiền đã được hoàn lại cho khách.",
-                        "BOOKING",
-                        booking.getId().toString()
-                );
-
-                System.out.println("[AutoCancel] Hoàn tiền đơn " + booking.getId() + " cho " + booking.getUser().getUsername());
-            } catch (Exception e) {
-                System.err.println("[AutoCancel] Lỗi khi xử lý đơn " + booking.getId() + ": " + e.getMessage());
+            Room room = booking.getRoom();
+            if (room != null) {
+                room.setStatus(RoomStatus.AVAILABLE);
+                roomRepository.save(room);
             }
+
+            // Hoàn tiền vào Ví của khách
+            walletService.refundToWallet(
+                    booking.getUser().getId(),
+                    booking.getTotalPrice(),
+                    "Hoàn tiền tự động: Chủ nhà không duyệt đơn đặt phòng tại " + booking.getHomestay().getName() + " trong 3 giờ"
+            );
+
+            bookingRepository.save(booking);
+
+            // Thông báo cho User (khách)
+            notificationService.createNotification(
+                    booking.getUser().getUsername(),
+                    "\ud83d\udd14 \u0110\u01a1n \u0111\u1eb7t ph\u00f2ng t\u1ea1i " + booking.getHomestay().getName()
+                            + " \u0111\u00e3 b\u1ecb h\u1ee7y t\u1ef1 \u0111\u1ed9ng v\u00ec ch\u1ee7 nh\u00e0 kh\u00f4ng duy\u1ec7t trong 3 gi\u1edd. "
+                            + "S\u1ed1 ti\u1ec1n " + formatVND(booking.getTotalPrice()) + "\u0111 \u0111\u00e3 \u0111\u01b0\u1ee3c ho\u00e0n v\u00e0o V\u00ed c\u1ee7a b\u1ea1n.",
+                    "BOOKING",
+                    booking.getId().toString()
+            );
+
+            // Thông báo cho Host
+            notificationService.createNotification(
+                    booking.getHomestay().getHost().getUsername(),
+                    "⚠️ Đơn đặt phòng của " + booking.getUser().getUsername() + " tại " + booking.getHomestay().getName()
+                            + " đã bị hủy tự động do quá thời gian duyệt (3 giờ). Tiền đã được hoàn lại cho khách.",
+                    "BOOKING",
+                    booking.getId().toString()
+            );
+
+            System.out.println("[Camunda] Auto-canceled unapproved paid booking: " + bookingId);
         }
     }
 
