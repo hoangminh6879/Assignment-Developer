@@ -2,7 +2,6 @@ package com.example.HomestayDev.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.Nationalized;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -17,8 +16,8 @@ public class Notification {
     @Column(nullable = false)
     private String userId; // Keycloak ID or Username
 
-    @Nationalized
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false, columnDefinition = "nvarchar(1000)")
+    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.NVARCHAR)
     private String message;
 
     @Column(nullable = false)

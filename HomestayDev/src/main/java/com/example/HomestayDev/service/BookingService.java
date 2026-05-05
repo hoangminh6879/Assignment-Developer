@@ -20,6 +20,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +38,7 @@ public class BookingService {
     private final ReviewService reviewService;
     private final NotificationService notificationService;
     private final VoucherService voucherService;
+    private final WalletService walletService;
 
     @Transactional
     public BookingDto createBooking(String username, BookingRequestDto request) {
@@ -101,6 +103,13 @@ public class BookingService {
                 .checkInCode(checkInCode)
                 .build();
 
+        if (booking.getPaymentMethod() == PaymentMethod.WALLET) {
+            // Giữ tiền User, nhưng chưa cộng cho Host. Host sẽ nhận tiền khi phê duyệt đơn.
+            walletService.holdPayment(user.getId(), totalPrice, "Thanh to\u00e1n \u0111\u1eb7t ph\u00f2ng " + homestay.getName());
+            booking.setPaymentStatus(PaymentStatus.PAID);
+            // Trạng thái vẫn là PENDING, chờ Host duyệt
+        }
+
         Booking savedBooking = bookingRepository.save(booking);
 
         if (request.getVoucherCode() != null && !request.getVoucherCode().isEmpty()) {
@@ -110,7 +119,8 @@ public class BookingService {
         // Notify Host
         notificationService.createNotification(
                 homestay.getHost().getUsername(),
-                "B\u1ea1n c\u00f3 \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng m\u1edbi t\u1eeb " + user.getUsername() + " cho " + homestay.getName(),
+                "\ud83c\udfe0 B\u1ea1n c\u00f3 \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng m\u1edbi t\u1eeb " + user.getUsername() + " cho " + homestay.getName()
+                        + " (Kh\u00e1ch \u0111\u00e3 thanh to\u00e1n - ch\u1edd b\u1ea1n duy\u1ec7t trong 3 gi\u1edd)",
                 "BOOKING",
                 savedBooking.getId().toString()
         );
@@ -138,14 +148,10 @@ public class BookingService {
         
         return bookingRepository.findAll().stream()
                 .filter(b -> b.getHomestay().getHost().getId().equals(host.getId()))
-                // Không hiển thị CHECKED_IN ở tab này (chúng được quản lý ở tab check-in)
                 .filter(b -> b.getStatus() != BookingStatus.CHECKED_IN)
-                .filter(b -> {
-                    if (b.getPaymentMethod() == PaymentMethod.VNPAY) {
-                        return b.getPaymentStatus() == PaymentStatus.PAID;
-                    }
-                    return true;
-                })
+                // Chỉ hiển thị đơn đã thanh toán (PAID hoặc REFUNDED - cần duyệt hoặc đã xử lý)
+                .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID
+                        || b.getPaymentStatus() == PaymentStatus.REFUNDED)
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
@@ -176,6 +182,17 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.CONFIRMED);
 
+        // Cộng tiền cho Host khi phê duyệt đơn đã thanh toán (WALLET hoặc VNPAY)
+        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
+            User host = booking.getHomestay().getHost();
+            User user = booking.getUser();
+            walletService.releaseToHost(
+                    host.getId(),
+                    booking.getTotalPrice(),
+                    "Doanh thu t\u1eeb \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng c\u1ee7a " + user.getUsername() + " t\u1ea1i " + booking.getHomestay().getName()
+            );
+        }
+
         // Cập nhật trạng thái phòng: Đã đặt
         Room room = booking.getRoom();
         if (room != null) {
@@ -188,7 +205,7 @@ public class BookingService {
         // Notify User
         notificationService.createNotification(
                 booking.getUser().getUsername(),
-                "\u0110\u01a1n \u0111\u1eb7t ph\u00f2ng " + booking.getHomestay().getName() + " c\u1ee7a b\u1ea1n \u0111\u00e3 \u0111\u01b0\u1ee3c x\u00e1c nh\u1eadn!",
+                "✅ Đơn đặt phòng tại " + booking.getHomestay().getName() + " đã được chủ nhà xác nhận!",
                 "BOOKING",
                 booking.getId().toString()
         );
@@ -225,10 +242,7 @@ public class BookingService {
             throw new RuntimeException("You are not authorized to cancel this booking");
         }
 
-        if (booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new RuntimeException("Booking is already cancelled");
-        }
-
+        BookingStatus oldStatus = booking.getStatus();
         booking.setStatus(BookingStatus.CANCELLED);
         
         // Trả phòng về trạng thái Sẵn sàng nếu đơn bị hủy
@@ -237,16 +251,48 @@ public class BookingService {
             room.setStatus(RoomStatus.AVAILABLE);
             roomRepository.save(room);
         }
+
+        // Hoàn tiền nếu đơn đã thanh toán (WALLET hoặc VNPAY)
+        boolean wasRefunded = false;
+        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
+            if (oldStatus == BookingStatus.CONFIRMED) {
+                // Trừ tiền từ Host vì Host đã nhận tiền khi CONFIRMED
+                User host = booking.getHomestay().getHost();
+                walletService.deductFromHost(
+                        host.getId(),
+                        booking.getTotalPrice(),
+                        "Thu h\u1ed3i doanh thu t\u1eeb \u0111\u01a1n \u0111\u00e3 x\u00e1c nh\u1eadn b\u1ecb h\u1ee7y t\u1ea1i " + booking.getHomestay().getName()
+                );
+            }
+
+            // Hoàn tiền cho User
+            String reason = isHost
+                    ? "Ch\u1ee7 nh\u00e0 t\u1eeb ch\u1ed1i \u0111\u01a1n - Ho\u00e0n ti\u1ec1n \u0111\u1eb7t ph\u00f2ng t\u1ea1i " + booking.getHomestay().getName()
+                    : "H\u1ee7y \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng t\u1ea1i " + booking.getHomestay().getName();
+            walletService.refundToWallet(booking.getUser().getId(), booking.getTotalPrice(), reason);
+            booking.setPaymentStatus(PaymentStatus.REFUNDED);
+            wasRefunded = true;
+        }
         
         Booking saved = bookingRepository.save(booking);
 
-        // Notify other party
-        String notifier = isOwner ? booking.getHomestay().getHost().getUsername() : booking.getUser().getUsername();
-        String message = isOwner ? 
-                "Kh\u00e1ch h\u00e0ng " + username + " \u0111\u00e3 h\u1ee7y \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng." : 
-                "Ch\u1ee7 nh\u00e0 \u0111\u00e3 h\u1ee7y \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng c\u1ee7a b\u1ea1n cho " + booking.getHomestay().getName();
-        
-        notificationService.createNotification(notifier, message, "BOOKING", booking.getId().toString());
+        // Notify
+        if (isHost) {
+            // Thông báo cho khách
+            String userMsg = wasRefunded
+                    ? "🚨 Ch\u1ee7 nh\u00e0 \u0111\u00e3 t\u1eeb ch\u1ed1i \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng t\u1ea1i " + booking.getHomestay().getName()
+                        + ". S\u1ed1 ti\u1ec1n " + formatVND(booking.getTotalPrice()) + "\u0111 \u0111\u00e3 \u0111\u01b0\u1ee3c ho\u00e0n v\u00e0o V\u00ed c\u1ee7a b\u1ea1n."
+                    : "🚨 Ch\u1ee7 nh\u00e0 \u0111\u00e3 t\u1eeb ch\u1ed1i \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng t\u1ea1i " + booking.getHomestay().getName();
+            notificationService.createNotification(booking.getUser().getUsername(), userMsg, "BOOKING", saved.getId().toString());
+        } else {
+            // Thông báo cho host
+            notificationService.createNotification(
+                    booking.getHomestay().getHost().getUsername(),
+                    "\ud83d\udea8 Kh\u00e1ch h\u00e0ng " + username + " \u0111\u00e3 h\u1ee7y \u0111\u01a1n \u0111\u1eb7t ph\u00f2ng t\u1ea1i " + booking.getHomestay().getName(),
+                    "BOOKING",
+                    saved.getId().toString()
+            );
+        }
 
         return mapToDto(saved);
     }
@@ -339,13 +385,7 @@ public class BookingService {
             throw new RuntimeException("CCCD/CMND không khớp với thông tin đơn đặt phòng");
         }
 
-        if (booking.getPaymentStatus() == PaymentStatus.UNPAID) {
-            if (!request.isConfirmPayment()) {
-                throw new RuntimeException("Đơn hàng chưa thanh toán. Vui lòng xác nhận thanh toán để checkout.");
-            }
-            booking.setPaymentStatus(PaymentStatus.PAID);
-        }
-
+        // Mọi đơn đến giai đoạn CHECKED_IN đều đã được thanh toán trước - không cần xử lý thanh toán tại quầy nữa
         booking.setStatus(BookingStatus.COMPLETED);
 
         Room room = booking.getRoom();
@@ -383,26 +423,80 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    @Scheduled(fixedRate = 60000) // Run every 60 seconds
+    // ===== SCHEDULED JOBS =====
+
+    /** Hủy các đơn VNPAY chưa thanh toán sau 1 giờ (giữ link thanh toán) */
+    @Scheduled(fixedRate = 60000)
     @Transactional
     public void autoCancelExpiredVNPayBookings() {
-        java.time.LocalDateTime oneHourAgo = java.time.LocalDateTime.now().minusHours(1);
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
         List<Booking> expiredBookings = bookingRepository.findExpiredVNPayBookings(oneHourAgo);
-        
+
         for (Booking booking : expiredBookings) {
             booking.setStatus(BookingStatus.CANCELLED);
-            
-            // Giải phóng phòng về trạng thái Sẵn sàng
             Room room = booking.getRoom();
             if (room != null) {
                 room.setStatus(RoomStatus.AVAILABLE);
                 roomRepository.save(room);
             }
         }
-        
+
         if (!expiredBookings.isEmpty()) {
             bookingRepository.saveAll(expiredBookings);
-            System.out.println("Auto-cancelled " + expiredBookings.size() + " expired VNPay bookings and released rooms.");
+            System.out.println("[AutoCancel] Hủy " + expiredBookings.size() + " đơn VNPay chưa thanh toán.");
+        }
+    }
+
+    /** Hủy các đơn đã PAID nhưng Host không duyệt sau 3 giờ - hoàn tiền */
+    @Scheduled(fixedRate = 300000) // 5 phút/lần
+    @Transactional
+    public void autoCancelAndRefundExpiredPaidBookings() {
+        LocalDateTime threeHoursAgo = LocalDateTime.now().minusHours(3);
+        List<Booking> expiredBookings = bookingRepository.findExpiredPaidPendingBookings(threeHoursAgo);
+
+        for (Booking booking : expiredBookings) {
+            try {
+                booking.setStatus(BookingStatus.CANCELLED);
+                booking.setPaymentStatus(PaymentStatus.REFUNDED);
+
+                Room room = booking.getRoom();
+                if (room != null) {
+                    room.setStatus(RoomStatus.AVAILABLE);
+                    roomRepository.save(room);
+                }
+
+                // Hoàn tiền vào Ví của khách
+                walletService.refundToWallet(
+                        booking.getUser().getId(),
+                        booking.getTotalPrice(),
+                        "Hoàn tiền tự động: Chủ nhà không duyệt đơn đặt phòng tại " + booking.getHomestay().getName() + " trong 3 giờ"
+                );
+
+                bookingRepository.save(booking);
+
+                // Thông báo cho User (khách)
+                notificationService.createNotification(
+                        booking.getUser().getUsername(),
+                        "\ud83d\udd14 \u0110\u01a1n \u0111\u1eb7t ph\u00f2ng t\u1ea1i " + booking.getHomestay().getName()
+                                + " \u0111\u00e3 b\u1ecb h\u1ee7y t\u1ef1 \u0111\u1ed9ng v\u00ec ch\u1ee7 nh\u00e0 kh\u00f4ng duy\u1ec7t trong 3 gi\u1edd. "
+                                + "S\u1ed1 ti\u1ec1n " + formatVND(booking.getTotalPrice()) + "\u0111 \u0111\u00e3 \u0111\u01b0\u1ee3c ho\u00e0n v\u00e0o V\u00ed c\u1ee7a b\u1ea1n.",
+                        "BOOKING",
+                        booking.getId().toString()
+                );
+
+                // Thông báo cho Host
+                notificationService.createNotification(
+                        booking.getHomestay().getHost().getUsername(),
+                        "⚠️ Đơn đặt phòng của " + booking.getUser().getUsername() + " tại " + booking.getHomestay().getName()
+                                + " đã bị hủy tự động do quá thời gian duyệt (3 giờ). Tiền đã được hoàn lại cho khách.",
+                        "BOOKING",
+                        booking.getId().toString()
+                );
+
+                System.out.println("[AutoCancel] Hoàn tiền đơn " + booking.getId() + " cho " + booking.getUser().getUsername());
+            } catch (Exception e) {
+                System.err.println("[AutoCancel] Lỗi khi xử lý đơn " + booking.getId() + ": " + e.getMessage());
+            }
         }
     }
 
@@ -430,5 +524,10 @@ public class BookingService {
                 .hostName(booking.getHomestay().getHost().getUsername())
                 .review(booking.getReview() != null ? reviewService.mapToDto(booking.getReview()) : null)
                 .build();
+    }
+
+    private String formatVND(BigDecimal amount) {
+        if (amount == null) return "0";
+        return String.format("%,.0f", amount.doubleValue());
     }
 }
