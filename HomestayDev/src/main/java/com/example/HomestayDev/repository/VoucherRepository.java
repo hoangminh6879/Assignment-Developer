@@ -12,6 +12,7 @@ import java.util.UUID;
 @Repository
 public interface VoucherRepository extends JpaRepository<Voucher, UUID> {
     Optional<Voucher> findByCode(String code);
+    boolean existsByCode(String code);
     
     List<Voucher> findByHostId(UUID hostId);
     

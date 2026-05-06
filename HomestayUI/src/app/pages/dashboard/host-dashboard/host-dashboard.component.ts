@@ -447,7 +447,11 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
                   <option [ngValue]="null">-- Chọn Homestay --</option>
                   <option *ngFor="let h of homestays" [ngValue]="h.id">{{ h.name }}</option>
                 </select>
+                <button class="btn-secondary" [disabled]="!selectedHomestayForRoom || !isHomestayActive()" (click)="roomFileInput.click()">
+                  <i class="fas fa-file-excel"></i> Import Excel
+                </button>
                 <button class="btn-primary" [disabled]="!selectedHomestayForRoom || !isHomestayActive()" (click)="openAddRoomForm()">+ Thêm Phòng</button>
+                <input type="file" #roomFileInput (change)="onRoomFileSelected($event)" accept=".xlsx, .xls" style="display: none">
               </div>
             </div>
 
@@ -1206,5 +1210,25 @@ export class HostDashboardComponent implements OnInit {
   onChatRequested(user: any) {
     this.chatRecipientUser = user;
     this.activeTab = 'chat';
+  }
+
+  onRoomFileSelected(event: any) {
+    const file: File = event.target.files[0];
+    if (file && this.selectedHomestayForRoom) {
+      this.isLoading = true;
+      this.roomService.importRooms(this.selectedHomestayForRoom, file).subscribe({
+        next: () => {
+          this.notificationService.success('Đã import phòng thành công!');
+          this.loadRooms();
+          this.isLoading = false;
+          event.target.value = ''; // Reset file input
+        },
+        error: (err) => {
+          this.notificationService.error(err.error?.message || 'Lỗi khi import file Excel');
+          this.isLoading = false;
+          event.target.value = '';
+        }
+      });
+    }
   }
 }

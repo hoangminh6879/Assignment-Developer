@@ -42,4 +42,10 @@ export class RoomService {
   deleteRoom(roomId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/rooms/${roomId}`, { headers: this.getHeaders() });
   }
+
+  importRooms(homestayId: string, file: File): Observable<void> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<void>(`${this.apiUrl}/homestays/${homestayId}/rooms/import`, formData, { headers: this.getHeaders() });
+  }
 }

@@ -12,7 +12,13 @@ import { NotificationService } from '../../services/notification.service';
     <div class="voucher-tab">
       <div class="card-header">
         <h3>Mã giảm giá của tôi</h3>
-        <button class="btn-primary" (click)="openAddForm()">+ Tạo Voucher mới</button>
+        <div class="header-actions">
+          <button class="btn-secondary" (click)="fileInput.click()">
+            <i class="fas fa-file-excel"></i> Import Excel
+          </button>
+          <button class="btn-primary" (click)="openAddForm()">+ Tạo Voucher mới</button>
+          <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx, .xls" style="display: none">
+        </div>
       </div>
 
       <div class="filter-bar">
@@ -122,6 +128,7 @@ import { NotificationService } from '../../services/notification.service';
   styles: [`
     .voucher-tab { padding: 5px; }
     .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+    .header-actions { display: flex; gap: 12px; }
     .card-header h3 { font-size: 20px; font-weight: 800; color: #1e293b; margin: 0; }
     
     .filter-bar { display: flex; align-items: center; gap: 24px; margin-bottom: 25px; background: #f8fafc; padding: 12px 20px; border-radius: 20px; border: 1px solid #e2e8f0; }
@@ -286,5 +293,25 @@ export class HostVoucherTabComponent implements OnInit {
       },
       error: () => this.notification.error('Không thể cập nhật trạng thái')
     });
+  }
+
+  onFileSelected(event: any) {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.isLoading = true;
+      this.voucherService.importVouchers(file).subscribe({
+        next: () => {
+          this.notification.success('Đã import voucher thành công!');
+          this.loadVouchers();
+          this.isLoading = false;
+          event.target.value = ''; // Reset file input
+        },
+        error: (err) => {
+          this.notification.error(err.error?.message || 'Lỗi khi import file Excel');
+          this.isLoading = false;
+          event.target.value = '';
+        }
+      });
+    }
   }
 }

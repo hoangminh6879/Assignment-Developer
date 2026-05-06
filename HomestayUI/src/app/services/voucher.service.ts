@@ -63,4 +63,10 @@ export class VoucherService {
   deleteVoucher(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+
+  importVouchers(file: File): Observable<void> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<void>(`${this.apiUrl}/import`, formData);
+  }
 }
