@@ -41,8 +41,13 @@ export class NavbarComponent implements OnInit {
   }
 
   onLogout() {
-    this.authService.logout();
-    this.router.navigate(['/']);
+    this.authService.logout().subscribe({
+      next: () => this.router.navigate(['/']),
+      error: () => {
+        // Kể cả khi Keycloak lỗi, vẫn xóa token local và chuyển trang
+        this.router.navigate(['/']);
+      }
+    });
   }
 
   toggleNotifications() {

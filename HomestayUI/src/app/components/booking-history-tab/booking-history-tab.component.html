@@ -25,7 +25,7 @@
     <div class="modal-content animate-fade-in">
       <button class="close-btn" (click)="closeDetails()">×</button>
       <h2>Chi tiết đơn đặt phòng</h2>
-      
+
       <div class="modal-body" *ngIf="selectedBookingDetails as details">
         <div class="homestay-summary">
           <div class="h-main">
@@ -44,34 +44,32 @@
             </div>
           </div>
         </div>
-        
+
         <div class="booking-summary-modal" style="margin-top: 20px;">
           <h3>Thông tin thanh toán & Trạng thái</h3>
           <p *ngIf="details.appliedVoucherCode">
-            <strong>Mã giảm giá:</strong> 
+            <strong>Mã giảm giá:</strong>
             <span class="v-code-badge">{{ details.appliedVoucherCode }}</span>
           </p>
           <p *ngIf="details.discountAmount && details.discountAmount > 0">
-            <strong>Số tiền giảm:</strong> 
+            <strong>Số tiền giảm:</strong>
             <span class="discount-text">-{{ details.discountAmount | number }}đ</span>
           </p>
           <p><strong>Tổng tiền:</strong> <span class="total-price-modal">{{ details.totalPrice | number }}đ</span></p>
           <p><strong>Hình thức thanh toán:</strong> {{ details.paymentMethod === 'VNPAY' ? 'VNPay' : 'Ví điện tử' }}</p>
           <p>
-            <strong>Trạng thái thanh toán:</strong> 
+            <strong>Trạng thái thanh toán:</strong>
             <span class="badge" [ngClass]="details.paymentStatus.toLowerCase() || ''">
               {{ details.paymentStatus === 'PAID' ? 'Đã trả' : 'Chưa trả' }}
             </span>
-            <button 
+            <button
               *ngIf="details.paymentMethod === 'VNPAY' && details.paymentStatus === 'UNPAID' && details.status === 'PENDING' && role === 'USER'"
-              class="btn-pay-now"
-              (click)="payNow(details.id)"
-              [disabled]="isPaying">
+              class="btn-pay-now" (click)="payNow(details.id)" [disabled]="isPaying">
               {{ isPaying ? 'Đang chuyển hướng...' : 'Thanh toán ngay' }}
             </button>
           </p>
           <p>
-            <strong>Trạng thái đặt phòng:</strong> 
+            <strong>Trạng thái đặt phòng:</strong>
             <span class="badge status-badge" [ngClass]="details.status.toLowerCase() || ''">
               {{ details.status === 'CHECKED_IN' ? 'Đã nhận phòng' : translateStatus(details.status) }}
             </span>
@@ -79,9 +77,12 @@
         </div>
 
         <div class="booking-summary-modal" style="margin-top: 20px; text-align: center;" *ngIf="details.checkInCode">
-          <p style="margin: 0 0 10px; color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600;">Mã Đặt Phòng</p>
-          <div style="display: inline-block; padding: 15px 30px; border-radius: 12px; background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%); border: 2px dashed #6366f1;">
-            <span style="color: #4f46e5; font-size: 28px; font-weight: 800; letter-spacing: 4px;">{{ details.checkInCode }}</span>
+          <p style="margin: 0 0 10px; color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600;">Mã
+            Đặt Phòng</p>
+          <div
+            style="display: inline-block; padding: 15px 30px; border-radius: 12px; background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%); border: 2px dashed #6366f1;">
+            <span style="color: #4f46e5; font-size: 28px; font-weight: 800; letter-spacing: 4px;">{{ details.checkInCode
+              }}</span>
           </div>
         </div>
       </div>
@@ -141,44 +142,41 @@
             </span>
           </td>
           <td class="actions-col">
-            <div class="action-buttons">
-              <button class="btn-action btn-view" (click)="viewDetails(b)">Chi tiết</button>
-              <button 
-                *ngIf="role === 'HOST' && b.status === 'PENDING'" 
-                class="btn-action btn-approve" 
-                (click)="approve(b.id)">
-                Duyệt
+            <div class="action-dropdown" (click)="$event.stopPropagation()">
+              <button class="btn-dropdown-toggle" (click)="toggleDropdown(b.id, $event)">
+                Thao tác
               </button>
-              <button 
-                *ngIf="(role === 'USER' || role === 'HOST') && b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && b.status !== 'CHECKED_IN'" 
-                class="btn-action btn-cancel" 
-                (click)="cancel(b.id)">
-                {{ role === 'USER' ? 'Hủy đặt' : 'Từ chối' }}
-              </button>
-              
-              <!-- Review Button for User -->
-              <button 
-                *ngIf="role === 'USER' && b.status === 'COMPLETED' && !b.review" 
-                class="btn-action btn-review" 
-                (click)="openReviewModal(b)">
-                Đánh giá
-              </button>
+              <div class="dropdown-menu" *ngIf="activeDropdownId === b.id">
+                <a class="dropdown-item" (click)="viewDetails(b); activeDropdownId = null">
+                  <span class="icon">👁️</span> Chi tiết
+                </a>
 
-              <!-- Response Button for Host -->
-              <button 
-                *ngIf="role === 'HOST' && b.status === 'COMPLETED' && b.review && !b.review.response" 
-                class="btn-action btn-response" 
-                (click)="openResponseModal(b)">
-                Phản hồi
-              </button>
+                <a class="dropdown-item text-success" *ngIf="role === 'HOST' && b.status === 'PENDING'"
+                  (click)="approve(b.id); activeDropdownId = null">
+                  <span class="icon">✅</span> Duyệt
+                </a>
 
-              <!-- Chat Button -->
-              <button 
-                *ngIf="role !== 'ADMIN'"
-                class="btn-action btn-chat" 
-                (click)="chatWithUser(b)">
-                Nhắn tin
-              </button>
+                <a class="dropdown-item text-danger"
+                  *ngIf="(role === 'USER' || role === 'HOST') && b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && b.status !== 'CHECKED_IN'"
+                  (click)="cancel(b.id); activeDropdownId = null">
+                  <span class="icon">❌</span> {{ role === 'USER' ? 'Hủy đặt' : 'Từ chối' }}
+                </a>
+
+                <a class="dropdown-item text-primary" *ngIf="role === 'USER' && b.status === 'COMPLETED' && !b.review"
+                  (click)="openReviewModal(b); activeDropdownId = null">
+                  <span class="icon">⭐</span> Đánh giá
+                </a>
+
+                <a class="dropdown-item text-primary"
+                  *ngIf="role === 'HOST' && b.status === 'COMPLETED' && b.review && !b.review.response"
+                  (click)="openResponseModal(b); activeDropdownId = null">
+                  <span class="icon">💬</span> Phản hồi đánh giá
+                </a>
+
+                <a class="dropdown-item" *ngIf="role !== 'ADMIN'" (click)="chatWithUser(b); activeDropdownId = null">
+                  <span class="icon">✉️</span> Nhắn tin
+                </a>
+              </div>
             </div>
           </td>
         </tr>
@@ -196,7 +194,7 @@
         </div>
         <button class="close-btn-round" (click)="closeReviewModal()">×</button>
       </div>
-      
+
       <div class="review-modal-body">
         <div class="booking-brief">
           <p>Bạn đang đánh giá đơn đặt phòng tại <strong>{{ selectedBookingForReview?.homestayName }}</strong></p>
@@ -205,10 +203,7 @@
         <div class="rating-section">
           <label>Bạn cảm thấy thế nào?</label>
           <div class="premium-stars">
-            <button 
-              *ngFor="let s of [1,2,3,4,5]" 
-              (click)="reviewRating = s" 
-              [class.active]="reviewRating >= s"
+            <button *ngFor="let s of [1,2,3,4,5]" (click)="reviewRating = s" [class.active]="reviewRating >= s"
               class="star-btn">
               ★
             </button>
@@ -220,9 +215,8 @@
 
         <div class="comment-section">
           <label>Bình luận chi tiết</label>
-          <textarea 
-            [(ngModel)]="reviewComment" 
-            placeholder="Hãy chia sẻ những điều bạn thích hoặc chưa hài lòng về homestay này nhé..." 
+          <textarea [(ngModel)]="reviewComment"
+            placeholder="Hãy chia sẻ những điều bạn thích hoặc chưa hài lòng về homestay này nhé..."
             class="premium-textarea"></textarea>
         </div>
 
@@ -241,10 +235,7 @@
 
       <div class="review-modal-footer">
         <button class="btn-cancel-premium" (click)="closeReviewModal()">Để sau</button>
-        <button 
-          class="btn-submit-premium" 
-          [disabled]="!reviewRating || isSubmittingReview" 
-          (click)="submitReview()">
+        <button class="btn-submit-premium" [disabled]="!reviewRating || isSubmittingReview" (click)="submitReview()">
           <span *ngIf="!isSubmittingReview">Gửi đánh giá ngay</span>
           <span *ngIf="isSubmittingReview">⌛ Đang gửi...</span>
         </button>
@@ -274,18 +265,14 @@
 
         <div class="comment-section" style="margin-top: 25px;">
           <label>Nội dung phản hồi</label>
-          <textarea 
-            [(ngModel)]="hostResponse" 
-            placeholder="Cảm ơn khách hàng hoặc phản hồi góp ý..." 
+          <textarea [(ngModel)]="hostResponse" placeholder="Cảm ơn khách hàng hoặc phản hồi góp ý..."
             class="premium-textarea"></textarea>
         </div>
       </div>
 
       <div class="review-modal-footer">
         <button class="btn-cancel-premium" (click)="closeResponseModal()">Hủy</button>
-        <button 
-          class="btn-submit-premium" 
-          [disabled]="!hostResponse || isSubmittingResponse" 
+        <button class="btn-submit-premium" [disabled]="!hostResponse || isSubmittingResponse"
           (click)="submitResponse()">
           <span *ngIf="!isSubmittingResponse">Gửi phản hồi</span>
           <span *ngIf="isSubmittingResponse">⌛ Đang gửi...</span>
@@ -298,7 +285,8 @@
   <div class="pagination-controls" *ngIf="totalPages > 1">
     <button class="page-btn" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">Trang trước</button>
     <span class="page-info">Trang {{ currentPage }} / {{ totalPages }}</span>
-    <button class="page-btn" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">Trang sau</button>
+    <button class="page-btn" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">Trang
+      sau</button>
   </div>
 
   <ng-template #emptyState>

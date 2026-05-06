@@ -16,6 +16,7 @@ export class RegisterComponent {
     username: '',
     email: '',
     password: '',
+    confirmPassword: '',
     firstName: '',
     lastName: '',
     phoneNumber: ''
@@ -23,36 +24,43 @@ export class RegisterComponent {
   isLoading = false;
   errorMessage = '';
   successMessage = '';
+  showPassword = false;
+  registered = false; // Sau khi đăng ký thành công, hiện panel chờ xác thực email
 
-  constructor(private authService: AuthService, private router: Router) {
-    console.log('RegisterComponent loaded!');
-  }
+  constructor(private authService: AuthService, private router: Router) {}
 
   onRegister() {
-    console.log('Register button clicked!', this.userData);
-    
-    // Kiểm tra dữ liệu đầu vào
     if (!this.userData.username || !this.userData.email || !this.userData.password) {
       this.errorMessage = 'Vui lòng điền đầy đủ Tên đăng nhập, Email và Mật khẩu!';
       return;
     }
 
+    if (this.userData.password !== this.userData.confirmPassword) {
+      this.errorMessage = 'Mật khẩu xác nhận không khớp!';
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
-    
+
     this.authService.register(this.userData).subscribe({
       next: (res) => {
-        console.log('Registration success:', res);
-        this.successMessage = 'Đăng ký thành công! Đang chuyển hướng...';
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 2000);
+        // Hiện panel thông báo xác thực email thay vì chuyển trang ngay
+        this.registered = true;
+        this.isLoading = false;
       },
       error: (err) => {
-        console.error('Registration error:', err);
         this.errorMessage = err.error || 'Có lỗi xảy ra, vui lòng kiểm tra lại thông tin!';
         this.isLoading = false;
       }
     });
+  }
+
+  togglePassword() {
+    this.showPassword = !this.showPassword;
+  }
+
+  goToLogin() {
+    this.router.navigate(['/login']);
   }
 }
