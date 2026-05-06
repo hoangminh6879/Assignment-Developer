@@ -12,12 +12,16 @@ import com.example.HomestayDev.repository.ImageRepository;
 import com.example.HomestayDev.repository.RoomRepository;
 import com.example.HomestayDev.repository.RoomTypeRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -84,6 +88,129 @@ public class RoomService {
         }
 
         return mapToDto(roomRepository.findById(savedRoom.getId()).get());
+    }
+
+    @Transactional
+    public void importRooms(UUID homestayId, MultipartFile file, String hostUsername) {
+        Homestay homestay = homestayRepository.findById(homestayId)
+                .orElseThrow(() -> new RuntimeException("Homestay not found"));
+        if (!homestay.getHost().getUsername().equals(hostUsername)) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Iterator<Row> rows = sheet.iterator();
+
+            // Skip header
+            if (rows.hasNext()) rows.next();
+
+            List<Room> rooms = new ArrayList<>();
+            java.util.Set<String> namesInFile = new java.util.HashSet<>();
+            java.util.List<String> duplicateNamesInFile = new java.util.ArrayList<>();
+            java.util.List<String> existingNamesInDb = new java.util.ArrayList<>();
+
+            while (rows.hasNext()) {
+                Row row = rows.next();
+                if (isRowEmpty(row)) continue;
+
+                String name = getCellValueAsString(row.getCell(0));
+                if (name == null || name.isBlank()) continue;
+
+                // Check for duplicate in the same file
+                if (namesInFile.contains(name.toLowerCase())) {
+                    duplicateNamesInFile.add(name);
+                } else {
+                    namesInFile.add(name.toLowerCase());
+                }
+
+                // Check if room name already exists in this homestay
+                if (roomRepository.existsByNameAndHomestayId(name, homestayId)) {
+                    existingNamesInDb.add(name);
+                }
+
+                String typeName = getCellValueAsString(row.getCell(1));
+                RoomType roomType = roomTypeRepository.findByName(typeName)
+                        .orElseThrow(() -> new RuntimeException("Room type '" + typeName + "' not found"));
+
+                BigDecimal priceExtra = getCellValueAsBigDecimal(row.getCell(2));
+                Integer maxGuests = getCellValueAsInteger(row.getCell(3));
+
+                Room room = Room.builder()
+                        .name(name)
+                        .homestay(homestay)
+                        .roomType(roomType)
+                        .priceExtra(priceExtra != null ? priceExtra : BigDecimal.ZERO)
+                        .maxGuests(maxGuests != null ? maxGuests : 2)
+                        .status(RoomStatus.AVAILABLE)
+                        .build();
+
+                rooms.add(room);
+            }
+
+            // Throw exception if any duplicates were found
+            if (!duplicateNamesInFile.isEmpty() || !existingNamesInDb.isEmpty()) {
+                StringBuilder errorMsg = new StringBuilder("Lỗi import Phòng: ");
+                if (!duplicateNamesInFile.isEmpty()) {
+                    errorMsg.append("\n- Các tên phòng trùng lặp trong file: ").append(String.join(", ", duplicateNamesInFile));
+                }
+                if (!existingNamesInDb.isEmpty()) {
+                    errorMsg.append("\n- Các tên phòng đã tồn tại trong Homestay này: ").append(String.join(", ", existingNamesInDb));
+                }
+                throw new RuntimeException(errorMsg.toString());
+            }
+
+            roomRepository.saveAll(rooms);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to parse Excel file: " + e.getMessage());
+        }
+    }
+
+    private boolean isRowEmpty(Row row) {
+        if (row == null) return true;
+        for (int c = row.getFirstCellNum(); c < row.getLastCellNum(); c++) {
+            Cell cell = row.getCell(c);
+            if (cell != null && cell.getCellType() != CellType.BLANK) return false;
+        }
+        return true;
+    }
+
+    private String getCellValueAsString(Cell cell) {
+        if (cell == null) return null;
+        switch (cell.getCellType()) {
+            case STRING: return cell.getStringCellValue();
+            case NUMERIC: return String.valueOf((long) cell.getNumericCellValue());
+            case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
+            default: return null;
+        }
+    }
+
+    private BigDecimal getCellValueAsBigDecimal(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return BigDecimal.valueOf(cell.getNumericCellValue());
+        } else if (cell.getCellType() == CellType.STRING) {
+            try {
+                return new BigDecimal(cell.getStringCellValue());
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private Integer getCellValueAsInteger(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return (int) cell.getNumericCellValue();
+        } else if (cell.getCellType() == CellType.STRING) {
+            try {
+                return Integer.parseInt(cell.getStringCellValue());
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     @Transactional

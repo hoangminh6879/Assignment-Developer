@@ -54,6 +54,13 @@ public class RoomController {
         return ResponseEntity.ok(roomService.updateRoom(roomId, name, roomTypeId, priceExtra, maxGuests, status, images, auth.getName()));
     }
 
+    @PostMapping("/homestays/{homestayId}/rooms/import")
+    public ResponseEntity<Void> importRooms(@PathVariable UUID homestayId, @RequestParam("file") MultipartFile file) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        roomService.importRooms(homestayId, file, auth.getName());
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/rooms/{roomId}")
     public ResponseEntity<Void> deleteRoom(@PathVariable UUID roomId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

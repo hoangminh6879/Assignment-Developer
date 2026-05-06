@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -54,7 +55,9 @@ public class VoucherController {
     @PostMapping
     @PreAuthorize("hasAnyRole('HOST', 'ADMIN')")
     public ResponseEntity<VoucherDto> createVoucher(@RequestBody VoucherDto dto, Authentication auth) {
-        return ResponseEntity.ok(voucherService.createVoucher(dto, auth.getName()));
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return ResponseEntity.ok(voucherService.createVoucher(dto, auth.getName(), isAdmin));
     }
 
     @PatchMapping("/{id}/toggle")
@@ -66,8 +69,19 @@ public class VoucherController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('HOST', 'ADMIN')")
-    public ResponseEntity<VoucherDto> updateVoucher(@PathVariable UUID id, @RequestBody VoucherDto dto) {
-        return ResponseEntity.ok(voucherService.updateVoucher(id, dto));
+    public ResponseEntity<VoucherDto> updateVoucher(@PathVariable UUID id, @RequestBody VoucherDto dto, Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return ResponseEntity.ok(voucherService.updateVoucher(id, dto, isAdmin));
+    }
+
+    @PostMapping("/import")
+    @PreAuthorize("hasAnyRole('HOST', 'ADMIN')")
+    public ResponseEntity<Void> importVouchers(@RequestParam("file") MultipartFile file, Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        voucherService.importVouchers(file, auth.getName(), isAdmin);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
