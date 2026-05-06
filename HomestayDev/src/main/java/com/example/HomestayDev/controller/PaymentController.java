@@ -24,9 +24,9 @@ public class PaymentController {
     public ResponseEntity<PaymentResponseDto> createVNPayPayment(
             @RequestParam UUID bookingId,
             HttpServletRequest request) {
-        
+
         String vnpayUrl = paymentService.createVNPayUrl(bookingId, request);
-        
+
         return ResponseEntity.ok(PaymentResponseDto.builder()
                 .status("OK")
                 .message("Successfully created payment URL")
@@ -38,11 +38,14 @@ public class PaymentController {
     public void vnpayReturn(
             @RequestParam Map<String, String> params,
             HttpServletResponse response) throws IOException {
-        
-        boolean isSuccess = paymentService.processPaymentReturn(params);
-        
-        // Redirect back to frontend
-        if (isSuccess) {
+
+        // processPaymentReturn() chỉ lưu DB, trả về bookingId nếu thành công
+        UUID bookingId = paymentService.processPaymentReturn(params);
+
+        if (bookingId != null) {
+            // Gọi Camunda correlation SAU KHI transaction DB đã commit thành công
+            // → tránh UnexpectedRollbackException
+            paymentService.correlateVNPayMessage(bookingId);
             response.sendRedirect("http://localhost:4200/payment/result?status=success");
         } else {
             response.sendRedirect("http://localhost:4200/payment/result?status=failed");
