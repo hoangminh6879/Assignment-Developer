@@ -49,12 +49,13 @@
 
 .input-wrapper input {
   width: 100%;
-  padding: 12px 15px 12px 40px;
+  padding: 12px 45px 12px 40px;
   border: 2px solid #eee;
   border-radius: 10px;
   outline: none;
   transition: all 0.3s ease;
   font-size: 1rem;
+  box-sizing: border-box;
 }
 
 .input-wrapper input:focus {
@@ -64,12 +65,101 @@
 
 .input-icon {
   position: absolute;
-  left: 15px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: #999;
+  pointer-events: none;
 }
 
+/* ── Toggle Password Button ── */
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 4px;
+  color: #888;
+  transition: color 0.2s;
+}
+
+.toggle-password:hover {
+  color: #667eea;
+}
+
+/* ── Remember Me + Forgot Password row ── */
+.form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #555;
+  user-select: none;
+}
+
+.remember-me input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #667eea;
+  cursor: pointer;
+}
+
+.forgot-link {
+  font-size: 0.9rem;
+  color: #667eea;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-link:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+/* ── Forgot Password Section ── */
+.forgot-password-section h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.forgot-desc {
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #667eea;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  transition: color 0.2s;
+}
+
+.back-btn:hover {
+  color: #764ba2;
+}
+
+/* ── Buttons ── */
 .btn-primary {
   width: 100%;
   padding: 14px;
@@ -82,6 +172,9 @@
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-primary:hover {
@@ -95,6 +188,7 @@
   transform: none;
 }
 
+/* ── Footer ── */
 .form-footer {
   text-align: center;
   margin-top: 20px;
@@ -107,18 +201,32 @@
   font-weight: 600;
 }
 
+/* ── Alerts ── */
 .error-alert {
   background: #ffe5e5;
   color: #d8000c;
-  padding: 10px;
+  padding: 10px 14px;
   border-radius: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   font-size: 0.9rem;
   text-align: center;
+  border-left: 4px solid #d8000c;
 }
 
+.success-alert {
+  background: #e5ffe9;
+  color: #006d2c;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  text-align: center;
+  border-left: 4px solid #38a169;
+}
+
+/* ── Animations ── */
 .animate-fade-in {
-  animation: fadeIn 0.6s ease-out;
+  animation: fadeIn 0.5s ease-out;
 }
 
 @keyframes fadeIn {
@@ -127,17 +235,91 @@
 }
 
 .loader {
-  width: 24px;
-  height: 24px;
-  border: 3px solid #FFF;
-  border-bottom-color: transparent;
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(255,255,255,0.5);
+  border-bottom-color: white;
   border-radius: 50%;
   display: inline-block;
   box-sizing: border-box;
-  animation: rotation 1s linear infinite;
+  animation: rotation 0.8s linear infinite;
 }
 
-@keyframes rotation {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* ── Email Not Verified Banner ── */
+.verify-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fff8e1;
+  border: 1px solid #f9a825;
+  border-left: 4px solid #f9a825;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
 }
+
+.verify-banner-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.verify-banner-content {
+  flex: 1;
+}
+
+.verify-banner-content strong {
+  display: block;
+  color: #e65100;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.verify-banner-content p {
+  color: #795548;
+  font-size: 0.88rem;
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+}
+
+.btn-resend {
+  background: #f9a825;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-resend:hover {
+  background: #e65100;
+}
+
+.btn-resend:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.resend-success {
+  color: #2e7d32;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 6px 0;
+}
+
+.loader-sm {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-bottom-color: white;
+  border-radius: 50%;
+  display: inline-block;
+  animation: rotation 0.8s linear infinite;
+}
+

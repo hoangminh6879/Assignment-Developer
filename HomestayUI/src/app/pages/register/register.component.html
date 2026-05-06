@@ -1,60 +1,115 @@
 <div class="register-container">
   <div class="register-card animate-fade-in">
-    <div class="register-header">
-      <h1>Tham gia cùng chúng tôi</h1>
-      <p>Bắt đầu hành trình quản lý homestay chuyên nghiệp</p>
-    </div>
 
-    <form (ngSubmit)="onRegister()" #registerForm="ngForm" class="register-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="firstName">Họ</label>
-          <input type="text" id="firstName" name="firstName" [(ngModel)]="userData.firstName" required>
+    @if (!registered) {
+      <!-- ── REGISTER FORM ── -->
+      <div class="register-header">
+        <h1>Tham gia cùng chúng tôi</h1>
+        <p>Bắt đầu hành trình quản lý homestay chuyên nghiệp</p>
+      </div>
+
+      <form (ngSubmit)="onRegister()" #registerForm="ngForm" class="register-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">Họ</label>
+            <input type="text" id="firstName" name="firstName" [(ngModel)]="userData.firstName" required placeholder="Nguyễn">
+          </div>
+          <div class="form-group">
+            <label for="lastName">Tên</label>
+            <input type="text" id="lastName" name="lastName" [(ngModel)]="userData.lastName" required placeholder="Văn A">
+          </div>
         </div>
+
         <div class="form-group">
-          <label for="lastName">Tên</label>
-          <input type="text" id="lastName" name="lastName" [(ngModel)]="userData.lastName" required>
+          <label for="username">Tên đăng nhập</label>
+          <input type="text" id="username" name="username" [(ngModel)]="userData.username" required placeholder="nguyenvana">
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="username">Tên đăng nhập</label>
-        <input type="text" id="username" name="username" [(ngModel)]="userData.username" required>
-      </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" [(ngModel)]="userData.email" required email placeholder="example@gmail.com">
+        </div>
 
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" [(ngModel)]="userData.email" required email>
-      </div>
+        <div class="form-group">
+          <label for="phoneNumber">Số điện thoại</label>
+          <input type="text" id="phoneNumber" name="phoneNumber" [(ngModel)]="userData.phoneNumber" placeholder="0912345678">
+        </div>
 
-      <div class="form-group">
-        <label for="phoneNumber">Số điện thoại</label>
-        <input type="text" id="phoneNumber" name="phoneNumber" [(ngModel)]="userData.phoneNumber">
-      </div>
+        <div class="form-group">
+          <label for="password">Mật khẩu</label>
+          <div class="input-wrapper">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              name="password"
+              [(ngModel)]="userData.password"
+              required
+              minlength="6"
+              placeholder="Ít nhất 6 ký tự"
+            >
+            <button type="button" class="toggle-password" (click)="togglePassword()">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+        </div>
 
-      <div class="form-group">
-        <label for="password">Mật khẩu</label>
-        <input type="password" id="password" name="password" [(ngModel)]="userData.password" required minlength="6">
-      </div>
+        <div class="form-group">
+          <label for="confirmPassword">Xác nhận mật khẩu</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            [(ngModel)]="userData.confirmPassword"
+            required
+            placeholder="Nhập lại mật khẩu"
+          >
+        </div>
 
-      @if (errorMessage) {
-        <div class="error-alert">{{ errorMessage }}</div>
-      }
-      @if (successMessage) {
-        <div class="success-alert">{{ successMessage }}</div>
-      }
-
-      <button type="button" (click)="onRegister()" class="btn-primary">
-        @if (isLoading) {
-          <span class="loader"></span>
-        } @else {
-          Tạo tài khoản
+        @if (errorMessage) {
+          <div class="error-alert">{{ errorMessage }}</div>
         }
-      </button>
 
-      <div class="form-footer">
-        <p>Đã có tài khoản? <a routerLink="/login">Đăng nhập</a></p>
+        <button type="submit" id="btn-register" class="btn-primary" [disabled]="isLoading">
+          @if (isLoading) {
+            <span class="loader"></span>
+          } @else {
+            Tạo tài khoản
+          }
+        </button>
+
+        <div class="form-footer">
+          <p>Đã có tài khoản? <a routerLink="/login">Đăng nhập</a></p>
+        </div>
+      </form>
+
+    } @else {
+      <!-- ── EMAIL VERIFICATION PENDING ── -->
+      <div class="verify-email-panel animate-fade-in">
+        <div class="verify-icon">📧</div>
+        <h2>Xác thực email của bạn</h2>
+        <p>
+          Chúng tôi đã gửi email xác thực đến <strong>{{ userData.email }}</strong>.
+          Vui lòng kiểm tra hộp thư đến (và thư rác) rồi nhấn vào liên kết để kích hoạt tài khoản.
+        </p>
+        <div class="verify-steps">
+          <div class="step">
+            <span class="step-num">1</span>
+            <span>Mở email từ <strong>Keycloak</strong> hoặc <strong>HomestayDev</strong></span>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <span>Nhấn vào nút <strong>"Xác thực email"</strong></span>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <span>Quay lại và đăng nhập bình thường</span>
+          </div>
+        </div>
+        <button class="btn-primary" (click)="goToLogin()">
+          Đến trang đăng nhập →
+        </button>
       </div>
-    </form>
+    }
+
   </div>
 </div>

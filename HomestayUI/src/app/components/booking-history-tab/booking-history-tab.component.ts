@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BookingService, BookingDto } from '../../services/booking.service';
@@ -49,6 +49,14 @@ export class BookingHistoryTabComponent implements OnInit {
   showResponseModal = false;
   hostResponse = '';
   isSubmittingResponse = false;
+
+  // Dropdown state for actions
+  activeDropdownId: string | null = null;
+
+  @HostListener('document:click')
+  clickout() {
+    this.activeDropdownId = null;
+  }
 
   constructor(
     private bookingService: BookingService,
@@ -290,5 +298,10 @@ export class BookingHistoryTabComponent implements OnInit {
       'CHECKED_IN': 'Đã nhận phòng'
     };
     return map[status] || status;
+  }
+
+  toggleDropdown(id: string, event: Event) {
+    event.stopPropagation();
+    this.activeDropdownId = this.activeDropdownId === id ? null : id;
   }
 }

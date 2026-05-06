@@ -5,54 +5,141 @@
       <p>Đăng nhập để quản lý homestay của bạn</p>
     </div>
 
-    <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="login-form">
-      <div class="form-group">
-        <label for="username">Tên đăng nhập</label>
-        <div class="input-wrapper">
-          <input 
-            type="text" 
-            id="username" 
-            name="username" 
-            [(ngModel)]="loginData.username" 
-            required 
-            placeholder="Nhập tên đăng nhập"
-          >
-          <span class="input-icon">👤</span>
+    @if (!showForgotPassword) {
+      <!-- ── LOGIN FORM ── -->
+      <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="login-form">
+        <div class="form-group">
+          <label for="username">Email hoặc Tên đăng nhập</label>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="username"
+              name="username"
+              [(ngModel)]="loginData.username"
+              required
+              placeholder="Nhập email hoặc tên đăng nhập"
+            >
+            <span class="input-icon">👤</span>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="password">Mật khẩu</label>
-        <div class="input-wrapper">
-          <input 
-            type="password" 
-            id="password" 
-            name="password" 
-            [(ngModel)]="loginData.password" 
-            required 
-            placeholder="Nhập mật khẩu"
-          >
-          <span class="input-icon">🔒</span>
+        <div class="form-group">
+          <label for="password">Mật khẩu</label>
+          <div class="input-wrapper">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              name="password"
+              [(ngModel)]="loginData.password"
+              required
+              placeholder="Nhập mật khẩu"
+            >
+            <span class="input-icon">🔒</span>
+            <button type="button" class="toggle-password" (click)="togglePassword()">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
         </div>
-      </div>
 
-      @if (errorMessage) {
-        <div class="error-alert">
-          {{ errorMessage }}
+        <div class="form-options">
+          <label class="remember-me">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              name="rememberMe"
+              [(ngModel)]="loginData.remember_me"
+            >
+            <span class="checkmark"></span>
+            Ghi nhớ đăng nhập
+          </label>
+          <a class="forgot-link" (click)="toggleForgotPassword()">Quên mật khẩu?</a>
         </div>
-      }
 
-      <button type="submit" class="btn-primary" [disabled]="!loginForm.valid || isLoading">
-        @if (isLoading) {
-          <span class="loader"></span>
-        } @else {
-          Đăng Nhập
+        @if (emailNotVerified) {
+          <div class="verify-banner">
+            <div class="verify-banner-icon">📧</div>
+            <div class="verify-banner-content">
+              <strong>Tài khoản chưa xác thực email</strong>
+              <p>Vui lòng kiểm tra hộp thư đến của bạn và nhấn vào liên kết xác thực.</p>
+              @if (resendSuccess) {
+                <div class="resend-success">{{ resendSuccess }}</div>
+              } @else {
+                <button
+                  type="button"
+                  class="btn-resend"
+                  id="btn-resend-verification"
+                  [disabled]="isResendLoading"
+                  (click)="onResendVerification()"
+                >
+                  @if (isResendLoading) {
+                    <span class="loader-sm"></span>
+                  } @else {
+                    Gửi lại email xác thực
+                  }
+                </button>
+              }
+            </div>
+          </div>
         }
-      </button>
 
-      <div class="form-footer">
-        <p>Chưa có tài khoản? <a routerLink="/register">Đăng ký ngay</a></p>
+        @if (errorMessage) {
+          <div class="error-alert">{{ errorMessage }}</div>
+        }
+
+        <button type="submit" id="btn-login" class="btn-primary" [disabled]="!loginForm.valid || isLoading">
+          @if (isLoading) {
+            <span class="loader"></span>
+          } @else {
+            Đăng Nhập
+          }
+        </button>
+
+        <div class="form-footer">
+          <p>Chưa có tài khoản? <a routerLink="/register">Đăng ký ngay</a></p>
+        </div>
+      </form>
+    } @else {
+      <!-- ── FORGOT PASSWORD FORM ── -->
+      <div class="forgot-password-section animate-fade-in">
+        <div class="back-btn" (click)="toggleForgotPassword()">
+          ← Quay lại đăng nhập
+        </div>
+        <h2>Quên mật khẩu?</h2>
+        <p class="forgot-desc">Nhập email của bạn và chúng tôi sẽ gửi liên kết đặt lại mật khẩu.</p>
+
+        <form (ngSubmit)="onForgotPassword()" #forgotForm="ngForm" class="login-form">
+          <div class="form-group">
+            <label for="forgotEmail">Email</label>
+            <div class="input-wrapper">
+              <input
+                type="email"
+                id="forgotEmail"
+                name="forgotEmail"
+                [(ngModel)]="forgotEmail"
+                required
+                email
+                placeholder="Nhập email tài khoản của bạn"
+              >
+              <span class="input-icon">📧</span>
+            </div>
+          </div>
+
+          @if (forgotError) {
+            <div class="error-alert">{{ forgotError }}</div>
+          }
+          @if (forgotSuccess) {
+            <div class="success-alert">{{ forgotSuccess }}</div>
+          }
+
+          <button type="submit" id="btn-forgot-password" class="btn-primary" [disabled]="!forgotForm.valid || isForgotLoading">
+            @if (isForgotLoading) {
+              <span class="loader"></span>
+            } @else {
+              Gửi liên kết đặt lại mật khẩu
+            }
+          </button>
+        </form>
       </div>
-    </form>
+    }
   </div>
 </div>

@@ -3,7 +3,6 @@ package com.example.HomestayDev.service;
 import com.example.HomestayDev.config.VNPayConfig;
 import com.example.HomestayDev.model.Booking;
 import com.example.HomestayDev.model.Payment;
-import com.example.HomestayDev.model.enums.BookingStatus;
 import com.example.HomestayDev.model.enums.PaymentStatus;
 import com.example.HomestayDev.repository.BookingRepository;
 import com.example.HomestayDev.repository.PaymentRepository;
@@ -46,13 +45,8 @@ public class PaymentService {
         vnp_Params.put("vnp_TmnCode", vnPayConfig.getVnp_TmnCode());
         vnp_Params.put("vnp_Amount", String.valueOf(amount));
         vnp_Params.put("vnp_CurrCode", "VND");
-        
-        // Use vnp_TxnRef to store a unique transaction reference along with booking ID
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
-        
-        // This parameter passes back the booking ID to the return URL for easy processing
         vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang:" + bookingId);
-        
         vnp_Params.put("vnp_OrderType", "other");
         vnp_Params.put("vnp_Locale", "vn");
         vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getVnp_ReturnUrl());
@@ -62,7 +56,7 @@ public class PaymentService {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
-        
+
         cld.add(Calendar.MINUTE, 15);
         String vnp_ExpireDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
@@ -76,11 +70,9 @@ public class PaymentService {
             String fieldName = itr.next();
             String fieldValue = vnp_Params.get(fieldName);
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                //Build hash data
                 hashData.append(fieldName);
                 hashData.append('=');
                 hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                //Build query
                 query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII));
                 query.append('=');
                 query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
@@ -96,8 +88,15 @@ public class PaymentService {
         return vnPayConfig.getVnp_PayUrl() + "?" + queryUrl;
     }
 
+    /**
+     * Xử lý kết quả trả về từ VNPay — chỉ lưu DB trong @Transactional này.
+     * Camunda correlation được gọi riêng bằng correlateVNPayMessage() SAU KHI
+     * transaction commit.
+     *
+     * @return bookingId nếu thanh toán thành công, null nếu thất bại
+     */
     @Transactional
-    public boolean processPaymentReturn(Map<String, String> params) {
+    public UUID processPaymentReturn(Map<String, String> params) {
         Map<String, String> fields = new HashMap<>(params);
         String secureHash = fields.get("vnp_SecureHash");
         fields.remove("vnp_SecureHashType");
@@ -122,70 +121,75 @@ public class PaymentService {
 
         String checkSum = VNPayConfig.hmacSHA512(vnPayConfig.getVnp_HashSecret(), hashData.toString());
 
-        if (checkSum.equals(secureHash)) {
-            if ("00".equals(fields.get("vnp_ResponseCode"))) {
-                // Payment successful
-                String txnRef = fields.get("vnp_TxnRef");
-                // Split into max 2 parts, so the UUID stays intact
-                String[] parts = txnRef.split("-", 2);
-                if (parts.length > 1) {
-                    try {
-                        UUID bookingId = UUID.fromString(parts[1]);
-                        Booking booking = bookingRepository.findById(bookingId)
-                                .orElseThrow(() -> new RuntimeException("Booking not found"));
-
-                        if (booking.getPaymentStatus() == PaymentStatus.UNPAID) {
-                            booking.setPaymentStatus(PaymentStatus.PAID);
-                            // Giữ PENDING - Host cần duyệt thủ công trong vòng 3 giờ
-                            bookingRepository.save(booking);
-
-                            Payment payment = Payment.builder()
-                                    .amount(booking.getTotalPrice())
-                                    .paymentMethod("VNPAY")
-                                    .transactionId(fields.get("vnp_TransactionNo"))
-                                    .status("SUCCESS")
-                                    .booking(booking)
-                                    .build();
-                            paymentRepository.save(payment);
-
-                            // CAMUNDA: Correlate VNPaySuccessMessage
-                            try {
-                                runtimeService.createMessageCorrelation("Message_VNPaySuccess")
-                                        .processInstanceBusinessKey(booking.getId().toString())
-                                        .correlate();
-                            } catch (Exception e) {
-                                System.err.println("[Camunda] Could not correlate Message_VNPaySuccess: " + e.getMessage());
-                            }
-
-                            // Thông báo cho Host
-                            notificationService.createNotification(
-                                    booking.getHomestay().getHost().getUsername(),
-                                    "🏠 Khách hàng " + booking.getUser().getUsername()
-                                            + " đã thanh toán thành công qua VNPay cho đơn đặt phòng tại "
-                                            + booking.getHomestay().getName()
-                                            + ". Hãy duyệt đơn trong vòng 3 giờ, nếu không đơn sẽ tự động bị hủy và hoàn tiền cho khách.",
-                                    "BOOKING",
-                                    booking.getId().toString()
-                            );
-
-                            // Thông báo cho khách
-                            notificationService.createNotification(
-                                    booking.getUser().getUsername(),
-                                    "✅ Thanh toán VNPay thành công cho đơn đặt phòng tại "
-                                            + booking.getHomestay().getName()
-                                            + ". Đơn đang chờ chủ nhà xác nhận (tối đa 3 giờ).",
-                                    "BOOKING",
-                                    booking.getId().toString()
-                            );
-                        }
-                        return true;
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return false;
-                    }
-                }
-            }
+        if (!checkSum.equals(secureHash)) {
+            return null; // Sai chữ ký → từ chối
         }
-        return false;
+
+        if (!"00".equals(fields.get("vnp_ResponseCode"))) {
+            return null; // Thanh toán thất bại phía VNPay
+        }
+
+        String txnRef = fields.get("vnp_TxnRef");
+        String[] parts = txnRef.split("-", 2);
+        if (parts.length < 2)
+            return null;
+
+        UUID bookingId = UUID.fromString(parts[1]);
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (booking.getPaymentStatus() != PaymentStatus.UNPAID) {
+            // Duplicate callback — đã xử lý rồi
+            return bookingId;
+        }
+
+        booking.setPaymentStatus(PaymentStatus.PAID);
+        bookingRepository.save(booking);
+
+        Payment payment = Payment.builder()
+                .amount(booking.getTotalPrice())
+                .paymentMethod("VNPAY")
+                .transactionId(fields.get("vnp_TransactionNo"))
+                .status("SUCCESS")
+                .booking(booking)
+                .build();
+        paymentRepository.save(payment);
+
+        // Thông báo cho Host
+        notificationService.createNotification(
+                booking.getHomestay().getHost().getUsername(),
+                "🏠 Khách hàng " + booking.getUser().getUsername()
+                        + " đã thanh toán thành công qua VNPay cho đơn đặt phòng tại "
+                        + booking.getHomestay().getName()
+                        + ". Hãy duyệt đơn trong vòng 3 giờ, nếu không đơn sẽ tự động bị hủy và hoàn tiền cho khách.",
+                "BOOKING",
+                booking.getId().toString());
+
+        // Thông báo cho khách
+        notificationService.createNotification(
+                booking.getUser().getUsername(),
+                "✅ Thanh toán VNPay thành công cho đơn đặt phòng tại "
+                        + booking.getHomestay().getName()
+                        + ". Đơn đang chờ chủ nhà xác nhận (tối đa 3 giờ).",
+                "BOOKING",
+                booking.getId().toString());
+
+        return bookingId;
+    }
+
+    /**
+     * Correlate Camunda Message SAU KHI transaction DB đã commit thành công.
+     * KHÔNG có @Transactional để không lây exception vào transaction payment.
+     */
+    public void correlateVNPayMessage(UUID bookingId) {
+        try {
+            runtimeService.createMessageCorrelation("Message_VNPaySuccess")
+                    .processInstanceBusinessKey(bookingId.toString())
+                    .correlate();
+            System.out.println("[Camunda] Correlated Message_VNPaySuccess for booking: " + bookingId);
+        } catch (Exception e) {
+            System.err.println("[Camunda] Could not correlate Message_VNPaySuccess for booking "
+                    + bookingId + ": " + e.getMessage());
+        }
     }
 }

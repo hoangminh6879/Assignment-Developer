@@ -158,13 +158,10 @@ public class BookingService {
     public List<BookingDto> getHostBookings(String username) {
         User host = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Host not found"));
-        
+
+        // Trả về TẤT CẢ đơn thuộc homestay của host, không lọc theo trạng thái hay hình thức thanh toán
         return bookingRepository.findAll().stream()
                 .filter(b -> b.getHomestay().getHost().getId().equals(host.getId()))
-                .filter(b -> b.getStatus() != BookingStatus.CHECKED_IN)
-                // Chỉ hiển thị đơn đã thanh toán (PAID hoặc REFUNDED - cần duyệt hoặc đã xử lý)
-                .filter(b -> b.getPaymentStatus() == PaymentStatus.PAID
-                        || b.getPaymentStatus() == PaymentStatus.REFUNDED)
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
