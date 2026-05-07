@@ -29,6 +29,8 @@ export interface HostStatistics {
   totalHomestays: number;
   monthlyRevenue: MonthlyRevenue[];
   homestayStats: HomestayStats[];
+  averageRating: number;
+  totalReviews: number;
 }
 
 @Injectable({

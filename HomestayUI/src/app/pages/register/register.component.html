@@ -12,32 +12,48 @@
         <div class="form-row">
           <div class="form-group">
             <label for="firstName">Họ</label>
-            <input type="text" id="firstName" name="firstName" [(ngModel)]="userData.firstName" required placeholder="Nguyễn">
+            <div class="input-wrapper">
+              <i class="fa-solid fa-user-tag input-icon"></i>
+              <input type="text" id="firstName" name="firstName" [(ngModel)]="userData.firstName" required placeholder="Nguyễn">
+            </div>
           </div>
           <div class="form-group">
             <label for="lastName">Tên</label>
-            <input type="text" id="lastName" name="lastName" [(ngModel)]="userData.lastName" required placeholder="Văn A">
+            <div class="input-wrapper">
+              <i class="fa-solid fa-user input-icon"></i>
+              <input type="text" id="lastName" name="lastName" [(ngModel)]="userData.lastName" required placeholder="Văn A">
+            </div>
           </div>
         </div>
 
         <div class="form-group">
           <label for="username">Tên đăng nhập</label>
-          <input type="text" id="username" name="username" [(ngModel)]="userData.username" required placeholder="nguyenvana">
+          <div class="input-wrapper">
+            <i class="fa-solid fa-id-badge input-icon"></i>
+            <input type="text" id="username" name="username" [(ngModel)]="userData.username" required placeholder="nguyenvana">
+          </div>
         </div>
 
         <div class="form-group">
           <label for="email">Email</label>
-          <input type="email" id="email" name="email" [(ngModel)]="userData.email" required email placeholder="example@gmail.com">
+          <div class="input-wrapper">
+            <i class="fa-solid fa-envelope input-icon"></i>
+            <input type="email" id="email" name="email" [(ngModel)]="userData.email" required email placeholder="example@gmail.com">
+          </div>
         </div>
 
         <div class="form-group">
           <label for="phoneNumber">Số điện thoại</label>
-          <input type="text" id="phoneNumber" name="phoneNumber" [(ngModel)]="userData.phoneNumber" placeholder="0912345678">
+          <div class="input-wrapper">
+            <i class="fa-solid fa-phone input-icon"></i>
+            <input type="text" id="phoneNumber" name="phoneNumber" [(ngModel)]="userData.phoneNumber" placeholder="0912345678">
+          </div>
         </div>
 
         <div class="form-group">
           <label for="password">Mật khẩu</label>
           <div class="input-wrapper">
+            <i class="fa-solid fa-lock input-icon"></i>
             <input
               [type]="showPassword ? 'text' : 'password'"
               id="password"
@@ -48,32 +64,38 @@
               placeholder="Ít nhất 6 ký tự"
             >
             <button type="button" class="toggle-password" (click)="togglePassword()">
-              {{ showPassword ? '🙈' : '👁️' }}
+              <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
             </button>
           </div>
         </div>
 
         <div class="form-group">
           <label for="confirmPassword">Xác nhận mật khẩu</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            [(ngModel)]="userData.confirmPassword"
-            required
-            placeholder="Nhập lại mật khẩu"
-          >
+          <div class="input-wrapper">
+            <i class="fa-solid fa-shield-halved input-icon"></i>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              [(ngModel)]="userData.confirmPassword"
+              required
+              placeholder="Nhập lại mật khẩu"
+            >
+          </div>
         </div>
 
         @if (errorMessage) {
-          <div class="error-alert">{{ errorMessage }}</div>
+          <div class="error-alert">
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+          </div>
         }
 
         <button type="submit" id="btn-register" class="btn-primary" [disabled]="isLoading">
           @if (isLoading) {
             <span class="loader"></span>
           } @else {
-            Tạo tài khoản
+            <span>Tạo tài khoản</span>
+            <i class="fa-solid fa-user-plus"></i>
           }
         </button>
 
@@ -85,7 +107,9 @@
     } @else {
       <!-- ── EMAIL VERIFICATION PENDING ── -->
       <div class="verify-email-panel animate-fade-in">
-        <div class="verify-icon">📧</div>
+        <div class="verify-icon">
+          <i class="fa-solid fa-envelope-circle-check"></i>
+        </div>
         <h2>Xác thực email của bạn</h2>
         <p>
           Chúng tôi đã gửi email xác thực đến <strong>{{ userData.email }}</strong>.
@@ -106,7 +130,8 @@
           </div>
         </div>
         <button class="btn-primary" (click)="goToLogin()">
-          Đến trang đăng nhập →
+          <span>Đến trang đăng nhập</span>
+          <i class="fa-solid fa-arrow-right"></i>
         </button>
       </div>
     }

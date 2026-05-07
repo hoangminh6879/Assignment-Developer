@@ -3,23 +3,27 @@
 <div class="home-container">
   <!-- Hero Section -->
   <section class="hero animate-fade-in">
+    <div class="hero-overlay"></div>
     <div class="hero-content animate-fade-in">
-      <h1>Khám Phá Homestay Tuyệt Vời</h1>
+      <h1>Khám Phá Homestay Cho Riêng Bạn</h1>
       <p>Tìm kiếm nơi dừng chân lý tưởng cho chuyến đi của bạn</p>
 
       <div class="search-wrapper">
         <div class="search-bar">
           <div class="search-input-wrap">
-            <span class="search-icon">🔍</span>
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
             <input type="text" [(ngModel)]="searchQuery" (input)="applyFilters()" placeholder="Bạn muốn đi đâu?">
           </div>
           <div class="search-actions">
             <button class="btn-filter-toggle" (click)="toggleFilters()" [class.active]="showFilters"
               title="Bộ lọc nâng cao">
-              <i class="fa-solid fa-filter"></i>
+              <i class="fa-solid fa-sliders"></i>
               <span>Bộ lọc</span>
             </button>
-            <button class="btn-search" (click)="applyFilters()">Tìm kiếm</button>
+            <button class="btn-search" (click)="applyFilters()">
+              <i class="fa-solid fa-search"></i>
+              <span>Tìm kiếm</span>
+            </button>
           </div>
         </div>
 
@@ -27,30 +31,33 @@
         <div class="advanced-filters-panel" *ngIf="showFilters">
           <div class="filter-grid">
             <div class="filter-item">
-              <label>🏙️ Thành phố</label>
+              <label><i class="fa-solid fa-city"></i> Thành phố</label>
               <select [(ngModel)]="searchCity" (change)="applyFilters()">
-                <option value="">Tất cả</option>
+                <option value="">Tất cả thành phố</option>
                 <option *ngFor="let city of cities" [value]="city">{{ city }}</option>
               </select>
             </div>
 
             <div class="filter-item">
-              <label>🏠 Loại phòng</label>
+              <label><i class="fa-solid fa-house-chimney"></i> Loại phòng</label>
               <select [(ngModel)]="selectedRoomType" (change)="applyFilters()">
-                <option value="">Tất cả</option>
+                <option value="">Tất cả loại phòng</option>
                 <option *ngFor="let rt of roomTypes" [value]="rt.name">{{ rt.name }}</option>
               </select>
             </div>
 
             <div class="filter-item">
-              <label>💰 Giá tối đa</label>
-              <input type="number" [(ngModel)]="maxPrice" (input)="applyFilters()" placeholder="VD: 1000000">
+              <label><i class="fa-solid fa-tag"></i> Giá tối đa</label>
+              <div class="input-with-unit">
+                <input type="number" [(ngModel)]="maxPrice" (input)="applyFilters()" placeholder="VD: 1000000">
+                <span class="unit">đ</span>
+              </div>
             </div>
 
             <div class="filter-item">
-              <label>⭐ Đánh giá</label>
+              <label><i class="fa-solid fa-star"></i> Đánh giá tối thiểu</label>
               <select [(ngModel)]="minStars" (change)="applyFilters()">
-                <option [value]="0">Tất cả</option>
+                <option [value]="0">Tất cả đánh giá</option>
                 <option [value]="4">4+ sao</option>
                 <option [value]="4.5">4.5+ sao</option>
                 <option [value]="5">5 sao</option>
@@ -58,7 +65,9 @@
             </div>
           </div>
           <div class="panel-footer">
-            <button class="btn-clear" (click)="resetFilters()">Đặt lại tất cả</button>
+            <button class="btn-clear" (click)="resetFilters()">
+              <i class="fa-solid fa-rotate-left"></i> Đặt lại tất cả
+            </button>
           </div>
         </div>
       </div>
@@ -69,6 +78,7 @@
   <section class="featured">
     <div class="section-header">
       <h2>Homestay Nổi Bật</h2>
+      <div class="header-line"></div>
       <p>Những địa điểm được yêu thích nhất bởi cộng đồng</p>
     </div>
 
@@ -78,23 +88,29 @@
         <div class="card-image">
           <img *ngIf="home.images && home.images.length > 0" [src]="'http://localhost:9999' + home.images[0].url"
             [alt]="home.name">
-          <div *ngIf="!home.images || home.images.length === 0" class="no-image-placeholder">🏠</div>
+          <div *ngIf="!home.images || home.images.length === 0" class="no-image-placeholder">
+            <i class="fa-solid fa-image"></i>
+          </div>
           <div class="badge">Đang mở</div>
+          <div class="card-price-tag">{{ home.pricePerNight | number }}đ <span>/ đêm</span></div>
         </div>
         <div class="card-body">
           <div class="card-header">
             <h3>{{ home.name }}</h3>
-            <span class="rating">★ {{ (home.averageRating || 0) | number:'1.1-1' }}</span>
+            <span class="rating"><i class="fa-solid fa-star"></i> {{ (home.averageRating || 0) | number:'1.1-1'
+              }}</span>
           </div>
-          <p class="location">📍 {{ home.city }}</p>
+          <p class="location"><i class="fa-solid fa-location-dot"></i> {{ home.city }}</p>
           <p class="card-description">{{ home.description }}</p>
           <div class="card-footer">
-            <span class="price">{{ home.pricePerNight | number }}đ <span>/ đêm</span></span>
             <div class="card-actions">
-              <button class="btn-action btn-view" (click)="viewDetail(home); $event.stopPropagation()">Chi tiết</button>
+              <button class="btn-action btn-view" (click)="viewDetail(home); $event.stopPropagation()">
+                <i class="fa-solid fa-circle-info"></i> Chi tiết
+              </button>
               <button *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')" class="btn-action btn-book"
-                [routerLink]="['/booking', home.id]" (click)="incrementView(home.id); $event.stopPropagation()">Đặt
-                phòng</button>
+                [routerLink]="['/booking', home.id]" (click)="incrementView(home.id); $event.stopPropagation()">
+                <i class="fa-solid fa-calendar-check"></i> Đặt ngay
+              </button>
             </div>
           </div>
         </div>
@@ -103,7 +119,7 @@
     </div>
     <ng-template #noData>
       <div class="empty-state">
-        <span class="empty-icon">🏖️</span>
+        <i class="fa-solid fa-umbrella-beach empty-icon"></i>
         <p>Hiện chưa có homestay nào hoạt động. Trở lại sau nhé!</p>
       </div>
     </ng-template>
@@ -113,111 +129,135 @@
 <!-- HOMESTAY DETAIL MODAL -->
 <div class="modal-overlay" *ngIf="selectedHomestay" (click)="closeDetail()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close-btn" (click)="closeDetail()">&#x2715;</button>
+    <button class="modal-close-btn" (click)="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
     <div class="modal-body">
-      <h2 class="modal-title">🏠 {{ selectedHomestay.name }}</h2>
+      <div class="modal-layout">
+        <!-- Left Column: Media & Content -->
+        <div class="modal-main-content">
+          <h2 class="modal-title">{{ selectedHomestay.name }}</h2>
+          <p class="modal-location"><i class="fa-solid fa-location-dot"></i> {{ selectedHomestay.address }}, {{
+            selectedHomestay.city }}</p>
 
-      <!-- SLIDESHOW -->
-      <div class="slideshow" *ngIf="selectedHomestay.images && selectedHomestay.images.length > 0">
-        <div class="slide-track">
-          <img [src]="'http://localhost:9999' + selectedHomestay.images[slideIndex].url" class="slide-img"
-            [alt]="selectedHomestay.name" />
-        </div>
-        <button class="slide-btn slide-prev" (click)="prevSlide()"
-          *ngIf="selectedHomestay.images.length > 1">&#10094;</button>
-        <button class="slide-btn slide-next" (click)="nextSlide()"
-          *ngIf="selectedHomestay.images.length > 1">&#10095;</button>
-        <div class="slide-dots" *ngIf="selectedHomestay.images.length > 1">
-          <span *ngFor="let img of selectedHomestay.images; let i = index" class="dot" [class.active]="i === slideIndex"
-            (click)="goToSlide(i)"></span>
-        </div>
-        <div class="slide-counter" *ngIf="selectedHomestay.images.length > 1">
-          {{ slideIndex + 1 }} / {{ selectedHomestay.images.length }}
-        </div>
-      </div>
-      <div class="modal-no-img" *ngIf="!selectedHomestay.images || selectedHomestay.images.length === 0">🏠</div>
-
-      <!-- Info Grid -->
-      <div class="modal-info-grid">
-        <div class="info-item">
-          <span class="info-label">📍 Thành phố</span>
-          <span class="info-value">{{ selectedHomestay.city }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">💰 Giá / đêm</span>
-          <span class="info-value price-highlight">{{ selectedHomestay.pricePerNight | number }}đ</span>
-        </div>
-        <div class="info-item info-full">
-          <span class="info-label">📮 Địa chỉ</span>
-          <span class="info-value">{{ selectedHomestay.address }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">👥 Khách tối đa</span>
-          <span class="info-value">{{ selectedHomestay.maxGuests }} khách</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">👤 Chủ nhà</span>
-          <span class="info-value">{{ selectedHomestay.hostName }}</span>
-        </div>
-        <div class="info-item info-full" *ngIf="selectedHomestay.description">
-          <span class="info-label">📝 Mô tả</span>
-          <span class="info-value description-text">{{ selectedHomestay.description }}</span>
-        </div>
-        <div class="info-item info-full" *ngIf="selectedHomestay.amenities && selectedHomestay.amenities.length > 0">
-          <span class="info-label">✨ Tiện ích</span>
-          <div class="amenity-tags">
-            <span class="amenity-tag" *ngFor="let am of selectedHomestay.amenities">{{ am.iconUrl }} {{ am.name
-              }}</span>
+          <!-- SLIDESHOW -->
+          <div class="slideshow" *ngIf="selectedHomestay.images && selectedHomestay.images.length > 0">
+            <div class="slide-track">
+              <img [src]="'http://localhost:9999' + selectedHomestay.images[slideIndex].url" class="slide-img"
+                [alt]="selectedHomestay.name" />
+            </div>
+            <button class="slide-btn slide-prev" (click)="prevSlide()" *ngIf="selectedHomestay.images.length > 1"><i
+                class="fa-solid fa-chevron-left"></i></button>
+            <button class="slide-btn slide-next" (click)="nextSlide()" *ngIf="selectedHomestay.images.length > 1"><i
+                class="fa-solid fa-chevron-right"></i></button>
+            <div class="slide-dots" *ngIf="selectedHomestay.images.length > 1">
+              <span *ngFor="let img of selectedHomestay.images; let i = index" class="dot"
+                [class.active]="i === slideIndex" (click)="goToSlide(i)"></span>
+            </div>
+            <div class="slide-counter" *ngIf="selectedHomestay.images.length > 1">
+              {{ slideIndex + 1 }} / {{ selectedHomestay.images.length }}
+            </div>
           </div>
-        </div>
-      </div> <!-- end modal-info-grid -->
+          <div class="modal-no-img" *ngIf="!selectedHomestay.images || selectedHomestay.images.length === 0">
+            <i class="fa-solid fa-image"></i>
+          </div>
 
-      <!-- Reviews Section -->
-      <div class="reviews-section">
-        <h3>💬 Đánh giá từ khách hàng ({{ reviews.length }})</h3>
+          <div class="modal-description">
+            <h3>Mô tả chi tiết</h3>
+            <p class="description-text">{{ selectedHomestay.description }}</p>
+          </div>
 
-        <div class="review-list" *ngIf="reviews.length > 0; else noReviews">
-          <div class="review-item animate-fade-in" *ngFor="let review of reviews">
-            <div class="review-header">
-              <div class="user-meta">
-                <span class="avatar">{{ review.userFullName.charAt(0) || 'U' }}</span>
-                <div class="user-name-date">
-                  <strong>{{ review.userFullName }}</strong>
-                  <span class="date">{{ review.createdAt | date:'dd/MM/yyyy' }}</span>
+          <div class="modal-amenities" *ngIf="selectedHomestay.amenities && selectedHomestay.amenities.length > 0">
+            <h3>Tiện ích nổi bật</h3>
+            <div class="amenity-tags">
+              <span class="amenity-tag" *ngFor="let am of selectedHomestay.amenities">
+                <i class="fa-solid fa-check"></i> {{ am.name }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Reviews Section -->
+          <div class="reviews-section">
+            <h3><i class="fa-solid fa-comments"></i> Đánh giá từ khách hàng ({{ reviews.length }})</h3>
+
+            <div class="review-list" *ngIf="reviews.length > 0; else noReviews">
+              <div class="review-item animate-fade-in" *ngFor="let review of reviews">
+                <div class="review-header">
+                  <div class="user-meta">
+                    <span class="avatar">{{ review.userFullName.charAt(0) || 'U' }}</span>
+                    <div class="user-name-date">
+                      <strong>{{ review.userFullName }}</strong>
+                      <span class="date">{{ review.createdAt | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                  </div>
+                  <div class="review-rating"><i class="fa-solid fa-star"></i> {{ review.rating }}</div>
+                </div>
+                <div class="review-content">
+                  {{ review.comment }}
+                </div>
+                <div class="review-images" *ngIf="review.imageUrls && review.imageUrls.length > 0">
+                  <img *ngFor="let url of review.imageUrls" [src]="'http://localhost:9999' + url" alt="Review Image">
+                </div>
+
+                <!-- Host Response -->
+                <div class="host-response" *ngIf="review.response">
+                  <div class="response-header">
+                    <strong><i class="fa-solid fa-house-user"></i> Phản hồi từ chủ nhà</strong>
+                    <span class="date">{{ review.responseCreatedAt | date:'dd/MM/yyyy' }}</span>
+                  </div>
+                  <div class="response-content">
+                    {{ review.response }}
+                  </div>
                 </div>
               </div>
-              <div class="review-rating">★ {{ review.rating }}</div>
-            </div>
-            <div class="review-content">
-              {{ review.comment }}
-            </div>
-            <div class="review-images" *ngIf="review.imageUrls && review.imageUrls.length > 0">
-              <img *ngFor="let url of review.imageUrls" [src]="'http://localhost:9999' + url" alt="Review Image">
             </div>
 
-            <!-- Host Response -->
-            <div class="host-response" *ngIf="review.response">
-              <div class="response-header">
-                <strong>🏠 Phản hồi từ chủ nhà</strong>
-                <span class="date">{{ review.responseCreatedAt | date:'dd/MM/yyyy' }}</span>
+            <ng-template #noReviews>
+              <div class="empty-reviews">
+                <p>Chưa có đánh giá nào cho homestay này.</p>
               </div>
-              <div class="response-content">
-                {{ review.response }}
-              </div>
-            </div>
+            </ng-template>
           </div>
         </div>
 
-        <ng-template #noReviews>
-          <div class="empty-reviews">
-            <p>Chưa có đánh giá nào cho homestay này.</p>
+        <!-- Right Column: Booking Sidebar (Glassmorphism) -->
+        <div class="modal-sidebar">
+          <div class="booking-card">
+            <div class="booking-price">
+              <span class="amount">{{ selectedHomestay.pricePerNight | number }}đ</span>
+              <span class="per-night">/ đêm</span>
+            </div>
+
+            <div class="sidebar-info-list">
+              <div class="sidebar-info-item">
+                <i class="fa-solid fa-users"></i>
+                <div class="info-details">
+                  <span class="label">Số khách tối đa</span>
+                  <span class="value">{{ selectedHomestay.maxGuests }} khách</span>
+                </div>
+              </div>
+              <div class="sidebar-info-item">
+                <i class="fa-solid fa-user-tie"></i>
+                <div class="info-details">
+                  <span class="label">Chủ nhà</span>
+                  <span class="value">{{ selectedHomestay.hostName }}</span>
+                </div>
+              </div>
+              <div class="sidebar-info-item">
+                <i class="fa-solid fa-city"></i>
+                <div class="info-details">
+                  <span class="label">Thành phố</span>
+                  <span class="value">{{ selectedHomestay.city }}</span>
+                </div>
+              </div>
+            </div>
+
+            <button *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')" class="btn-book-large"
+              [routerLink]="['/booking', selectedHomestay.id]" (click)="closeDetail()">
+              Đặt phòng ngay
+            </button>
+            <p class="booking-note">Bạn sẽ không bị tính phí ngay lúc này</p>
           </div>
-        </ng-template>
+        </div>
       </div>
     </div> <!-- end modal-body -->
-    <div class="modal-footer" *ngIf="!authService.hasRole('HOST') && !authService.hasRole('ADMIN')">
-      <button class="btn-book-large" [routerLink]="['/booking', selectedHomestay.id]" (click)="closeDetail()">Đặt phòng
-        ngay</button>
-    </div>
   </div> <!-- end modal-box -->
 </div> <!-- end modal-overlay -->

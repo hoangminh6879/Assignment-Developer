@@ -66,6 +66,10 @@ export class HomestayService {
     return this.http.put<HomestayDto>(`${this.apiUrl}/admin/homestays/${id}/status`, { status, adminReason });
   }
 
+  updateHostHomestayStatus(id: string, status: string): Observable<HomestayDto> {
+    return this.http.put<HomestayDto>(`${this.apiUrl}/host/homestays/${id}/status`, { status });
+  }
+
   incrementViewCount(id: string): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/homestays/${id}/view`, null);
   }

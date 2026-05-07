@@ -11,6 +11,7 @@
         <div class="form-group">
           <label for="username">Email hoặc Tên đăng nhập</label>
           <div class="input-wrapper">
+            <i class="fa-solid fa-envelope input-icon"></i>
             <input
               type="text"
               id="username"
@@ -19,13 +20,13 @@
               required
               placeholder="Nhập email hoặc tên đăng nhập"
             >
-            <span class="input-icon">👤</span>
           </div>
         </div>
 
         <div class="form-group">
           <label for="password">Mật khẩu</label>
           <div class="input-wrapper">
+            <i class="fa-solid fa-lock input-icon"></i>
             <input
               [type]="showPassword ? 'text' : 'password'"
               id="password"
@@ -34,9 +35,8 @@
               required
               placeholder="Nhập mật khẩu"
             >
-            <span class="input-icon">🔒</span>
             <button type="button" class="toggle-password" (click)="togglePassword()">
-              {{ showPassword ? '🙈' : '👁️' }}
+              <i [class]="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
             </button>
           </div>
         </div>
@@ -57,12 +57,16 @@
 
         @if (emailNotVerified) {
           <div class="verify-banner">
-            <div class="verify-banner-icon">📧</div>
+            <div class="verify-banner-icon">
+              <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
             <div class="verify-banner-content">
               <strong>Tài khoản chưa xác thực email</strong>
               <p>Vui lòng kiểm tra hộp thư đến của bạn và nhấn vào liên kết xác thực.</p>
               @if (resendSuccess) {
-                <div class="resend-success">{{ resendSuccess }}</div>
+                <div class="resend-success">
+                  <i class="fa-solid fa-check-circle"></i> {{ resendSuccess }}
+                </div>
               } @else {
                 <button
                   type="button"
@@ -74,7 +78,7 @@
                   @if (isResendLoading) {
                     <span class="loader-sm"></span>
                   } @else {
-                    Gửi lại email xác thực
+                    <i class="fa-solid fa-paper-plane"></i> Gửi lại email xác thực
                   }
                 </button>
               }
@@ -83,14 +87,17 @@
         }
 
         @if (errorMessage) {
-          <div class="error-alert">{{ errorMessage }}</div>
+          <div class="error-alert">
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+          </div>
         }
 
         <button type="submit" id="btn-login" class="btn-primary" [disabled]="!loginForm.valid || isLoading">
           @if (isLoading) {
             <span class="loader"></span>
           } @else {
-            Đăng Nhập
+            <span>Đăng Nhập</span>
+            <i class="fa-solid fa-arrow-right"></i>
           }
         </button>
 
@@ -102,7 +109,7 @@
       <!-- ── FORGOT PASSWORD FORM ── -->
       <div class="forgot-password-section animate-fade-in">
         <div class="back-btn" (click)="toggleForgotPassword()">
-          ← Quay lại đăng nhập
+          <i class="fa-solid fa-arrow-left"></i> Quay lại đăng nhập
         </div>
         <h2>Quên mật khẩu?</h2>
         <p class="forgot-desc">Nhập email của bạn và chúng tôi sẽ gửi liên kết đặt lại mật khẩu.</p>
@@ -111,6 +118,7 @@
           <div class="form-group">
             <label for="forgotEmail">Email</label>
             <div class="input-wrapper">
+              <i class="fa-solid fa-at input-icon"></i>
               <input
                 type="email"
                 id="forgotEmail"
@@ -120,22 +128,26 @@
                 email
                 placeholder="Nhập email tài khoản của bạn"
               >
-              <span class="input-icon">📧</span>
             </div>
           </div>
 
           @if (forgotError) {
-            <div class="error-alert">{{ forgotError }}</div>
+            <div class="error-alert">
+              <i class="fa-solid fa-triangle-exclamation"></i> {{ forgotError }}
+            </div>
           }
           @if (forgotSuccess) {
-            <div class="success-alert">{{ forgotSuccess }}</div>
+            <div class="success-alert">
+              <i class="fa-solid fa-check-circle"></i> {{ forgotSuccess }}
+            </div>
           }
 
           <button type="submit" id="btn-forgot-password" class="btn-primary" [disabled]="!forgotForm.valid || isForgotLoading">
             @if (isForgotLoading) {
               <span class="loader"></span>
             } @else {
-              Gửi liên kết đặt lại mật khẩu
+              <span>Gửi liên kết đặt lại</span>
+              <i class="fa-solid fa-paper-plane"></i>
             }
           </button>
         </form>
