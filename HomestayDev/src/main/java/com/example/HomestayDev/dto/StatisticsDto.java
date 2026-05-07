@@ -35,6 +35,8 @@ public class StatisticsDto {
         private Long totalHomestays;
         private List<MonthlyRevenue> monthlyRevenue;
         private List<HomestayStats> homestayStats;
+        private Double averageRating;
+        private Long totalReviews;
     }
 
     @Data
