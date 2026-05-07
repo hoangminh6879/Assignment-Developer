@@ -163,6 +163,27 @@ public class HomestayService {
     }
 
     @Transactional
+    public HomestayDto updateHostStatus(UUID homestayId, String username, HomestayStatus status) {
+        Homestay homestay = homestayRepository.findById(homestayId)
+                .orElseThrow(() -> new RuntimeException("Homestay not found"));
+
+        if (!homestay.getHost().getUsername().equals(username)) {
+            throw new RuntimeException("Not authorized to update this homestay");
+        }
+
+        if (homestay.getStatus() == HomestayStatus.PENDING || homestay.getStatus() == HomestayStatus.REJECTED) {
+            throw new RuntimeException("Cannot change status while homestay is " + homestay.getStatus());
+        }
+
+        if (status != HomestayStatus.ACTIVE && status != HomestayStatus.INACTIVE) {
+            throw new RuntimeException("Invalid status transition for host");
+        }
+
+        homestay.setStatus(status);
+        return mapToDto(homestayRepository.save(homestay));
+    }
+
+    @Transactional
     public void deleteHomestay(UUID homestayId, String username) {
         Homestay homestay = homestayRepository.findById(homestayId)
                 .orElseThrow(() -> new RuntimeException("Homestay not found"));

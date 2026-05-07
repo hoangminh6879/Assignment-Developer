@@ -94,6 +94,16 @@ public class HomestayController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/host/homestays/{id}/status")
+    public ResponseEntity<HomestayDto> updateHostStatus(
+            @PathVariable UUID id,
+            @RequestBody Map<String, String> body
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        HomestayStatus status = HomestayStatus.valueOf(body.get("status"));
+        return ResponseEntity.ok(homestayService.updateHostStatus(id, auth.getName(), status));
+    }
+
     // ADMIN
     @GetMapping("/admin/homestays")
     public ResponseEntity<List<HomestayDto>> getAllHomestays() {

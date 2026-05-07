@@ -49,37 +49,37 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
           </div>
           <ul class="sidebar-menu">
             <li [class.active]="activeTab === 'statistics'" (click)="activeTab = 'statistics'; loadAllStats()">
-              <span class="menu-icon">📊</span> Thống kê của tôi
+              <span class="menu-icon"><i class="fa-solid fa-chart-line"></i></span> Thống kê của tôi
             </li>
             <li [class.active]="activeTab === 'wallet'" (click)="activeTab = 'wallet'">
-              <span class="menu-icon">💳</span> Ví doanh thu
+              <span class="menu-icon"><i class="fa-solid fa-wallet"></i></span> Ví doanh thu
             </li>
             <li [class.active]="activeTab === 'checkin'" (click)="activeTab = 'checkin'">
-              <span class="menu-icon">🔑</span> Mã nhận phòng
+              <span class="menu-icon"><i class="fa-solid fa-key"></i></span> Mã nhận phòng
             </li>
             <li [class.active]="activeTab === 'homestays'" (click)="activeTab = 'homestays'; notificationService.markTypeAsRead('HOMESTAY')">
-              <span class="menu-icon">🏠</span> Quản lý Homestay
+              <span class="menu-icon"><i class="fa-solid fa-house"></i></span> Quản lý Homestay
               <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('HOMESTAY') | async"></span>
             </li>
             <li [class.active]="activeTab === 'rooms'" (click)="activeTab = 'rooms'">
-              <span class="menu-icon">🛏️</span> Quản lý Phòng
+              <span class="menu-icon"><i class="fa-solid fa-bed"></i></span> Quản lý Phòng
             </li>
             <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'; notificationService.markTypeAsRead('BOOKING')">
-              <span class="menu-icon">📅</span> Quản lý Đặt phòng
+              <span class="menu-icon"><i class="fa-solid fa-calendar-days"></i></span> Quản lý Đặt phòng
               <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('BOOKING') | async"></span>
             </li>
             <li [class.active]="activeTab === 'vouchers'" (click)="activeTab = 'vouchers'">
-              <span class="menu-icon">🎟️</span> Quản lý Voucher
+              <span class="menu-icon"><i class="fa-solid fa-ticket"></i></span> Quản lý Voucher
             </li>
             <li [class.active]="activeTab === 'reviews'" (click)="activeTab = 'reviews'">
-              <span class="menu-icon">💬</span> Quản lý Đánh giá
+              <span class="menu-icon"><i class="fa-solid fa-star"></i></span> Quản lý Đánh giá
             </li>
             <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'; notificationService.markTypeAsRead('CHAT')">
-              <span class="menu-icon">💬</span> Tin nhắn
+              <span class="menu-icon"><i class="fa-solid fa-comments"></i></span> Tin nhắn
               <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('CHAT') | async"></span>
             </li>
             <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
-              <span class="menu-icon">👤</span> Hồ sơ của tôi
+              <span class="menu-icon"><i class="fa-solid fa-user-gear"></i></span> Hồ sơ của tôi
             </li>
           </ul>
         </aside>
@@ -91,7 +91,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
         <div *ngIf="activeTab === 'statistics'">
           <div class="tab-header-actions">
             <button class="btn-export-premium" (click)="openReportModal('STATS')">
-              <span class="btn-icon">📥</span> Xuất báo cáo thống kê
+              <span class="btn-icon"><i class="fa-solid fa-file-export"></i></span> Xuất báo cáo thống kê
             </button>
           </div>
           <div class="stats-overview">
@@ -100,28 +100,28 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
                 <span class="label">Doanh thu của tôi</span>
                 <span class="value">{{ hostStats?.totalRevenue | number }}đ</span>
               </div>
-              <div class="stat-icon">💰</div>
+              <div class="stat-icon-bg"><i class="fa-solid fa-sack-dollar"></i></div>
             </div>
             <div class="stat-card-premium blue">
               <div class="stat-info">
-                <span class="label">Tổng lượt đặt</span>
+                <span class="label">Tổng đơn đặt</span>
                 <span class="value">{{ hostStats?.totalBookings }}</span>
               </div>
-              <div class="stat-icon">📅</div>
+              <div class="stat-icon-bg"><i class="fa-solid fa-calendar-check"></i></div>
             </div>
             <div class="stat-card-premium orange">
               <div class="stat-info">
-                <span class="label">Homestay của tôi</span>
-                <span class="value">{{ hostStats?.totalHomestays }}</span>
+                <span class="label">Đánh giá trung bình</span>
+                <span class="value">{{ hostStats?.averageRating | number:'1.1-1' }}</span>
               </div>
-              <div class="stat-icon">🏠</div>
+              <div class="stat-icon-bg"><i class="fa-solid fa-star"></i></div>
             </div>
             <div class="stat-card-premium purple">
               <div class="stat-info">
                 <span class="label">Tổng lượt truy cập</span>
                 <span class="value">{{ totalViews | number }}</span>
               </div>
-              <div class="stat-icon">👁️</div>
+              <div class="stat-icon"><i class="fa-solid fa-eye"></i></div>
             </div>
           </div>
 
@@ -129,7 +129,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
             <!-- REVENUE CHART -->
             <div class="card glass-card revenue-chart-section">
               <div class="card-header">
-                <h3>Biểu đồ doanh thu</h3>
+                <h3><i class="fa-solid fa-chart-column"></i> Biểu đồ doanh thu</h3>
               </div>
               <div class="chart-container-large">
                 <div class="bar-chart" *ngIf="hostStats?.monthlyRevenue?.length; else emptyChart">
@@ -151,7 +151,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
             <!-- HOMESTAY PERFORMANCE -->
             <div class="card glass-card performance-section">
               <div class="card-header">
-                <h3>Hiệu suất Homestay</h3>
+                <h3><i class="fa-solid fa-ranking-star"></i> Hiệu suất Homestay</h3>
               </div>
               <div class="table-container-large">
                 <table class="simple-table" *ngIf="hostStats?.homestayStats?.length; else emptyTable">
@@ -188,9 +188,9 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
         <!-- BOOKINGS TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'bookings'">
           <div class="card-header">
-            <h3>Danh sách Đặt phòng</h3>
+            <h3><i class="fa-solid fa-list-check"></i> Danh sách Đặt phòng</h3>
             <button class="btn-export-premium" (click)="openReportModal('BOOKINGS')">
-              <span class="btn-icon">📤</span> Xuất báo cáo
+              <span class="btn-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span> Xuất báo cáo
             </button>
           </div>
           <app-booking-history-tab role="HOST"></app-booking-history-tab>
@@ -204,7 +204,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
         <!-- REVIEWS TAB -->
         <div class="card glass-card" *ngIf="activeTab === 'reviews'">
           <div class="card-header">
-            <h3>Quản lý Đánh giá & Phản hồi</h3>
+            <h3><i class="fa-solid fa-comments"></i> Quản lý Đánh giá & Phản hồi</h3>
           </div>
           <app-host-review-tab></app-host-review-tab>
         </div>
@@ -213,21 +213,21 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
         <div *ngIf="activeTab === 'homestays'">
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon">🏠</div>
+            <div class="stat-icon"><i class="fa-solid fa-house-circle-check"></i></div>
             <div class="stat-info">
               <h4>Tổng số Homestay</h4>
               <p class="stat-value">{{ homestays.length }}</p>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">✅</div>
+            <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
             <div class="stat-info">
               <h4>Đang hoạt động</h4>
               <p class="stat-value">{{ activeCount }}</p>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">⏳</div>
+            <div class="stat-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
             <div class="stat-info">
               <h4>Chờ duyệt</h4>
               <p class="stat-value">{{ pendingCount }}</p>
@@ -238,7 +238,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
         <div class="card glass-card" *ngIf="!showForm">
           <div class="card-header">
             <h3>Danh sách Homestay của bạn</h3>
-            <button class="btn-primary" (click)="openAddForm()">+ Thêm Homestay mới</button>
+            <button class="btn-primary" (click)="openAddForm()"><i class="fa-solid fa-plus"></i> Thêm Homestay mới</button>
           </div>
 
           <div class="table-container" *ngIf="homestays.length > 0; else emptyState">
@@ -256,7 +256,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
                 <tr *ngFor="let h of homestays" class="table-row">
                   <td class="homestay-cell">
                     <img *ngIf="h.images && h.images.length > 0" [src]="'http://localhost:9999' + h.images[0].url" class="h-thumb" />
-                    <div class="h-thumb-placeholder" *ngIf="!h.images || h.images.length === 0">🏠</div>
+                    <div class="h-thumb-placeholder" *ngIf="!h.images || h.images.length === 0"><i class="fa-solid fa-house"></i></div>
                     <div class="h-info-inline">
                       <span class="h-name">{{ h.name }}</span>
                       <span class="h-city-tag">{{ h.city }}</span>
@@ -265,9 +265,15 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
                    <td class="text-center" style="font-weight: 600; color: #334155;">{{ h.pricePerNight | number }}đ</td>
                    <td class="text-center" style="font-weight: 700; color: #6366f1;">{{ h.viewCount | number }}</td>
                    <td class="text-center">
-                     <div class="status-inline">
+                     <div class="status-badge-wrap">
                        <span class="badge" [ngClass]="h.status.toLowerCase()">{{ h.status }}</span>
-                       <span *ngIf="h.adminReason" class="admin-reason-inline" [title]="h.adminReason">⚠️ Lý do: {{ h.adminReason }}</span>
+                       <label class="switch" *ngIf="h.status === 'ACTIVE' || h.status === 'INACTIVE'">
+                         <input type="checkbox" [checked]="h.status === 'ACTIVE'" (change)="toggleStatus(h)">
+                         <span class="slider"></span>
+                       </label>
+                     </div>
+                     <div *ngIf="h.adminReason" class="admin-reason-inline" [title]="h.adminReason">
+                       <i class="fa-solid fa-circle-exclamation"></i> Lý do: {{ h.adminReason }}
                      </div>
                    </td>
                    <td class="actions-cell">
@@ -281,7 +287,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
           </div>
           <ng-template #emptyState>
             <div class="empty-state">
-              <span class="empty-icon">📭</span>
+              <span class="empty-icon"><i class="fa-solid fa-folder-open"></i></span>
               <p>Bạn chưa có homestay nào. Hãy tạo ngay một homestay để bắt đầu kinh doanh!</p>
             </div>
           </ng-template>
@@ -291,7 +297,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
         <div class="card glass-card" *ngIf="showForm">
           <div class="card-header">
             <h3>{{ isEditMode ? 'Cập nhật Homestay' : 'Thêm Homestay mới' }}</h3>
-            <button class="btn-secondary" (click)="closeForm()">Quay lại</button>
+            <button class="btn-secondary" (click)="closeForm()"><i class="fa-solid fa-arrow-left"></i> Quay lại</button>
           </div>
 
           <form (submit)="submitForm($event)" class="homestay-form">
@@ -332,7 +338,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
               <div class="amenities-checkboxes">
                 <label class="amenity-checkbox" *ngFor="let am of availableAmenities">
                   <input type="checkbox" [value]="am.id" (change)="toggleAmenity(am.id, $event)" [checked]="selectedAmenityIds.includes(am.id)">
-                  {{ am.iconUrl }} {{ am.name }}
+                  <span class="am-icon">{{ am.iconUrl }}</span> {{ am.name }}
                 </label>
               </div>
             </div>
@@ -366,7 +372,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
 
             <div class="form-actions">
               <button type="submit" class="btn-primary" [disabled]="isLoading">
-                {{ isLoading ? 'Đang lưu...' : 'Lưu Homestay' }}
+                <i class="fa-solid fa-save"></i> {{ isLoading ? 'Đang lưu...' : 'Lưu Homestay' }}
               </button>
             </div>
           </form>
@@ -375,7 +381,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
 
         <div class="modal-overlay" *ngIf="showDetailModal" (click)="closeDetail()">
           <div class="modal-box premium-modal" (click)="$event.stopPropagation()">
-            <button class="modal-close-btn" (click)="closeDetail()">✕</button>
+            <button class="modal-close-btn" (click)="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
             
             <div class="modal-header-banner" *ngIf="selectedHomestayForDetail?.images?.length">
                <img [src]="'http://localhost:9999' + selectedHomestayForDetail?.images?.[0]?.url" class="header-bg-img" />
@@ -388,33 +394,33 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
             <div class="modal-body">
               <div class="detail-grid-modern">
                 <div class="detail-card">
-                  <span class="d-label">📍 Vị trí</span>
+                  <span class="d-label"><i class="fa-solid fa-location-dot"></i> Vị trí</span>
                   <span class="d-value">{{ selectedHomestayForDetail?.city }}</span>
                   <p class="d-subtext">{{ selectedHomestayForDetail?.address }}</p>
                 </div>
                 <div class="detail-card">
-                  <span class="d-label">💰 Giá / Đêm</span>
+                  <span class="d-label"><i class="fa-solid fa-money-bill-wave"></i> Giá / Đêm</span>
                   <span class="d-value price-text">{{ selectedHomestayForDetail?.pricePerNight | number }}đ</span>
                 </div>
                 <div class="detail-card">
-                  <span class="d-label">👥 Sức chứa</span>
+                  <span class="d-label"><i class="fa-solid fa-users"></i> Sức chứa</span>
                   <span class="d-value">{{ selectedHomestayForDetail?.maxGuests }} khách</span>
                 </div>
                 <div class="detail-card">
-                  <span class="d-label">👁️ Lượt xem</span>
+                  <span class="d-label"><i class="fa-solid fa-chart-simple"></i> Lượt xem</span>
                   <span class="d-value">{{ selectedHomestayForDetail?.viewCount || 0 }}</span>
                 </div>
               </div>
 
               <div class="detail-main-section">
-                <div class="section-title">📝 Mô tả chi tiết</div>
+                <div class="section-title"><i class="fa-solid fa-file-lines"></i> Mô tả chi tiết</div>
                 <div class="description-rich-text">
                   {{ selectedHomestayForDetail?.description }}
                 </div>
               </div>
 
               <div class="detail-main-section">
-                <div class="section-title">✨ Tiện ích có sẵn</div>
+                <div class="section-title"><i class="fa-solid fa-star"></i> Tiện ích có sẵn</div>
                 <div class="amenity-modern-list">
                   <div class="amenity-item-chip" *ngFor="let am of selectedHomestayForDetail?.amenities">
                     <span class="am-icon-large">{{ am.iconUrl }}</span>
@@ -424,7 +430,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
               </div>
 
               <div class="detail-main-section" *ngIf="selectedHomestayForDetail?.images?.length">
-                <div class="section-title">🖼️ Bộ sưu tập hình ảnh</div>
+                <div class="section-title"><i class="fa-solid fa-images"></i> Bộ sưu tập hình ảnh</div>
                 <div class="image-gallery-modern">
                   <img *ngFor="let img of selectedHomestayForDetail?.images" [src]="'http://localhost:9999' + img.url" class="gallery-img" />
                 </div>
@@ -448,15 +454,15 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
                   <option *ngFor="let h of homestays" [ngValue]="h.id">{{ h.name }}</option>
                 </select>
                 <button class="btn-secondary" [disabled]="!selectedHomestayForRoom || !isHomestayActive()" (click)="roomFileInput.click()">
-                  <i class="fas fa-file-excel"></i> Import Excel
+                  <i class="fa-solid fa-file-excel"></i> Import Excel
                 </button>
-                <button class="btn-primary" [disabled]="!selectedHomestayForRoom || !isHomestayActive()" (click)="openAddRoomForm()">+ Thêm Phòng</button>
+                <button class="btn-primary" [disabled]="!selectedHomestayForRoom || !isHomestayActive()" (click)="openAddRoomForm()"><i class="fa-solid fa-plus"></i> Thêm Phòng</button>
                 <input type="file" #roomFileInput (change)="onRoomFileSelected($event)" accept=".xlsx, .xls" style="display: none">
               </div>
             </div>
 
             <div class="warning-banner" *ngIf="selectedHomestayForRoom && !isHomestayActive()">
-              <span>⚠️ Homestay này đang ở trạng thái <strong>{{ getSelectedHomestayStatus() }}</strong>. Bạn cần chờ Quản trị viên phê duyệt để có thể thêm hoặc chỉnh sửa phòng.</span>
+              <span><i class="fa-solid fa-triangle-exclamation"></i> Homestay này đang ở trạng thái <strong>{{ getSelectedHomestayStatus() }}</strong>. Bạn cần chờ Quản trị viên phê duyệt để có thể thêm hoặc chỉnh sửa phòng.</span>
             </div>
 
             <div class="table-container" *ngIf="rooms.length > 0; else emptyRoomState">
@@ -475,7 +481,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
                   <tr *ngFor="let r of rooms" class="table-row">
                     <td class="homestay-cell">
                       <img *ngIf="r.images && r.images.length > 0" [src]="'http://localhost:9999' + r.images[0].url" class="h-thumb" />
-                      <div class="h-thumb-placeholder" *ngIf="!r.images || r.images.length === 0">🛏️</div>
+                      <div class="h-thumb-placeholder" *ngIf="!r.images || r.images.length === 0"><i class="fa-solid fa-bed"></i></div>
                       <div class="h-name">{{ r.name }}</div>
                     </td>
                     <td>{{ r.roomTypeName }}</td>
@@ -496,7 +502,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
             </div>
             <ng-template #emptyRoomState>
               <div class="empty-state">
-                <span class="empty-icon">🛏️</span>
+                <span class="empty-icon"><i class="fa-solid fa-bed"></i></span>
                 <p *ngIf="selectedHomestayForRoom">Chưa có phòng nào trong Homestay này.</p>
                 <p *ngIf="!selectedHomestayForRoom">Vui lòng chọn một Homestay để xem danh sách phòng.</p>
               </div>
@@ -507,7 +513,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
           <div class="card glass-card" *ngIf="showRoomForm">
             <div class="card-header">
               <h3>{{ isRoomEditMode ? 'Cập nhật Phòng' : 'Thêm Phòng mới' }}</h3>
-              <button class="btn-secondary" (click)="closeRoomForm()">Quay lại</button>
+              <button class="btn-secondary" (click)="closeRoomForm()"><i class="fa-solid fa-arrow-left"></i> Quay lại</button>
             </div>
 
             <form (submit)="submitRoomForm($event)" class="homestay-form">
@@ -564,7 +570,7 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
 
               <div class="form-actions">
                 <button type="submit" class="btn-primary" [disabled]="isLoading">
-                  {{ isLoading ? 'Đang lưu...' : 'Lưu Phòng' }}
+                  <i class="fa-solid fa-save"></i> {{ isLoading ? 'Đang lưu...' : 'Lưu Phòng' }}
                 </button>
               </div>
             </form>
@@ -592,216 +598,190 @@ import { ReportModalComponent } from '../../../components/report-modal/report-mo
     .dashboard-page { min-height: 100vh; background: #f8fafc; padding-top: 80px; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; }
     .dashboard-layout { display: flex; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; padding: 30px 20px; gap: 30px; }
     
-    .sidebar { width: 260px; background: white; border-radius: 16px; padding: 25px 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; height: fit-content; flex-shrink: 0; }
-    .sidebar-header { margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;}
-    .sidebar-header h2 { font-size: 24px; color: #0f172a; margin: 0 0 5px 0; font-weight: 700; }
-    .subtitle { color: #64748b; font-size: 14px; margin: 0; }
+    .sidebar { width: 280px; background: white; border-radius: 24px; padding: 30px 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03); border: 1px solid #e2e8f0; height: fit-content; flex-shrink: 0; position: sticky; top: 110px; max-height: calc(100vh - 140px); overflow-y: auto; scrollbar-width: none; }
+    .sidebar::-webkit-scrollbar { display: none; }
+    .sidebar-header { margin-bottom: 35px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px; text-align: center;}
+    .sidebar-header h2 { font-size: 24px; color: #0f172a; margin: 0 0 5px 0; font-weight: 800; letter-spacing: -0.5px; }
+    .subtitle { color: #64748b; font-size: 14px; margin: 0; font-weight: 500; }
     
-    .sidebar-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-    .sidebar-menu li { padding: 12px 16px; border-radius: 10px; color: #475569; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px; font-size: 15px; }
-    .sidebar-menu li:hover { background: #f8fafc; color: #0f172a; }
-    .sidebar-menu li.active { background: #10b981; color: white; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
-    .menu-icon { font-size: 18px; }
+    .sidebar-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+    .sidebar-menu li { padding: 14px 18px; border-radius: 14px; color: #64748b; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 14px; font-size: 15px; position: relative; }
+    .sidebar-menu li:hover { background: #f8fafc; color: #0f172a; transform: translateX(5px); }
+    .sidebar-menu li.active { background: #10b981; color: white; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.25); }
+    .sidebar-menu li.active .menu-icon { color: white; }
+    .menu-icon { font-size: 18px; color: #94a3b8; width: 24px; text-align: center; transition: color 0.3s; }
+    .nav-dot { position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 0 2px white; }
 
     .main-content { flex: 1; min-width: 0; }
 
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-    .stat-card { background: white; border-radius: 16px; padding: 24px; display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
-    .stat-icon { font-size: 32px; background: #f1f5f9; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
-    .stat-info h4 { color: #64748b; font-size: 14px; font-weight: 600; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-value { font-size: 24px; font-weight: 700; color: #0f172a; margin: 0; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 35px; }
+    .stat-card { background: white; border-radius: 20px; padding: 24px; display: flex; align-items: center; gap: 20px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03); border: 1px solid #e2e8f0; transition: transform 0.3s; position: relative; }
+    .stat-card:hover { transform: translateY(-5px); }
+    .stat-icon { font-size: 24px; background: #f8fafc; color: #1e293b; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; border-radius: 16px; border: 1px solid #f1f5f9; }
+    .stat-info h4 { color: #64748b; font-size: 13px; font-weight: 700; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { font-size: 26px; font-weight: 800; color: #0f172a; margin: 0; }
     
-    .glass-card { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; }
-    .card-header h3 { font-size: 18px; color: #1e293b; margin: 0; font-weight: 600; }
+    .glass-card { background: white; border-radius: 24px; padding: 35px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.03); border: 1px solid #e2e8f0; margin-bottom: 30px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px; }
+    .card-header h3 { font-size: 20px; color: #0f172a; margin: 0; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+    .card-header h3 i { color: #10b981; }
     
-    .empty-state { text-align: center; padding: 50px 20px; color: #64748b; }
-    .empty-icon { font-size: 48px; display: block; margin-bottom: 15px; opacity: 0.5; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+    .empty-icon { font-size: 56px; display: block; margin-bottom: 20px; color: #e2e8f0; }
     
-    .warning-banner { background: #fff7ed; border: 1px solid #ffedd5; color: #9a3412; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+    .warning-banner { background: #fff7ed; border: 1px solid #ffedd5; color: #9a3412; padding: 15px 25px; border-radius: 16px; margin-bottom: 30px; font-size: 14px; display: flex; align-items: center; gap: 12px; font-weight: 500; }
+    .warning-banner i { font-size: 18px; }
 
-    .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid #f1f5f9; }
+    .table-container { overflow-x: auto; border-radius: 16px; border: 1px solid #f1f5f9; }
     .modern-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .modern-table th { background: #f8fafc; padding: 15px 20px; color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
-    .modern-table td { padding: 20px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+    .modern-table th { background: #f8fafc; padding: 18px 24px; color: #64748b; font-size: 12px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; border-bottom: 1.5px solid #e2e8f0; }
+    .modern-table td { padding: 20px 24px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+    .table-row:hover { background: #fcfdfe; }
     
-    .homestay-cell { display: flex; align-items: center; gap: 15px; }
-    .h-thumb { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
-    .h-thumb-placeholder { width: 48px; height: 48px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #94a3b8; }
-    .h-info-inline { display: flex; align-items: center; gap: 10px; }
-    .h-name { font-weight: 700; color: #1e293b; font-size: 15px; white-space: nowrap; }
-    .h-city-tag { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 10px; border-radius: 6px; font-weight: 600; }
+    .homestay-cell { display: flex; align-items: center; gap: 18px; }
+    .h-thumb { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+    .h-thumb-placeholder { width: 56px; height: 56px; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #94a3b8; }
+    .h-info-inline { display: flex; flex-direction: column; gap: 4px; }
+    .h-name { font-weight: 700; color: #0f172a; font-size: 15px; }
+    .h-city-tag { font-size: 11px; color: #10b981; background: #ecfdf5; padding: 2px 10px; border-radius: 6px; font-weight: 700; width: fit-content; text-transform: uppercase; }
     
-    .badge { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-    .pending { background: #fffbeb; color: #92400e; }
-    .active { background: #dcfce7; color: #166534; }
+    .badge { padding: 6px 14px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pending { background: #fffbeb; color: #b45309; }
+    .active { background: #ecfdf5; color: #047857; }
     .inactive { background: #f1f5f9; color: #475569; }
-    .rejected { background: #fee2e2; color: #991b1b; }
-    .room-status { text-transform: none; font-size: 11px; }
-    .available { background: #dcfce7; color: #166534; }
-    .booked { background: #dbeafe; color: #1e40af; }
-    .unavailable { background: #fef3c7; color: #92400e; }
-    .status-inline { display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .admin-reason-inline { font-size: 12px; color: #ef4444; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+    .rejected { background: #fef2f2; color: #b91c1c; }
     
-    .text-center { text-align: center !important; }
-    .actions-cell { text-align: center; display: flex; gap: 10px; justify-content: center; align-items: center; min-height: 56px; }
-    .btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 40px; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .status-inline { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .admin-reason-inline { font-size: 11px; color: #ef4444; font-weight: 600; display: flex; align-items: center; gap: 4px; }
     
-    .btn-view { background: #f0fdf4; color: #15803d; border: 1.5px solid #dcfce7; }
-    .btn-view:hover { background: #dcfce7; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(22, 101, 52, 0.1); }
+    .actions-cell { text-align: center; display: flex; gap: 8px; justify-content: center; align-items: center; min-height: 70px; }
+    .btn-icon { padding: 8px 16px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
     
-    .btn-edit { background: #eff6ff; color: #1d4ed8; border: 1.5px solid #dbeafe; }
-    .btn-edit:hover { background: #dbeafe; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(29, 78, 216, 0.1); }
+    .btn-view { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+    .btn-view:hover { background: #f1f5f9; color: #0f172a; }
     
-    .btn-delete { background: #fff1f2; color: #be123c; border: 1.5px solid #ffe4e6; }
-    .btn-delete:hover { background: #ffe4e6; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(190, 18, 60, 0.1); }
+    .btn-edit { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+    .btn-edit:hover { background: #dbeafe; }
+    
+    .btn-delete { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+    .btn-delete:hover { background: #fee2e2; }
 
-    .btn-primary { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
-    .btn-primary:hover { background: #059669; }
-    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary { padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 10px; transition: all 0.3s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+    .btn-primary:hover { background: #059669; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(16, 185, 129, 0.3); }
     
-    .btn-secondary { padding: 10px 20px; background: #f1f5f9; color: #475569; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
-    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-secondary { padding: 10px 20px; background: white; color: #475569; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .btn-secondary:hover { background: #f8fafc; color: #0f172a; }
 
-    .form-row { display: flex; gap: 20px; }
-    .form-row .form-group { flex: 1; }
-    .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; font-weight: 600; color: #4a5568; margin-bottom: 8px; font-size: 14px; }
-    .input-field { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 14px; font-family: inherit; }
-    .input-file { display: block; width: 100%; padding: 10px; border: 1px dashed #cbd5e0; border-radius: 8px; background: #f8fafc; cursor: pointer; }
+    .homestay-form { max-width: 100%; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .form-group { margin-bottom: 25px; }
+    .form-group label { display: block; font-weight: 700; color: #334155; margin-bottom: 10px; font-size: 14px; }
+    .input-field { width: 100%; padding: 14px 16px; border: 1.5px solid #e2e8f0; border-radius: 14px; font-size: 15px; transition: all 0.2s; outline: none; background: #fcfdfe; }
+    .input-field:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); background: white; }
+    .input-file { display: block; width: 100%; padding: 25px; border: 2px dashed #e2e8f0; border-radius: 16px; background: #f8fafc; cursor: pointer; text-align: center; }
     
-    .amenities-checkboxes { display: flex; flex-wrap: wrap; gap: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
-    .amenity-checkbox { display: flex; align-items: center; gap: 5px; font-size: 14px; cursor: pointer; }
+    .amenities-checkboxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; padding: 20px; background: #f8fafc; border-radius: 16px; border: 1.5px solid #f1f5f9; }
+    .amenity-checkbox { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; padding: 8px; border-radius: 8px; transition: background 0.2s; font-weight: 500; }
+    .amenity-checkbox:hover { background: white; }
+    .am-icon { font-size: 18px; }
     
-    .file-info { margin-top: 15px; font-size: 13px; color: #475569; }
-    .image-preview-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-    .preview-wrapper { position: relative; width: 80px; height: 80px; }
-    .preview-img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; display: block; }
-    .preview-remove-btn { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: 2px solid white; font-size: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-    .preview-remove-btn:hover { background: #dc2626; transform: scale(1.1); }
-    .form-actions { margin-top: 30px; text-align: right; }
-
-    /* STATISTICS STYLES */
-    .stats-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
-    .stat-card-premium { border-radius: 20px; padding: 24px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.15); transition: transform 0.3s ease; }
-    .stat-card-premium:hover { transform: translateY(-5px); }
-    .stat-card-premium.green { background: linear-gradient(135deg, #10b981, #047857); }
-    .stat-card-premium.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-    .stat-card-premium.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .stat-card-premium.purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
-    .stat-info .label { display: block; font-size: 14px; opacity: 0.9; font-weight: 500; margin-bottom: 5px; }
-    .stat-info .value { display: block; font-size: 24px; font-weight: 800; }
-    .stat-icon { font-size: 40px; opacity: 0.3; }
-
-    .stats-grid-vertical { display: flex; flex-direction: column; gap: 25px; margin-bottom: 25px; }
-    .revenue-chart-section { min-height: 450px; }
-    .chart-container-large { height: 350px; display: flex; align-items: flex-end; padding: 30px 0; }
+    .image-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; }
+    .preview-wrapper { position: relative; aspect-ratio: 1; }
+    .preview-img { width: 100%; height: 100%; object-fit: cover; border-radius: 14px; border: 1px solid #e2e8f0; }
+    .preview-remove-btn { position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%; background: #ef4444; color: white; border: 3px solid white; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     
-    .bar-chart { display: flex; align-items: flex-end; justify-content: space-around; width: 100%; height: 100%; gap: 10px; }
-    .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; max-width: 80px; }
-    .bar-wrapper { width: 100%; flex: 1; display: flex; align-items: flex-end; background: #f1f5f9; border-radius: 12px 12px 0 0; position: relative; }
-    .bar { width: 100%; background: linear-gradient(to top, #10b981, #34d399); border-radius: 12px 12px 0 0; position: relative; transition: height 0.5s ease-out; }
-    .bar.host-theme { background: linear-gradient(to top, #059669, #10b981); }
-    .bar:hover { opacity: 0.8; }
-    .bar-tooltip { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 6px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 10; }
-    .bar:hover .bar-tooltip { opacity: 1; }
-    .bar-label { margin-top: 12px; font-size: 13px; color: #64748b; font-weight: 600; }
-    .empty-chart { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #94a3b8; font-style: italic; }
+    .form-actions { margin-top: 40px; display: flex; justify-content: flex-end; }
 
-    .table-container-large { margin-top: 15px; }
+    /* STATISTICS PREMIUM STYLES */
+    .tab-header-actions { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+    .stats-overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 35px; }
+    .stat-card-premium { border-radius: 24px; padding: 28px; color: white; display: flex; justify-content: space-between; align-items: center; position: relative; overflow: hidden; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    .stat-card-premium:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2); }
+    .stat-card-premium.green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .stat-card-premium.blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+    .stat-card-premium.orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .stat-card-premium.purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+    .stat-info { position: relative; z-index: 2; }
+    .stat-info .label { display: block; font-size: 13px; opacity: 0.85; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-info .value { display: block; font-size: 28px; font-weight: 900; letter-spacing: -1px; }
+    .stat-icon-bg { font-size: 56px; opacity: 0.15; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); z-index: 1; }
+
+    .revenue-chart-section { min-height: 480px; }
+    .chart-container-large { height: 350px; display: flex; align-items: flex-end; padding: 40px 0 20px; }
+    
+    .bar-chart { display: flex; align-items: flex-end; justify-content: space-around; width: 100%; height: 100%; gap: 15px; }
+    .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; max-width: 60px; }
+    .bar-wrapper { width: 100%; flex: 1; display: flex; align-items: flex-end; background: #f8fafc; border-radius: 12px 12px 0 0; position: relative; }
+    .bar { width: 100%; background: #10b981; border-radius: 10px 10px 0 0; position: relative; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    .bar:hover { filter: brightness(1.1); transform: scaleX(1.05); }
+    .bar-tooltip { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; white-space: nowrap; opacity: 0; transition: all 0.2s; pointer-events: none; z-index: 10; box-shadow: 0 10px 15px rgba(0,0,0,0.2); }
+    .bar-wrapper:hover .bar-tooltip { opacity: 1; top: -50px; }
+    .bar-label { margin-top: 15px; font-size: 12px; color: #64748b; font-weight: 700; }
+
     .simple-table { width: 100%; border-collapse: collapse; }
-    .simple-table th { text-align: left; padding: 15px; color: #64748b; font-size: 14px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; font-weight: 700; }
-    .simple-table td { padding: 18px 15px; font-size: 15px; border-bottom: 1px solid #f1f5f9; }
-    .h-name-cell { font-weight: 700; color: #0f172a; }
-    .revenue-cell { font-weight: 800; color: #10b981; font-size: 16px; }
-    .empty-state-simple { text-align: center; padding: 40px; color: #94a3b8; font-style: italic; }
+    .simple-table th { text-align: left; padding: 20px; color: #64748b; font-size: 12px; border-bottom: 1.5px solid #e2e8f0; background: #f8fafc; font-weight: 800; letter-spacing: 1px; }
+    .simple-table td { padding: 20px; font-size: 15px; border-bottom: 1px solid #f1f5f9; }
+    .h-name-cell { font-weight: 800; color: #0f172a; }
+    .revenue-cell { font-weight: 900; color: #10b981; font-size: 16px; }
 
-    /* EXPORT PREMIUM BUTTON */
-    .tab-header-actions { display: flex; justify-content: flex-end; margin-bottom: 25px; }
-    
-    .btn-export-premium {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white; border: none; padding: 14px 28px; border-radius: 16px;
-      font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex; align-items: center; gap: 12px; font-size: 15px;
-      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
-      position: relative; overflow: hidden;
-    }
-    .btn-export-premium::after {
-      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: all 0.5s;
-    }
-    .btn-export-premium:hover::after { left: 100%; }
-    .btn-export-premium:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.5);
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    }
-    .btn-export-premium .btn-icon { font-size: 20px; }
-
-    .export-dropdown { position: relative; display: inline-block; }
-    .dropdown-content { display: none; position: absolute; right: 0; background-color: white; min-width: 240px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1); z-index: 100; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
-    .dropdown-content a { color: #1e293b; padding: 12px 16px; text-decoration: none; display: block; font-size: 14px; cursor: pointer; transition: background 0.2s; }
-    .dropdown-content a:hover { background-color: #f1f5f9; color: #6366f1; }
-    .export-dropdown:hover .dropdown-content { display: block; }
+    .btn-export-premium { background: #0f172a; color: white; border: none; padding: 14px 28px; border-radius: 16px; font-weight: 800; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 12px; font-size: 14px; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15); }
+    .btn-export-premium:hover { background: #1e293b; transform: translateY(-3px); box-shadow: 0 15px 30px rgba(15, 23, 42, 0.25); }
 
     /* PREMIUM MODAL STYLES */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: flex; align-items: flex-start; justify-content: center; z-index: 2000; backdrop-filter: blur(12px); padding: 40px 20px; overflow-y: auto; scrollbar-width: none; }
-    .modal-overlay::-webkit-scrollbar { display: none; }
-    
-    .premium-modal { background: white; width: 100%; max-width: 950px; border-radius: 32px; position: relative; display: flex; flex-direction: column; box-shadow: 0 40px 100px -20px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); animation: modalAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 40px; transform-origin: top; overflow: hidden; }
-    
-    @keyframes modalAppear {
-      from { opacity: 0; transform: translateY(20px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); display: flex; align-items: flex-start; justify-content: center; z-index: 2000; backdrop-filter: blur(10px); padding: 40px 20px; overflow-y: auto; }
+    .premium-modal { background: white; width: 100%; max-width: 1000px; border-radius: 32px; position: relative; animation: modalAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.3); }
+    @keyframes modalAppear { from { opacity: 0; transform: translateY(40px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .modal-close-btn { position: absolute; top: 25px; right: 25px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; z-index: 100; transition: all 0.3s; }
+    .modal-close-btn:hover { background: white; color: #0f172a; transform: rotate(90deg); }
 
-    .modal-header-banner { position: relative; height: 280px; width: 100%; overflow: hidden; }
-    .header-bg-img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.75); }
-    .header-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px; background: linear-gradient(to top, rgba(15, 23, 42, 0.9), transparent); color: white; }
-    .header-overlay h2 { margin: 12px 0 0 0; font-size: 38px; font-weight: 900; text-shadow: 0 4px 12px rgba(0,0,0,0.4); letter-spacing: -0.5px; }
-    .badge-large { background: #10b981; color: white; padding: 8px 20px; border-radius: 50px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
-    .badge-large.pending { background: #f59e0b; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); }
-    .badge-large.rejected { background: #ef4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
+    .modal-header-banner { position: relative; height: 320px; width: 100%; }
+    .header-bg-img { width: 100%; height: 100%; object-fit: cover; }
+    .header-overlay { position: absolute; inset: 0; padding: 40px; background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 10%, transparent 100%); color: white; display: flex; flex-direction: column; justify-content: flex-end; }
+    .header-overlay h2 { margin: 15px 0 0 0; font-size: 42px; font-weight: 900; letter-spacing: -1px; }
+    .badge-large { background: #10b981; color: white; padding: 8px 20px; border-radius: 50px; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; width: fit-content; }
+    .badge-large.pending { background: #f59e0b; }
+    .badge-large.rejected { background: #ef4444; }
 
-    .modal-close-btn { position: absolute; top: 25px; right: 25px; background: rgba(255,255,255,0.15); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; z-index: 100; transition: all 0.3s; }
-    .modal-close-btn:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg) scale(1.1); }
-
-    .modal-body { padding: 40px; overflow-y: auto; overflow-x: hidden; flex: 1; background: #ffffff; max-width: 100%; box-sizing: border-box; }
-    
-    .detail-grid-modern { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 45px; }
-    .detail-card { background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #f1f5f9; transition: all 0.3s; }
-    .detail-card:hover { transform: translateY(-5px); background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border-color: #e2e8f0; }
-    .d-label { display: block; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
-    .d-value { display: block; font-size: 22px; font-weight: 800; color: #0f172a; }
-    .d-subtext { margin: 6px 0 0 0; font-size: 14px; color: #64748b; font-weight: 500; }
+    .modal-body { padding: 45px; }
+    .detail-grid-modern { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 50px; }
+    .detail-card { background: #f8fafc; padding: 25px; border-radius: 24px; border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 8px; }
+    .detail-card i { color: #10b981; margin-right: 8px; }
+    .d-label { font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; }
+    .d-value { font-size: 22px; font-weight: 900; color: #0f172a; }
+    .d-subtext { font-size: 14px; color: #64748b; font-weight: 500; margin: 0; }
     .price-text { color: #10b981; }
 
-    .detail-main-section { margin-bottom: 45px; }
-    .section-title { font-size: 20px; font-weight: 900; color: #0f172a; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
-    .description-rich-text { background: #f8fafc; padding: 30px; border-radius: 24px; border: 1px solid #f1f5f9; line-height: 1.9; color: #334155; font-size: 16px; white-space: pre-wrap; }
+    .detail-main-section { margin-bottom: 50px; }
+    .section-title { font-size: 22px; font-weight: 900; color: #0f172a; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; }
+    .description-rich-text { font-size: 16px; line-height: 1.8; color: #334155; white-space: pre-wrap; background: #f8fafc; padding: 30px; border-radius: 24px; border: 1px solid #f1f5f9; }
 
-    .amenity-modern-list { display: flex; flex-wrap: wrap; gap: 14px; }
-    .amenity-item-chip { background: #f8fafc; padding: 12px 24px; border-radius: 16px; border: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; transition: all 0.3s; cursor: default; }
-    .amenity-item-chip:hover { background: #ffffff; transform: translateY(-3px); border-color: #10b981; box-shadow: 0 8px 20px -5px rgba(16, 185, 129, 0.2); }
-    .am-icon-large { font-size: 24px; }
-    .am-name-text { font-size: 15px; font-weight: 700; color: #1e293b; }
+    .amenity-modern-list { display: flex; flex-wrap: wrap; gap: 12px; }
+    .amenity-item-chip { background: white; padding: 12px 24px; border-radius: 16px; border: 1.5px solid #e2e8f0; display: flex; align-items: center; gap: 12px; font-weight: 700; color: #1e293b; transition: all 0.3s; }
+    .amenity-item-chip:hover { border-color: #10b981; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
 
-    .image-gallery-modern { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; width: 100%; box-sizing: border-box; }
-    .gallery-img { width: 100%; height: 180px; object-fit: cover; border-radius: 24px; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; border: 4px solid transparent; box-sizing: border-box; }
-    .gallery-img:hover { transform: scale(1.02); z-index: 2; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); border-color: #10b981; }
+    .image-gallery-modern { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    .gallery-img { width: 100%; height: 180px; object-ratio: 16/9; object-fit: cover; border-radius: 20px; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; }
+    .gallery-img:hover { transform: scale(1.05); }
 
-    .modal-footer-modern { padding: 30px 40px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 18px; border-radius: 0 0 32px 32px; }
-    .btn-cancel-flat { background: #ffffff; border: 1px solid #e2e8f0; padding: 14px 35px; border-radius: 16px; font-weight: 700; color: #475569; cursor: pointer; transition: all 0.2s; }
-    .btn-cancel-flat:hover { background: #f1f5f9; color: #0f172a; }
-    .btn-edit-premium { background: #10b981; color: white; border: none; padding: 14px 40px; border-radius: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4); transition: all 0.3s; font-size: 15px; }
-    .btn-edit-premium:hover { background: #059669; transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.5); }
+    .modal-footer-modern { padding: 30px 45px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 15px; }
+    .btn-cancel-flat { background: #e2e8f0; padding: 14px 35px; border-radius: 16px; font-weight: 700; color: #475569; border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-cancel-flat:hover { background: #cbd5e0; color: #0f172a; }
+    .btn-edit-premium { background: #0f172a; color: white; border: none; padding: 14px 40px; border-radius: 16px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2); transition: all 0.3s; font-size: 15px; }
+    .btn-edit-premium:hover { background: #1e293b; transform: translateY(-3px); box-shadow: 0 15px 35px rgba(15, 23, 42, 0.3); }
     .btn-icon-inside { font-size: 20px; }
 
-    .btn-view { background: #f0fdf4; color: #166534; }
     .btn-view:hover { background: #dcfce7; }
+
+    /* TOGGLE SWITCH */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e0; transition: .4s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #10b981; }
+    input:checked + .slider:before { transform: translateX(20px); }
+    .slider.disabled { cursor: not-allowed; opacity: 0.5; }
+    
+    .status-badge-wrap { display: flex; align-items: center; justify-content: center; gap: 12px; }
   `]
 })
 export class HostDashboardComponent implements OnInit {
@@ -883,8 +863,8 @@ export class HostDashboardComponent implements OnInit {
 
   loadHostStats() {
     this.statsService.getHostStats().subscribe({
-      next: (res) => this.hostStats = res,
-      error: (err) => console.error('Failed to load host stats', err)
+      next: (res: HostStatistics) => this.hostStats = res,
+      error: (err: any) => console.error('Failed to load host stats', err)
     });
   }
 
@@ -911,17 +891,17 @@ export class HostDashboardComponent implements OnInit {
 
   loadHomestays() {
     this.homestayService.getHostHomestays().subscribe({
-      next: (res) => {
+      next: (res: HomestayDto[]) => {
         this.homestays = res;
         this.activeCount = res.filter(h => h.status === 'ACTIVE').length;
         this.pendingCount = res.filter(h => h.status === 'PENDING').length;
       },
-      error: (err) => console.error(err)
+      error: (err: any) => console.error(err)
     });
   }
 
   loadAmenities() {
-    this.amenityService.getAllAmenities().subscribe(res => this.availableAmenities = res);
+    this.amenityService.getAllAmenities().subscribe((res: AmenityDto[]) => this.availableAmenities = res);
   }
 
   openAddForm() {
@@ -1004,11 +984,11 @@ export class HostDashboardComponent implements OnInit {
       fd.append('amenityIds', id.toString());
     });
 
-    this.selectedFiles.forEach(file => {
+    this.selectedFiles.forEach((file: File) => {
       fd.append('images', file);
     });
 
-    this.deletedImageIds.forEach(id => {
+    this.deletedImageIds.forEach((id: string) => {
       fd.append('deleteImageIds', id);
     });
 
@@ -1020,7 +1000,7 @@ export class HostDashboardComponent implements OnInit {
           this.loadHomestays();
           this.isLoading = false;
         },
-        error: (err) => {
+        error: (err: any) => {
           this.notificationService.error(err.error?.message || err.message);
           this.isLoading = false;
         }
@@ -1033,7 +1013,7 @@ export class HostDashboardComponent implements OnInit {
           this.loadHomestays();
           this.isLoading = false;
         },
-        error: (err) => {
+        error: (err: any) => {
           this.notificationService.error(err.error?.message || err.message);
           this.isLoading = false;
         }
@@ -1054,7 +1034,18 @@ export class HostDashboardComponent implements OnInit {
         this.notificationService.success('Đã xóa thành công!');
         this.loadHomestays();
       },
-      error: (err) => this.notificationService.error(err.error?.message || err.message)
+      error: (err: any) => this.notificationService.error(err.error?.message || err.message)
+    });
+  }
+
+  toggleStatus(homestay: HomestayDto) {
+    const newStatus = homestay.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    this.homestayService.updateHostHomestayStatus(homestay.id, newStatus).subscribe({
+      next: () => {
+        this.notificationService.success(`Đã chuyển trạng thái sang: ${newStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Tạm nghỉ'}`);
+        this.loadHomestays();
+      },
+      error: (err: any) => this.notificationService.error(err.error?.message || err.message)
     });
   }
 
@@ -1071,7 +1062,7 @@ export class HostDashboardComponent implements OnInit {
   currentRoomEditId: string | null = null;
 
   loadRoomTypes() {
-    this.roomTypeService.getAllRoomTypes().subscribe(res => this.roomTypes = res);
+    this.roomTypeService.getAllRoomTypes().subscribe((res: RoomTypeDto[]) => this.roomTypes = res);
   }
 
   loadRooms() {
@@ -1080,8 +1071,8 @@ export class HostDashboardComponent implements OnInit {
       return;
     }
     this.roomService.getRoomsByHomestay(this.selectedHomestayForRoom).subscribe({
-      next: (res) => this.rooms = res,
-      error: (err) => console.error(err)
+      next: (res: RoomDto[]) => this.rooms = res,
+      error: (err: any) => console.error(err)
     });
   }
 
@@ -1117,7 +1108,7 @@ export class HostDashboardComponent implements OnInit {
   onRoomFilesSelected(event: any) {
     if (event.target.files) {
       const newFiles: File[] = Array.from(event.target.files);
-      newFiles.forEach(file => {
+      newFiles.forEach((file: File) => {
         this.roomSelectedFiles.push(file);
         this.roomPreviewUrls.push(URL.createObjectURL(file));
       });
@@ -1147,7 +1138,7 @@ export class HostDashboardComponent implements OnInit {
       fd.append('status', this.roomFormData.status);
     }
 
-    this.roomSelectedFiles.forEach(file => {
+    this.roomSelectedFiles.forEach((file: File) => {
       fd.append('images', file);
     });
 
@@ -1159,20 +1150,20 @@ export class HostDashboardComponent implements OnInit {
           this.loadRooms();
           this.isLoading = false;
         },
-        error: (err) => {
+        error: (err: any) => {
           this.notificationService.error(err.error?.message || err.message);
           this.isLoading = false;
         }
       });
     } else {
-      this.roomService.createRoom(this.selectedHomestayForRoom, fd).subscribe({
+      this.roomService.createRoom(this.selectedHomestayForRoom!, fd).subscribe({
         next: () => {
           this.notificationService.success('Thêm phòng thành công!');
           this.closeRoomForm();
           this.loadRooms();
           this.isLoading = false;
         },
-        error: (err) => {
+        error: (err: any) => {
           this.notificationService.error(err.error?.message || err.message);
           this.isLoading = false;
         }
@@ -1193,7 +1184,7 @@ export class HostDashboardComponent implements OnInit {
         this.notificationService.success('Đã xóa phòng!');
         this.loadRooms();
       },
-      error: (err) => this.notificationService.error(err.error?.message || err.message)
+      error: (err: any) => this.notificationService.error(err.error?.message || err.message)
     });
   }
 
@@ -1223,7 +1214,7 @@ export class HostDashboardComponent implements OnInit {
           this.isLoading = false;
           event.target.value = ''; // Reset file input
         },
-        error: (err) => {
+        error: (err: any) => {
           this.notificationService.error(err.error?.message || 'Lỗi khi import file Excel');
           this.isLoading = false;
           event.target.value = '';

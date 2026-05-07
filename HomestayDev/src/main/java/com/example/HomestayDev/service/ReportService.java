@@ -325,9 +325,9 @@ public class ReportService {
         try {
             List<Map<String, Object>> data = stats.getHomestayStats() != null ? stats.getHomestayStats().stream().map(s -> {
                 Map<String, Object> map = new HashMap<>();
-                map.put("homestayName", s.getHomestayName());
-                map.put("bookingCount", s.getBookingCount());
-                map.put("revenue", s.getTotalRevenue().doubleValue());
+                map.put("homestayName", s.getHomestayName() != null ? s.getHomestayName() : "N/A");
+                map.put("bookingCount", s.getBookingCount() != null ? s.getBookingCount() : 0L);
+                map.put("revenue", s.getTotalRevenue() != null ? s.getTotalRevenue().doubleValue() : 0.0);
                 return map;
             }).toList() : List.of();
 
@@ -359,9 +359,9 @@ public class ReportService {
         try {
             List<Map<String, Object>> data = stats.getTopHomestays() != null ? stats.getTopHomestays().stream().map(s -> {
                 Map<String, Object> map = new HashMap<>();
-                map.put("homestayName", s.getHomestayName());
-                map.put("bookingCount", s.getBookingCount());
-                map.put("revenue", s.getTotalRevenue().doubleValue());
+                map.put("homestayName", s.getHomestayName() != null ? s.getHomestayName() : "N/A");
+                map.put("bookingCount", s.getBookingCount() != null ? s.getBookingCount() : 0L);
+                map.put("revenue", s.getTotalRevenue() != null ? s.getTotalRevenue().doubleValue() : 0.0);
                 return map;
             }).toList() : List.of();
 
