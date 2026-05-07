@@ -1,0 +1,107 @@
+<app-navbar></app-navbar>
+<div class="dashboard-page">
+  <div class="dashboard-layout">
+    
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Cá Nhân</h2>
+        <p class="subtitle">Trung tâm tài khoản</p>
+      </div>
+      <ul class="sidebar-menu">
+        <li [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+          <span class="menu-icon"><i class="fa-solid fa-user-shield"></i></span> Hồ sơ của tôi
+        </li>
+        <li [class.active]="activeTab === 'bookings'" (click)="activeTab = 'bookings'; notificationService.markTypeAsRead('BOOKING')">
+          <span class="menu-icon"><i class="fa-solid fa-calendar-check"></i></span> Lịch sử đặt phòng
+          <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('BOOKING') | async"></span>
+        </li>
+        <li [class.active]="activeTab === 'wallet'" (click)="activeTab = 'wallet'">
+          <span class="menu-icon"><i class="fa-solid fa-wallet"></i></span> Ví của tôi
+        </li>
+        <li [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'; notificationService.markTypeAsRead('CHAT')">
+          <span class="menu-icon"><i class="fa-solid fa-comments"></i></span> Tin nhắn
+          <span class="nav-dot" *ngIf="notificationService.hasUnreadOfType('CHAT') | async"></span>
+        </li>
+        <li [class.active]="activeTab === 'upgrades'" (click)="activeTab = 'upgrades'">
+          <span class="menu-icon"><i class="fa-solid fa-rocket"></i></span> Trở thành Host
+        </li>
+      </ul>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+    
+    <!-- PROFILE TAB -->
+    <div class="card glass-card" *ngIf="activeTab === 'profile'">
+      <app-profile-tab></app-profile-tab>
+    </div>
+
+    <!-- BOOKINGS TAB -->
+    <div class="card glass-card" *ngIf="activeTab === 'bookings'">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt phòng của bạn</h3>
+      </div>
+      <app-booking-history-tab role="USER" (chatRequested)="onChatRequested($event)"></app-booking-history-tab>
+    </div>
+
+    <!-- WALLET TAB -->
+    <div class="card glass-card" *ngIf="activeTab === 'wallet'">
+      <app-wallet-tab></app-wallet-tab>
+    </div>
+
+    <!-- UPGRADES TAB -->
+    <div class="card glass-card" *ngIf="activeTab === 'upgrades'">
+      <div class="card-header">
+        <h3><i class="fa-solid fa-house-medical"></i> Trở thành Đối tác Chủ nhà</h3>
+      </div>
+      <p class="card-desc">Nâng cấp tài khoản để bắt đầu đăng tin cho thuê homestay của riêng bạn và kiếm thêm thu nhập từ không gian trống!</p>
+      
+      <div *ngIf="requestStatus" class="status-box-premium" [ngClass]="requestStatus.status.toLowerCase()">
+        <div class="status-icon-wrap">
+          <i class="fa-solid" [ngClass]="{
+            'fa-hourglass-half': requestStatus.status === 'PENDING',
+            'fa-circle-check': requestStatus.status === 'APPROVED',
+            'fa-circle-xmark': requestStatus.status === 'REJECTED'
+          }"></i>
+        </div>
+        <div class="status-text">
+           <p class="status-label">Trạng thái yêu cầu:</p>
+           <span class="badge-premium">{{ requestStatus.status }}</span>
+           <p *ngIf="requestStatus.adminNote" class="admin-note-premium">
+             <strong>Phản hồi từ Admin:</strong> {{ requestStatus.adminNote }}
+           </p>
+        </div>
+      </div>
+
+      <div *ngIf="!requestStatus || requestStatus.status === 'REJECTED'" class="upgrade-form-premium">
+        <div class="form-group-premium">
+          <label><i class="fa-solid fa-pen-nib"></i> Nội dung yêu cầu (Tuỳ chọn)</label>
+          <textarea [(ngModel)]="userNote" class="premium-textarea" placeholder="Ví dụ: Tôi đã có kinh nghiệm quản lý homestay, tôi muốn đăng ký kinh doanh tại TP.HCM..."></textarea>
+        </div>
+        <div class="form-group-premium">
+          <label><i class="fa-solid fa-cloud-arrow-up"></i> Minh chứng (Ảnh CCCD / Giấy phép kinh doanh)</label>
+          <div class="file-drop-area-premium">
+            <input type="file" (change)="onFileSelected($event)" accept="image/*,.pdf" id="proofFile" class="hidden-input" />
+            <label for="proofFile" class="file-label-premium">
+              <i class="fa-solid fa-image"></i>
+              <span>{{ selectedFile ? selectedFile.name : 'Nhấn để chọn ảnh hoặc kéo thả vào đây' }}</span>
+            </label>
+          </div>
+          <small class="help-text">Vui lòng đính kèm một tệp ảnh để admin xác thực dễ dàng hơn.</small>
+        </div>
+        
+        <button (click)="requestUpgrade()" class="btn-upgrade-premium" [disabled]="isLoading">
+           <span *ngIf="!isLoading"><i class="fa-solid fa-paper-plane"></i> Gửi Yêu Cầu Nâng Cấp</span>
+           <span *ngIf="isLoading"><i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- CHAT TAB -->
+    <div class="card glass-card no-padding" *ngIf="activeTab === 'chat'">
+      <app-chat-tab [initialUser]="chatRecipientUser"></app-chat-tab>
+    </div>
+    </main>
+  </div>
+</div>

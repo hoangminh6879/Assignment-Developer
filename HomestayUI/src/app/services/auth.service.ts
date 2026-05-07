@@ -12,7 +12,7 @@ export class AuthService {
     !!(localStorage.getItem('access_token') || sessionStorage.getItem('access_token'))
   );
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // ─────────────────────────────────────────────
   //  Đăng ký — sau khi thành công cần xác thực email
