@@ -7,7 +7,7 @@ import { throwError } from 'rxjs';
 export class AuthInterceptor {
   static intercept: HttpInterceptorFn = (req, next) => {
     const router = inject(Router);
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     
     // Skip interceptor for auth endpoints
     if (req.url.includes('/api/auth/')) {
@@ -28,6 +28,8 @@ export class AuthInterceptor {
         if (error.status === 401) {
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
+          sessionStorage.removeItem('access_token');
+          sessionStorage.removeItem('refresh_token');
           router.navigate(['/login']);
         }
         return throwError(() => error);

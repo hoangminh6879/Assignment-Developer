@@ -8,7 +8,9 @@ import { Observable, tap } from 'rxjs';
 export class AuthService {
   private apiUrl = 'http://localhost:9999/api/auth';
 
-  isAuthenticated = signal<boolean>(!!localStorage.getItem('access_token'));
+  isAuthenticated = signal<boolean>(
+    !!(localStorage.getItem('access_token') || sessionStorage.getItem('access_token'))
+  );
 
   constructor(private http: HttpClient) {}
 
@@ -26,12 +28,12 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
       tap(response => {
         if (response.access_token) {
+          // Xóa hết storage cũ trước khi lưu mới
+          this.clearStorage();
+
           const storage = credentials.remember_me ? localStorage : sessionStorage;
           storage.setItem('access_token', response.access_token);
           storage.setItem('refresh_token', response.refresh_token);
-          // Luôn lưu access_token vào localStorage để signal hoạt động đúng
-          localStorage.setItem('access_token', response.access_token);
-          localStorage.setItem('refresh_token', response.refresh_token);
           this.isAuthenticated.set(true);
         }
       })
@@ -56,13 +58,15 @@ export class AuthService {
   //  Làm mới token
   // ─────────────────────────────────────────────
   refreshToken(): Observable<any> {
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = this.getRefreshToken();
     return this.http.post<any>(`${this.apiUrl}/refresh`, { refresh_token: refreshToken }).pipe(
       tap(response => {
         if (response.access_token) {
-          localStorage.setItem('access_token', response.access_token);
+          // Xác định storage đang chứa token để update
+          const storage = localStorage.getItem('refresh_token') ? localStorage : sessionStorage;
+          storage.setItem('access_token', response.access_token);
           if (response.refresh_token) {
-            localStorage.setItem('refresh_token', response.refresh_token);
+            storage.setItem('refresh_token', response.refresh_token);
           }
           this.isAuthenticated.set(true);
         }
@@ -74,23 +78,31 @@ export class AuthService {
   //  Đăng xuất — revoke token phía Keycloak
   // ─────────────────────────────────────────────
   logout(): Observable<any> {
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = this.getRefreshToken();
     return this.http.post(`${this.apiUrl}/logout`, { refresh_token: refreshToken }).pipe(
       tap(() => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        sessionStorage.removeItem('access_token');
-        sessionStorage.removeItem('refresh_token');
+        this.clearStorage();
         this.isAuthenticated.set(false);
       })
     );
+  }
+
+  private clearStorage() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
   }
 
   // ─────────────────────────────────────────────
   //  Helpers
   // ─────────────────────────────────────────────
   getToken(): string | null {
-    return localStorage.getItem('access_token');
+    return localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+  }
+
+  getRefreshToken(): string | null {
+    return localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
   }
 
   getRoles(): string[] {
