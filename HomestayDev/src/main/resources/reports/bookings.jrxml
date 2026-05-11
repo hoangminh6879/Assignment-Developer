@@ -8,6 +8,7 @@
 	<property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
 	<parameter name="title" class="java.lang.String"/>
 	<parameter name="exportDate" class="java.lang.String"/>
+	<parameter name="exporterName" class="java.lang.String"/>
 	<field name="bookingCode" class="java.lang.String"/>
 	<field name="homestayName" class="java.lang.String"/>
 	<field name="customerName" class="java.lang.String"/>
@@ -33,7 +34,7 @@
 				<textElement textAlignment="Center">
 					<font fontName="Arial" size="10" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Hệ thống HomestayDev - Ngày xuất: " + $P{exportDate}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Người xuất: " + $P{exporterName} + "  |  Ngày xuất: " + $P{exportDate}]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>

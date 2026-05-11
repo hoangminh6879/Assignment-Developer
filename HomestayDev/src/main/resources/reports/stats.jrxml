@@ -12,6 +12,7 @@
 	<parameter name="totalHomestays" class="java.lang.Long"/>
 	<parameter name="totalUsers" class="java.lang.Long"/>
 	<parameter name="exportDate" class="java.lang.String"/>
+	<parameter name="exporterName" class="java.lang.String"/>
 	<field name="homestayName" class="java.lang.String"/>
 	<field name="bookingCount" class="java.lang.Long"/>
 	<field name="revenue" class="java.lang.Double"/>
@@ -33,7 +34,7 @@
 				<textElement textAlignment="Center">
 					<font fontName="Arial" size="10" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Ngày xuất: " + $P{exportDate}]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Người xuất: " + $P{exporterName} + "  |  Ngày xuất: " + $P{exportDate}]]></textFieldExpression>
 			</textField>
 			
 			<rectangle radius="10">
