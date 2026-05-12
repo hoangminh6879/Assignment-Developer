@@ -6,6 +6,9 @@
 	<property name="net.sf.jasperreports.export.xls.white.page.background" value="false"/>
 	<property name="net.sf.jasperreports.export.xls.ignore.graphics" value="true"/>
 	<property name="net.sf.jasperreports.export.xls.collapse.row.span" value="true"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.keep.first.band.1" value="columnHeader"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.2" value="pageFooter"/>
+	<property name="net.sf.jasperreports.export.xls.exclude.origin.band.3" value="pageHeader"/>
 	<parameter name="title" class="java.lang.String"/>
 	<parameter name="exportDate" class="java.lang.String"/>
 	<parameter name="exporterName" class="java.lang.String"/>
@@ -30,7 +33,7 @@
 				<textFieldExpression><![CDATA[$P{title}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="0" y="45" width="802" height="20" forecolor="#E0E7FF"/>
+				<reportElement x="0" y="45" width="802" height="20" forecolor="#0000FF"/>
 				<textElement textAlignment="Center">
 					<font fontName="Arial" size="10" pdfFontName="C:\Windows\Fonts\arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
 				</textElement>

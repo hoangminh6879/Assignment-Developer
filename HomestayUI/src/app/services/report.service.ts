@@ -32,6 +32,10 @@ export class ReportService {
     this.downloadFile(`${this.apiUrl}/stats/pdf`, 'statistics.pdf');
   }
 
+  exportStatsExcel() {
+    this.downloadFile(`${this.apiUrl}/stats/excel`, 'statistics.xlsx');
+  }
+
   exportStatsJasper(format: string = 'pdf') {
     const ext = format === 'xlsx' ? 'xlsx' : 'pdf';
     this.downloadFile(`${this.apiUrl}/stats/jasper?format=${format}`, `statistics_jasper.${ext}`);
@@ -44,6 +48,10 @@ export class ReportService {
 
   exportAdminStatsPdf() {
     this.downloadFile(`${this.apiUrl}/admin/stats/pdf`, 'admin_statistics.pdf');
+  }
+
+  exportAdminStatsExcel() {
+    this.downloadFile(`${this.apiUrl}/admin/stats/excel`, 'admin_statistics.xlsx');
   }
 
   private downloadFile(url: string, fileName: string) {
