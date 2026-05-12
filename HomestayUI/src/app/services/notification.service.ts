@@ -1,8 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, timer, switchMap, map } from 'rxjs';
+import { Observable, BehaviorSubject, timer, switchMap, map, filter, catchError, of, merge } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { AuthService } from './auth.service';
 
 export interface NotificationDto {
+// ...
+// ... (rest of interfaces)
   id: string;
   message: string;
   type: string;
@@ -36,10 +40,16 @@ export class NotificationService {
   toasts$ = this.toastsSubject.asObservable();
   private nextId = 0;
 
-  constructor(private http: HttpClient) {
-    // Poll for notifications every 30 seconds
-    timer(0, 30000).pipe(
-      switchMap(() => this.getUnreadCount())
+  constructor(private http: HttpClient, private authService: AuthService) {
+    // Poll for notifications every 30 seconds, and also refresh when authentication state changes
+    merge(
+      toObservable(this.authService.isAuthenticated),
+      timer(0, 30000)
+    ).pipe(
+      filter(() => this.authService.isAuthenticated()),
+      switchMap(() => this.getUnreadCount().pipe(
+        catchError(() => of(0))
+      ))
     ).subscribe(count => this.unreadCountSubject.next(count));
   }
 

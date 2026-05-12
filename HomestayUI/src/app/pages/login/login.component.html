@@ -105,6 +105,13 @@
           <p>Chưa có tài khoản? <a routerLink="/register">Đăng ký ngay</a></p>
         </div>
       </form>
+
+      <div class="divider">Hoặc</div>
+
+      <button type="button" class="btn-google" (click)="onLoginWithGoogle()" [disabled]="isLoading">
+        <i class="fa-brands fa-google"></i>
+        <span>Đăng nhập với Google</span>
+      </button>
     } @else {
       <!-- ── FORGOT PASSWORD FORM ── -->
       <div class="forgot-password-section animate-fade-in">
