@@ -114,4 +114,18 @@ public class AuthController {
                 "message", "Nếu tài khoản tồn tại và chưa được xác thực, email xác thực đã được gửi."
         ));
     }
+    /**
+     * Đăng nhập bằng mã code (Google Login callback).
+     */
+    @PostMapping("/code-login")
+    public ResponseEntity<?> codeLogin(@RequestBody Map<String, String> request) {
+        try {
+            String code = request.get("code");
+            String codeVerifier = request.get("codeVerifier");
+            AuthResponse response = authService.loginWithCode(code, codeVerifier);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
+        }
+    }
 }

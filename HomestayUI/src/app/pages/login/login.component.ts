@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -11,7 +11,7 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginData = {
     username: '',
     password: '',
@@ -32,7 +32,60 @@ export class LoginComponent {
   forgotSuccess = '';
   isForgotLoading = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    public authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
+
+  ngOnInit() {
+    // Kiểm tra xem có code từ Keycloak redirect về không
+    const code = this.route.snapshot.queryParamMap.get('code');
+    console.log('LoginComponent ngOnInit, code:', code);
+    if (code) {
+      this.handleGoogleLogin(code);
+    }
+  }
+
+  private handleGoogleLogin(code: string) {
+    console.log('Handling Google login with code:', code);
+    this.isLoading = true;
+    this.authService.loginWithCode(code).subscribe({
+      next: (res) => {
+        console.log('Google login success:', res);
+        this.navigateToDashboard();
+      },
+      error: (err) => {
+        console.error('Google login error:', err);
+        this.errorMessage = err.error?.message || 'Đăng nhập bằng Google thất bại.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  async onLoginWithGoogle() {
+    this.isLoading = true;
+    try {
+      const url = await this.authService.getGoogleLoginUrl();
+      console.log('Redirecting to Google login URL (PKCE):', url);
+      window.location.href = url;
+    } catch (error) {
+      console.error('Failed to generate Google login URL:', error);
+      this.errorMessage = 'Không thể khởi tạo đăng nhập Google.';
+      this.isLoading = false;
+    }
+  }
+
+  private navigateToDashboard() {
+    const roles = this.authService.getRoles();
+    if (roles.includes('ADMIN')) {
+      this.router.navigate(['/dashboard/admin']);
+    } else if (roles.includes('HOST')) {
+      this.router.navigate(['/dashboard/host']);
+    } else {
+      this.router.navigate(['/']);
+    }
+  }
 
   onLogin() {
     this.isLoading = true;
@@ -42,14 +95,7 @@ export class LoginComponent {
 
     this.authService.login(this.loginData).subscribe({
       next: () => {
-        const roles = this.authService.getRoles();
-        if (roles.includes('ADMIN')) {
-          this.router.navigate(['/dashboard/admin']);
-        } else if (roles.includes('HOST')) {
-          this.router.navigate(['/dashboard/host']);
-        } else {
-          this.router.navigate(['/']);
-        }
+        this.navigateToDashboard();
       },
       error: (err) => {
         if (err.error?.error_code === 'EMAIL_NOT_VERIFIED') {
