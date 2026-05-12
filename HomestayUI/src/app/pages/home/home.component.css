@@ -15,7 +15,7 @@
   justify-content: center;
   text-align: center;
   color: white;
-  overflow: hidden;
+  z-index: 10;
 }
 
 .hero-overlay {
@@ -24,7 +24,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6));
   z-index: 1;
 }
 
@@ -163,7 +163,7 @@
   top: calc(100% + 20px);
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(194, 238, 247, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 28px;
   padding: 30px;
@@ -246,11 +246,12 @@
   color: #000;
 }
 
-/* ── FEATURED SECTION ── */
 .featured {
   max-width: 1300px;
   margin: 100px auto 0;
   padding: 0 30px;
+  position: relative;
+  z-index: 1;
 }
 
 .section-header {
@@ -453,7 +454,8 @@
   z-index: 10000;
   display: flex;
   justify-content: center;
-  padding: 20px; /* Reduced padding */
+  padding: 20px;
+  /* Reduced padding */
   overflow-y: auto;
 }
 
@@ -464,14 +466,23 @@
   border-radius: 32px;
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
   position: relative;
-  overflow: visible; /* Changed to visible to allow sidebar sticky to work if needed */
+  overflow: visible;
+  /* Changed to visible to allow sidebar sticky to work if needed */
   animation: modalIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  margin: auto; /* Center modal */
+  margin: auto;
+  /* Center modal */
 }
 
 @keyframes modalIn {
-  from { opacity: 0; transform: translateY(40px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modal-close-btn {
@@ -488,8 +499,9 @@
   justify-content: center;
   font-size: 1.2rem;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  z-index: 1000; /* Increased z-index */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  /* Increased z-index */
   transition: all 0.2s;
 }
 
@@ -501,13 +513,15 @@
 
 .modal-layout {
   display: grid;
-  grid-template-columns: 1fr 400px; /* Increased sidebar width slightly */
+  grid-template-columns: 1fr 400px;
+  /* Increased sidebar width slightly */
   gap: 0;
   min-height: 80vh;
 }
 
 .modal-main-content {
-  padding: 40px; /* Adjusted padding */
+  padding: 40px;
+  /* Adjusted padding */
   background: white;
 }
 
@@ -564,7 +578,7 @@
   justify-content: center;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   z-index: 10;
   transition: all 0.2s;
 }
@@ -574,8 +588,13 @@
   transform: translateY(-50%) scale(1.1);
 }
 
-.slide-prev { left: 20px; }
-.slide-next { right: 20px; }
+.slide-prev {
+  left: 20px;
+}
+
+.slide-next {
+  right: 20px;
+}
 
 .slide-dots {
   position: absolute;
@@ -584,7 +603,7 @@
   transform: translateX(-50%);
   display: flex;
   gap: 8px;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   padding: 8px 12px;
   border-radius: 20px;
   backdrop-filter: blur(5px);
@@ -594,7 +613,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.4);
+  background: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -641,13 +660,16 @@
   gap: 10px;
 }
 
-.amenity-tag i { color: #48bb78; }
+.amenity-tag i {
+  color: #48bb78;
+}
 
 /* ── REVIEWS ── */
 .reviews-section {
   border-top: 1px solid #edf2f7;
   padding-top: 40px;
-  margin-bottom: 40px; /* Added margin */
+  margin-bottom: 40px;
+  /* Added margin */
 }
 
 .review-item {
@@ -677,7 +699,8 @@
 
 .review-rating {
   font-weight: 800;
-  color: #ffc107; /* Updated to yellow */
+  color: #ffc107;
+  /* Updated to yellow */
   font-size: 1rem;
   display: flex;
   align-items: center;
@@ -853,8 +876,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── RESPONSIVE ── */
@@ -862,26 +892,54 @@
   .modal-layout {
     grid-template-columns: 1fr;
   }
-  
+
   .modal-sidebar {
     background: white;
     border-left: none;
     border-top: 1px solid #edf2f7;
     padding: 40px;
   }
-  
+
   .booking-card {
     position: static;
   }
 }
 
 @media (max-width: 768px) {
-  .hero-content h1 { font-size: 2.8rem; }
-  .search-bar { flex-direction: column; padding: 15px; border-radius: 28px; }
-  .search-actions { width: 100%; margin-top: 15px; }
-  .btn-search, .btn-filter-toggle { width: 100%; flex: 1; }
-  .homestay-grid { grid-template-columns: 1fr; }
-  .modal-main-content { padding: 30px; }
-  .modal-title { font-size: 1.8rem; }
-  .slideshow { height: 300px; }
+  .hero-content h1 {
+    font-size: 2.8rem;
+  }
+
+  .search-bar {
+    flex-direction: column;
+    padding: 15px;
+    border-radius: 28px;
+  }
+
+  .search-actions {
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  .btn-search,
+  .btn-filter-toggle {
+    width: 100%;
+    flex: 1;
+  }
+
+  .homestay-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-main-content {
+    padding: 30px;
+  }
+
+  .modal-title {
+    font-size: 1.8rem;
+  }
+
+  .slideshow {
+    height: 300px;
+  }
 }

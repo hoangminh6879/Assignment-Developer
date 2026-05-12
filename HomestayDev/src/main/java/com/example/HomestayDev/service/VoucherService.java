@@ -33,23 +33,37 @@ public class VoucherService {
     private final UserRepository userRepository;
 
     public List<VoucherDto> getAllVouchers() {
-        return voucherRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
+        return voucherRepository.findAll().stream().map(this::checkExpiryAndMap).collect(Collectors.toList());
     }
 
     public List<VoucherDto> getHostVouchers(String hostUsername) {
         User host = userRepository.findByUsername(hostUsername)
                 .orElseThrow(() -> new RuntimeException("Host not found"));
-        return voucherRepository.findByHostId(host.getId()).stream().map(this::mapToDto).collect(Collectors.toList());
+        return voucherRepository.findByHostId(host.getId()).stream().map(this::checkExpiryAndMap).collect(Collectors.toList());
     }
 
     public List<VoucherDto> getGlobalVouchers() {
-        return voucherRepository.findByIsGlobalTrue().stream().map(this::mapToDto).collect(Collectors.toList());
+        return voucherRepository.findByIsGlobalTrue().stream().map(this::checkExpiryAndMap).collect(Collectors.toList());
+    }
+
+    private VoucherDto checkExpiryAndMap(Voucher v) {
+        if (v.isActive() && v.getExpiryDate() != null && v.getExpiryDate().isBefore(LocalDate.now())) {
+            v.setActive(false);
+            voucherRepository.save(v);
+        }
+        return mapToDto(v);
     }
 
     public List<VoucherDto> getApplicableVouchers(UUID hostId) {
         return voucherRepository.findApplicableVouchers(hostId).stream()
+                .map(v -> {
+                    if (v.isActive() && v.getExpiryDate() != null && v.getExpiryDate().isBefore(LocalDate.now())) {
+                        v.setActive(false);
+                        voucherRepository.save(v);
+                    }
+                    return v;
+                })
                 .filter(Voucher::isActive)
-                .filter(v -> v.getExpiryDate() == null || v.getExpiryDate().isAfter(LocalDate.now().minusDays(1)))
                 .filter(v -> v.getUsageLimit() == null || v.getUsedCount() < v.getUsageLimit())
                 .map(this::mapToDto)
                 .collect(Collectors.toList());

@@ -55,9 +55,11 @@ public class ReportService {
             Paragraph title = new Paragraph("DANH SÁCH ĐƠN ĐẶT PHÒNG", titleFont);
             title.setAlignment(Paragraph.ALIGN_CENTER);
             document.add(title);
-            
-            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").format(java.time.LocalDateTime.now());
-            Paragraph info = new Paragraph("Người xuất: " + exporterName + "  |  Ngày xuất: " + exportTime, new Font(baseFont, 11, Font.ITALIC, Color.DARK_GRAY));
+
+            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .format(java.time.LocalDateTime.now());
+            Paragraph info = new Paragraph("Người xuất: " + exporterName + "  |  Ngày xuất: " + exportTime,
+                    new Font(baseFont, 11, Font.ITALIC, Color.DARK_GRAY));
             info.setAlignment(Paragraph.ALIGN_RIGHT);
             document.add(info);
             document.add(new Paragraph(" "));
@@ -116,15 +118,71 @@ public class ReportService {
         return cell;
     }
 
+    // --- POI EXCEL STYLE HELPERS ---
+    private org.apache.poi.ss.usermodel.CellStyle createHeaderStyle(Workbook workbook) {
+        org.apache.poi.ss.usermodel.CellStyle style = workbook.createCellStyle();
+        org.apache.poi.ss.usermodel.Font font = workbook.createFont();
+        font.setBold(true);
+        font.setColor(org.apache.poi.ss.usermodel.IndexedColors.WHITE.getIndex());
+        font.setFontHeightInPoints((short) 12);
+        style.setFont(font);
+        style.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.ROYAL_BLUE.getIndex());
+        style.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(org.apache.poi.ss.usermodel.VerticalAlignment.CENTER);
+        style.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        style.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        style.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        style.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        return style;
+    }
+
+    private org.apache.poi.ss.usermodel.CellStyle createDataStyle(Workbook workbook) {
+        org.apache.poi.ss.usermodel.CellStyle style = workbook.createCellStyle();
+        style.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        style.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        style.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        style.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        style.setVerticalAlignment(org.apache.poi.ss.usermodel.VerticalAlignment.CENTER);
+        return style;
+    }
+
+    private org.apache.poi.ss.usermodel.CellStyle createCurrencyStyle(Workbook workbook) {
+        org.apache.poi.ss.usermodel.CellStyle style = createDataStyle(workbook);
+        org.apache.poi.ss.usermodel.DataFormat format = workbook.createDataFormat();
+        style.setDataFormat(format.getFormat("#,##0"));
+        return style;
+    }
+
+    private org.apache.poi.ss.usermodel.CellStyle createTitleStyle(Workbook workbook) {
+        org.apache.poi.ss.usermodel.CellStyle style = workbook.createCellStyle();
+        org.apache.poi.ss.usermodel.Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 18);
+        font.setColor(org.apache.poi.ss.usermodel.IndexedColors.ROYAL_BLUE.getIndex());
+        style.setFont(font);
+        style.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+        return style;
+    }
+
     // --- EXCEL EXPORT ---
     public ByteArrayInputStream exportBookingsToExcel(List<Booking> bookings, String exporterName) throws IOException {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Bookings");
 
-            Row titleRow = sheet.createRow(0);
-            titleRow.createCell(0).setCellValue("DANH SÁCH ĐƠN ĐẶT PHÒNG");
+            org.apache.poi.ss.usermodel.CellStyle titleStyle = createTitleStyle(workbook);
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = createHeaderStyle(workbook);
+            org.apache.poi.ss.usermodel.CellStyle dataStyle = createDataStyle(workbook);
+            org.apache.poi.ss.usermodel.CellStyle currencyStyle = createCurrencyStyle(workbook);
 
-            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").format(java.time.LocalDateTime.now());
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("DANH SÁCH ĐƠN ĐẶT PHÒNG");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 6));
+
+            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .format(java.time.LocalDateTime.now());
             Row infoRow = sheet.createRow(1);
             infoRow.createCell(0).setCellValue("Người xuất: " + exporterName + "  |  Ngày xuất: " + exportTime);
 
@@ -134,19 +192,177 @@ public class ReportService {
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
             }
 
             int rowIdx = 4;
             for (Booking b : bookings) {
                 Row row = sheet.createRow(rowIdx++);
-                row.createCell(0).setCellValue(
-                        b.getCheckInCode() != null ? b.getCheckInCode() : b.getId().toString().substring(0, 8));
-                row.createCell(1).setCellValue(b.getHomestay().getName());
-                row.createCell(2).setCellValue(b.getUser().getFirstName() + " " + b.getUser().getLastName());
-                row.createCell(3).setCellValue(b.getCheckInDate().toString());
-                row.createCell(4).setCellValue(b.getCheckOutDate().toString());
-                row.createCell(5).setCellValue(b.getTotalPrice().doubleValue());
-                row.createCell(6).setCellValue(b.getStatus().toString());
+                Cell c0 = row.createCell(0);
+                c0.setCellValue(b.getCheckInCode() != null ? b.getCheckInCode() : b.getId().toString().substring(0, 8));
+                c0.setCellStyle(dataStyle);
+                Cell c1 = row.createCell(1);
+                c1.setCellValue(b.getHomestay().getName());
+                c1.setCellStyle(dataStyle);
+                Cell c2 = row.createCell(2);
+                c2.setCellValue(b.getUser().getFirstName() + " " + b.getUser().getLastName());
+                c2.setCellStyle(dataStyle);
+                Cell c3 = row.createCell(3);
+                c3.setCellValue(b.getCheckInDate().toString());
+                c3.setCellStyle(dataStyle);
+                Cell c4 = row.createCell(4);
+                c4.setCellValue(b.getCheckOutDate().toString());
+                c4.setCellStyle(dataStyle);
+                Cell c5 = row.createCell(5);
+                c5.setCellValue(b.getTotalPrice().doubleValue());
+                c5.setCellStyle(currencyStyle);
+                Cell c6 = row.createCell(6);
+                c6.setCellValue(b.getStatus().toString());
+                c6.setCellStyle(dataStyle);
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+        }
+    }
+
+    public ByteArrayInputStream exportStatsToExcel(StatisticsDto.HostStatistics stats, String exporterName)
+            throws IOException {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Statistics");
+
+            org.apache.poi.ss.usermodel.CellStyle titleStyle = createTitleStyle(workbook);
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = createHeaderStyle(workbook);
+            org.apache.poi.ss.usermodel.CellStyle dataStyle = createDataStyle(workbook);
+            org.apache.poi.ss.usermodel.CellStyle currencyStyle = createCurrencyStyle(workbook);
+
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("BÁO CÁO THỐNG KÊ DOANH THU");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 2));
+
+            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .format(java.time.LocalDateTime.now());
+            Row infoRow = sheet.createRow(1);
+            infoRow.createCell(0).setCellValue("Người xuất: " + exporterName + "  |  Ngày xuất: " + exportTime);
+
+            Row sumRow1 = sheet.createRow(3);
+            sumRow1.createCell(0).setCellValue("Tổng Doanh Thu:");
+            Cell cRev = sumRow1.createCell(2);
+            cRev.setCellValue(stats.getTotalRevenue() != null ? stats.getTotalRevenue().doubleValue() : 0);
+            cRev.setCellStyle(currencyStyle);
+
+            Row sumRow2 = sheet.createRow(4);
+            sumRow2.createCell(0).setCellValue("Tổng Lượt Đặt:");
+            sumRow2.createCell(2).setCellValue(stats.getTotalBookings() != null ? stats.getTotalBookings() : 0);
+
+            Row sumRow3 = sheet.createRow(5);
+            sumRow3.createCell(0).setCellValue("Tổng Homestay:");
+            sumRow3.createCell(2).setCellValue(stats.getTotalHomestays() != null ? stats.getTotalHomestays() : 0);
+
+            Row headerRow = sheet.createRow(7);
+            String[] headers = { "Tên Homestay", "Lượt đặt", "Doanh thu" };
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            int rowIdx = 8;
+            if (stats.getHomestayStats() != null) {
+                for (StatisticsDto.HomestayStats s : stats.getHomestayStats()) {
+                    Row row = sheet.createRow(rowIdx++);
+                    Cell c0 = row.createCell(0);
+                    c0.setCellValue(s.getHomestayName() != null ? s.getHomestayName() : "N/A");
+                    c0.setCellStyle(dataStyle);
+                    Cell c1 = row.createCell(1);
+                    c1.setCellValue(s.getBookingCount() != null ? s.getBookingCount() : 0);
+                    c1.setCellStyle(dataStyle);
+                    Cell c2 = row.createCell(2);
+                    c2.setCellValue(s.getTotalRevenue() != null ? s.getTotalRevenue().doubleValue() : 0);
+                    c2.setCellStyle(currencyStyle);
+                }
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+        }
+    }
+
+    public ByteArrayInputStream exportAdminStatsToExcel(StatisticsDto.AdminStatistics stats, String exporterName)
+            throws IOException {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Admin Statistics");
+
+            org.apache.poi.ss.usermodel.CellStyle titleStyle = createTitleStyle(workbook);
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = createHeaderStyle(workbook);
+            org.apache.poi.ss.usermodel.CellStyle dataStyle = createDataStyle(workbook);
+            org.apache.poi.ss.usermodel.CellStyle currencyStyle = createCurrencyStyle(workbook);
+
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("BÁO CÁO THỐNG KÊ QUẢN TRỊ");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 2));
+
+            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .format(java.time.LocalDateTime.now());
+            Row infoRow = sheet.createRow(1);
+            infoRow.createCell(0).setCellValue("Người xuất: " + exporterName + "  |  Ngày xuất: " + exportTime);
+
+            Row sumRow1 = sheet.createRow(3);
+            sumRow1.createCell(0).setCellValue("Doanh Thu Hệ Thống:");
+            Cell cRev = sumRow1.createCell(2);
+            cRev.setCellValue(stats.getTotalRevenue() != null ? stats.getTotalRevenue().doubleValue() : 0);
+            cRev.setCellStyle(currencyStyle);
+
+            Row sumRow2 = sheet.createRow(4);
+            sumRow2.createCell(0).setCellValue("Tổng Đơn Hàng:");
+            sumRow2.createCell(2).setCellValue(stats.getTotalBookings() != null ? stats.getTotalBookings() : 0);
+
+            Row sumRow3 = sheet.createRow(5);
+            sumRow3.createCell(0).setCellValue("Tổng Homestay:");
+            sumRow3.createCell(2).setCellValue(stats.getTotalHomestays() != null ? stats.getTotalHomestays() : 0);
+
+            Row sumRow4 = sheet.createRow(6);
+            sumRow4.createCell(0).setCellValue("Tổng Người Dùng:");
+            sumRow4.createCell(2).setCellValue(stats.getTotalUsers() != null ? stats.getTotalUsers() : 0);
+
+            Row headerRow = sheet.createRow(8);
+            String[] headers = { "Tên Homestay", "Lượt đặt", "Doanh thu" };
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            int rowIdx = 9;
+            if (stats.getTopHomestays() != null) {
+                for (StatisticsDto.HomestayStats s : stats.getTopHomestays()) {
+                    Row row = sheet.createRow(rowIdx++);
+                    Cell c0 = row.createCell(0);
+                    c0.setCellValue(s.getHomestayName() != null ? s.getHomestayName() : "N/A");
+                    c0.setCellStyle(dataStyle);
+                    Cell c1 = row.createCell(1);
+                    c1.setCellValue(s.getBookingCount() != null ? s.getBookingCount() : 0);
+                    c1.setCellStyle(dataStyle);
+                    Cell c2 = row.createCell(2);
+                    c2.setCellValue(s.getTotalRevenue() != null ? s.getTotalRevenue().doubleValue() : 0);
+                    c2.setCellStyle(currencyStyle);
+                }
+            }
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
             }
 
             workbook.write(out);
@@ -181,7 +397,8 @@ public class ReportService {
             JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(data);
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("title", "DANH SÁCH ĐẶT PHÒNG");
-            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").format(java.time.LocalDateTime.now());
+            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .format(java.time.LocalDateTime.now());
             parameters.put("exportDate", exportTime);
             parameters.put("exporterName", exporterName);
             if ("xlsx".equalsIgnoreCase(format)) {
@@ -197,6 +414,7 @@ public class ReportService {
                 configuration.setRemoveEmptySpaceBetweenRows(true);
                 configuration.setDetectCellType(true);
                 configuration.setWhitePageBackground(false);
+                configuration.setIgnorePageMargins(true);
 
                 net.sf.jasperreports.export.SimpleOutputStreamExporterOutput exporterOutput = new net.sf.jasperreports.export.SimpleOutputStreamExporterOutput(
                         baos);
@@ -238,9 +456,11 @@ public class ReportService {
             Paragraph title = new Paragraph("BÁO CÁO THỐNG KÊ CHỦ NHÀ", titleFont);
             title.setAlignment(Paragraph.ALIGN_CENTER);
             document.add(title);
-            
-            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").format(java.time.LocalDateTime.now());
-            Paragraph info = new Paragraph("Người xuất: " + exporterName + "  |  Ngày xuất: " + exportTime, new Font(baseFont, 11, Font.ITALIC, Color.DARK_GRAY));
+
+            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .format(java.time.LocalDateTime.now());
+            Paragraph info = new Paragraph("Người xuất: " + exporterName + "  |  Ngày xuất: " + exportTime,
+                    new Font(baseFont, 11, Font.ITALIC, Color.DARK_GRAY));
             info.setAlignment(Paragraph.ALIGN_RIGHT);
             document.add(info);
             document.add(new Paragraph(" "));
@@ -322,9 +542,11 @@ public class ReportService {
             Paragraph title = new Paragraph("BÁO CÁO THỐNG KÊ QUẢN TRỊ", titleFont);
             title.setAlignment(Paragraph.ALIGN_CENTER);
             document.add(title);
-            
-            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").format(java.time.LocalDateTime.now());
-            Paragraph info = new Paragraph("Người xuất: " + exporterName + "  |  Ngày xuất: " + exportTime, new Font(baseFont, 11, Font.ITALIC, Color.DARK_GRAY));
+
+            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .format(java.time.LocalDateTime.now());
+            Paragraph info = new Paragraph("Người xuất: " + exporterName + "  |  Ngày xuất: " + exportTime,
+                    new Font(baseFont, 11, Font.ITALIC, Color.DARK_GRAY));
             info.setAlignment(Paragraph.ALIGN_RIGHT);
             document.add(info);
             document.add(new Paragraph(" "));
@@ -379,7 +601,8 @@ public class ReportService {
     }
 
     // --- JASPER STATS EXPORT ---
-    public byte[] exportStatsJasper(StatisticsDto.HostStatistics stats, String format, String exporterName) throws JRException {
+    public byte[] exportStatsJasper(StatisticsDto.HostStatistics stats, String format, String exporterName)
+            throws JRException {
         try {
             List<Map<String, Object>> data = stats.getHomestayStats() != null
                     ? stats.getHomestayStats().stream().map(s -> {
@@ -404,7 +627,8 @@ public class ReportService {
                     stats.getTotalRevenue() != null ? stats.getTotalRevenue().doubleValue() : 0.0);
             parameters.put("totalBookings", stats.getTotalBookings() != null ? stats.getTotalBookings() : 0L);
             parameters.put("totalHomestays", stats.getTotalHomestays() != null ? stats.getTotalHomestays() : 0L);
-            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").format(java.time.LocalDateTime.now());
+            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .format(java.time.LocalDateTime.now());
             parameters.put("exportDate", exportTime);
             parameters.put("exporterName", exporterName);
             if ("xlsx".equalsIgnoreCase(format)) {
@@ -421,7 +645,8 @@ public class ReportService {
         }
     }
 
-    public byte[] exportAdminStatsJasper(StatisticsDto.AdminStatistics stats, String format, String exporterName) throws JRException {
+    public byte[] exportAdminStatsJasper(StatisticsDto.AdminStatistics stats, String format, String exporterName)
+            throws JRException {
         try {
             List<Map<String, Object>> data = stats.getTopHomestays() != null
                     ? stats.getTopHomestays().stream().map(s -> {
@@ -447,7 +672,8 @@ public class ReportService {
             parameters.put("totalBookings", stats.getTotalBookings() != null ? stats.getTotalBookings() : 0L);
             parameters.put("totalHomestays", stats.getTotalHomestays() != null ? stats.getTotalHomestays() : 0L);
             parameters.put("totalUsers", stats.getTotalUsers() != null ? stats.getTotalUsers() : 0L);
-            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").format(java.time.LocalDateTime.now());
+            String exportTime = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    .format(java.time.LocalDateTime.now());
             parameters.put("exportDate", exportTime);
             parameters.put("exporterName", exporterName);
             if ("xlsx".equalsIgnoreCase(format)) {
@@ -474,6 +700,7 @@ public class ReportService {
                 configuration.setRemoveEmptySpaceBetweenColumns(true);
                 configuration.setDetectCellType(true);
                 configuration.setWhitePageBackground(false);
+                configuration.setIgnorePageMargins(true);
 
                 net.sf.jasperreports.export.SimpleOutputStreamExporterOutput exporterOutput = new net.sf.jasperreports.export.SimpleOutputStreamExporterOutput(
                         baos);

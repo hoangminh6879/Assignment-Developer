@@ -98,6 +98,20 @@ public class ReportController {
                 .body(new InputStreamResource(bis));
     }
 
+    @GetMapping("/stats/excel")
+    public ResponseEntity<InputStreamResource> exportStatsExcel(Authentication auth) throws IOException {
+        var stats = statisticsService.getHostStatistics(auth.getName());
+        ByteArrayInputStream bis = reportService.exportStatsToExcel(stats, auth.getName());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=statistics.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(bis));
+    }
+
     @GetMapping("/admin/stats/pdf")
     public ResponseEntity<InputStreamResource> exportAdminStatsPdf(Authentication auth) {
         var stats = statisticsService.getAdminStatistics();
@@ -109,6 +123,20 @@ public class ReportController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .contentType(MediaType.APPLICATION_PDF)
+                .body(new InputStreamResource(bis));
+    }
+
+    @GetMapping("/admin/stats/excel")
+    public ResponseEntity<InputStreamResource> exportAdminStatsExcel(Authentication auth) throws IOException {
+        var stats = statisticsService.getAdminStatistics();
+        ByteArrayInputStream bis = reportService.exportAdminStatsToExcel(stats, auth != null ? auth.getName() : "Admin");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=admin_statistics.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(new InputStreamResource(bis));
     }
 

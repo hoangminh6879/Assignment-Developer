@@ -216,15 +216,15 @@ export class ReportModalComponent {
           if (this.role === 'ADMIN') {
             if (this.format === 'PDF') this.reportService.exportAdminStatsPdf();
             else if (this.format === 'JASPER') this.reportService.exportAdminStatsJasper('pdf');
-            else if (this.format === 'EXCEL') this.reportService.exportAdminStatsJasper('xlsx');
+            else if (this.format === 'EXCEL') this.reportService.exportAdminStatsExcel();
           } else {
             if (this.format === 'PDF') this.reportService.exportStatsPdf();
             else if (this.format === 'JASPER') this.reportService.exportStatsJasper('pdf');
-            else if (this.format === 'EXCEL') this.reportService.exportStatsJasper('xlsx');
+            else if (this.format === 'EXCEL') this.reportService.exportStatsExcel();
           }
         } else {
           if (this.format === 'PDF') this.reportService.exportBookingsPdf(this.startDate, this.endDate);
-          else if (this.format === 'EXCEL') this.reportService.exportBookingsJasper('xlsx', this.startDate, this.endDate); // Use Jasper for Excel now
+          else if (this.format === 'EXCEL') this.reportService.exportBookingsExcel(this.startDate, this.endDate);
           else if (this.format === 'JASPER') this.reportService.exportBookingsJasper('pdf', this.startDate, this.endDate);
         }
       } finally {
