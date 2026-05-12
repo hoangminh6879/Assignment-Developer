@@ -23,9 +23,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -58,6 +56,9 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
+        Map<String, List<String>> attribute = new HashMap<>();
+        attribute.put("phone", Collections.singletonList(request.getPhoneNumber()));
+        user.setAttributes(attribute);
         // Keycloak bật Verify Email → emailVerified = false để buộc xác thực
         user.setEmailVerified(false);
 

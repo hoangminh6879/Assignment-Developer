@@ -31,7 +31,7 @@ public class ReportController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate) {
         List<Booking> bookings = getBookingsWithFilters(auth, startDate, endDate);
-        ByteArrayInputStream bis = reportService.exportBookingsToPdf(bookings);
+        ByteArrayInputStream bis = reportService.exportBookingsToPdf(bookings, auth.getName());
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename=bookings.pdf");
@@ -48,14 +48,15 @@ public class ReportController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate) throws IOException {
         List<Booking> bookings = getBookingsWithFilters(auth, startDate, endDate);
-        ByteArrayInputStream bis = reportService.exportBookingsToExcel(bookings);
+        ByteArrayInputStream bis = reportService.exportBookingsToExcel(bookings, auth.getName());
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename=bookings.xlsx");
 
         return ResponseEntity.ok()
                 .headers(headers)
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .contentType(
+                        MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(new InputStreamResource(bis));
     }
 
@@ -66,11 +67,12 @@ public class ReportController {
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate) throws Exception {
         List<Booking> bookings = getBookingsWithFilters(auth, startDate, endDate);
-        byte[] report = reportService.exportBookingsJasper(bookings, format);
+        byte[] report = reportService.exportBookingsJasper(bookings, format, auth.getName());
 
         HttpHeaders headers = new HttpHeaders();
         if ("xlsx".equalsIgnoreCase(format)) {
-            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            headers.setContentType(
+                    MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
             headers.setContentDispositionFormData("attachment", "bookings_jasper.xlsx");
         } else {
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -85,7 +87,7 @@ public class ReportController {
     @GetMapping("/stats/pdf")
     public ResponseEntity<InputStreamResource> exportStatsPdf(Authentication auth) {
         var stats = statisticsService.getHostStatistics(auth.getName());
-        ByteArrayInputStream bis = reportService.exportStatsToPdf(stats);
+        ByteArrayInputStream bis = reportService.exportStatsToPdf(stats, auth.getName());
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename=statistics.pdf");
@@ -96,10 +98,24 @@ public class ReportController {
                 .body(new InputStreamResource(bis));
     }
 
+    @GetMapping("/stats/excel")
+    public ResponseEntity<InputStreamResource> exportStatsExcel(Authentication auth) throws IOException {
+        var stats = statisticsService.getHostStatistics(auth.getName());
+        ByteArrayInputStream bis = reportService.exportStatsToExcel(stats, auth.getName());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=statistics.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(bis));
+    }
+
     @GetMapping("/admin/stats/pdf")
-    public ResponseEntity<InputStreamResource> exportAdminStatsPdf() {
+    public ResponseEntity<InputStreamResource> exportAdminStatsPdf(Authentication auth) {
         var stats = statisticsService.getAdminStatistics();
-        ByteArrayInputStream bis = reportService.exportAdminStatsToPdf(stats);
+        ByteArrayInputStream bis = reportService.exportAdminStatsToPdf(stats, auth != null ? auth.getName() : "Admin");
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename=admin_statistics.pdf");
@@ -110,14 +126,30 @@ public class ReportController {
                 .body(new InputStreamResource(bis));
     }
 
-    @GetMapping("/admin/stats/jasper")
-    public ResponseEntity<byte[]> exportAdminStatsJasper(@RequestParam(defaultValue = "pdf") String format) throws Exception {
+    @GetMapping("/admin/stats/excel")
+    public ResponseEntity<InputStreamResource> exportAdminStatsExcel(Authentication auth) throws IOException {
         var stats = statisticsService.getAdminStatistics();
-        byte[] report = reportService.exportAdminStatsJasper(stats, format);
+        ByteArrayInputStream bis = reportService.exportAdminStatsToExcel(stats, auth != null ? auth.getName() : "Admin");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=admin_statistics.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(bis));
+    }
+
+    @GetMapping("/admin/stats/jasper")
+    public ResponseEntity<byte[]> exportAdminStatsJasper(Authentication auth,
+            @RequestParam(defaultValue = "pdf") String format) throws Exception {
+        var stats = statisticsService.getAdminStatistics();
+        byte[] report = reportService.exportAdminStatsJasper(stats, format, auth != null ? auth.getName() : "Admin");
 
         HttpHeaders headers = new HttpHeaders();
         if ("xlsx".equalsIgnoreCase(format)) {
-            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            headers.setContentType(
+                    MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
             headers.setContentDispositionFormData("attachment", "admin_statistics_jasper.xlsx");
         } else {
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -130,13 +162,15 @@ public class ReportController {
     }
 
     @GetMapping("/stats/jasper")
-    public ResponseEntity<byte[]> exportStatsJasper(Authentication auth, @RequestParam(defaultValue = "pdf") String format) throws Exception {
+    public ResponseEntity<byte[]> exportStatsJasper(Authentication auth,
+            @RequestParam(defaultValue = "pdf") String format) throws Exception {
         var stats = statisticsService.getHostStatistics(auth.getName());
-        byte[] report = reportService.exportStatsJasper(stats, format);
+        byte[] report = reportService.exportStatsJasper(stats, format, auth.getName());
 
         HttpHeaders headers = new HttpHeaders();
         if ("xlsx".equalsIgnoreCase(format)) {
-            headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            headers.setContentType(
+                    MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
             headers.setContentDispositionFormData("attachment", "statistics_jasper.xlsx");
         } else {
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -156,7 +190,7 @@ public class ReportController {
             java.time.LocalDateTime start = java.time.LocalDate.parse(startDateStr).atStartOfDay();
             java.time.LocalDateTime end = java.time.LocalDate.parse(endDateStr).atTime(23, 59, 59);
             System.out.println("Filtering bookings from " + start + " to " + end);
-            
+
             if (isAdmin) {
                 result = bookingRepository.findAllByDateRange(start, end);
             } else {

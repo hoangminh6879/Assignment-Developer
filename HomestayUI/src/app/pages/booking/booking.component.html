@@ -1,0 +1,350 @@
+<app-navbar></app-navbar>
+<div class="booking-page">
+  <div class="booking-container animate-fade-in">
+    
+    <!-- LEFT COLUMN: Main Selection Flow -->
+    <div class="selection-section">
+      <!-- Homestay Hero Mini -->
+      <div class="homestay-hero-mini" *ngIf="homestay">
+        <div class="hero-image-wrap">
+          <img [src]="'http://localhost:9999' + (homestay.images.length > 0 ? homestay.images[0].url : '')" class="h-img" alt="">
+          <div class="hero-overlay"></div>
+        </div>
+        <div class="h-details">
+          <div class="h-header">
+            <h1>{{ homestay.name }}</h1>
+            <div class="h-rating"><i class="fa-solid fa-star"></i> {{ homestay.averageRating || 0 | number:'1.1-1' }}</div>
+          </div>
+          <p class="h-address"><i class="fa-solid fa-location-dot"></i> {{ homestay.address }}, {{ homestay.city }}</p>
+          <div class="h-price-tag">
+            <span class="label">Giá cơ sở:</span>
+            <span class="value">{{ homestay.pricePerNight | number }}đ</span>
+            <span class="unit">/ đêm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 1: Date Selection -->
+      <div class="booking-step-card">
+        <div class="step-header">
+          <div class="step-num">01</div>
+          <div class="step-title">
+            <h3>Chọn thời gian lưu trú</h3>
+            <p>Hãy chọn ngày bạn muốn đến và đi</p>
+          </div>
+        </div>
+        
+        <div class="step-body">
+          <div class="date-picker-grid">
+            <div class="date-field">
+              <label><i class="fa-solid fa-calendar-plus"></i> Ngày nhận phòng</label>
+              <input type="date" [(ngModel)]="checkInDate" (change)="onDateChange()" [min]="today" class="premium-input">
+            </div>
+            <div class="date-arrow">
+              <i class="fa-solid fa-arrow-right-long"></i>
+            </div>
+            <div class="date-field">
+              <label><i class="fa-solid fa-calendar-minus"></i> Ngày trả phòng</label>
+              <input type="date" [(ngModel)]="checkOutDate" (change)="onDateChange()" [min]="minCheckOut" class="premium-input">
+            </div>
+          </div>
+          <div class="alert-error" *ngIf="dateError">
+            <i class="fa-solid fa-circle-exclamation"></i> {{ dateError }}
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Room Type Selection -->
+      <div class="booking-step-card" *ngIf="checkInDate && checkOutDate">
+        <div class="step-header">
+          <div class="step-num">02</div>
+          <div class="step-title">
+            <h3>Loại phòng mong muốn</h3>
+            <p>Chọn phân khúc phòng phù hợp với bạn</p>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="room-types-grid">
+            <div 
+              *ngFor="let rt of roomTypes" 
+              class="rt-card-premium" 
+              [class.active]="selectedRoomTypeId === rt.id"
+              (click)="selectRoomType(rt.id!)">
+              <div class="rt-icon-wrap"><i class="fa-solid fa-bed"></i></div>
+              <div class="rt-info">
+                <span class="rt-name">{{ rt.name }}</span>
+                <span class="rt-desc">{{ rt.description || 'Tiêu chuẩn' }}</span>
+              </div>
+              <div class="rt-check" *ngIf="selectedRoomTypeId === rt.id">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Specific Room Selection -->
+      <div class="booking-step-card" *ngIf="selectedRoomTypeId">
+        <div class="step-header">
+          <div class="step-num">03</div>
+          <div class="step-title">
+            <h3>Danh sách phòng trống</h3>
+            <p>Chọn một căn phòng cụ thể cho kỳ nghỉ này</p>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="available-rooms-grid" *ngIf="availableRooms.length > 0; else noRooms">
+            <div 
+              *ngFor="let room of availableRooms" 
+              class="room-card-premium" 
+              [class.selected]="selectedRoomId === room.id"
+              (click)="selectedRoomId = room.id!">
+              <div class="room-indicator"></div>
+              <div class="room-content">
+                <div class="room-main">
+                  <span class="room-name">{{ room.name }}</span>
+                  <span class="room-capacity"><i class="fa-solid fa-users"></i> {{ room.maxGuests }} khách</span>
+                </div>
+                <div class="room-pricing">
+                  <span class="price-extra" *ngIf="room.priceExtra > 0">+{{ room.priceExtra | number }}đ</span>
+                  <span class="price-final">{{ (homestay?.pricePerNight || 0) + room.priceExtra | number }}đ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ng-template #noRooms>
+            <div class="empty-rooms-alert">
+              <i class="fa-solid fa-calendar-xmark"></i>
+              <p>Rất tiếc! Hiện không còn phòng trống thuộc loại này trong khoảng thời gian đã chọn.</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- STEP 4: Payment Method Selection -->
+      <div class="booking-step-card" *ngIf="selectedRoomId">
+        <div class="step-header">
+          <div class="step-num">04</div>
+          <div class="step-title">
+            <h3>Phương thức thanh toán</h3>
+            <p>An toàn & Bảo mật tuyệt đối</p>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="payment-methods-grid">
+            <div 
+              class="pay-card-premium" 
+              [class.active]="selectedPaymentMethod === 'VNPAY'"
+              (click)="selectedPaymentMethod = 'VNPAY'">
+              <div class="pay-icon-box vnpay"><i class="fa-solid fa-credit-card"></i></div>
+              <div class="pay-info">
+                <strong>Thanh toán VNPay</strong>
+                <span>Chuyển khoản / Thẻ ngân hàng</span>
+              </div>
+              <div class="pay-radio"></div>
+            </div>
+            <div 
+              class="pay-card-premium" 
+              [class.active]="selectedPaymentMethod === 'WALLET'"
+              (click)="selectedPaymentMethod = 'WALLET'">
+              <div class="pay-icon-box wallet"><i class="fa-solid fa-wallet"></i></div>
+              <div class="pay-info">
+                <strong>Số dư Ví điện tử</strong>
+                <span>Khả dụng: {{ (wallet?.balance || 0) | number }}đ</span>
+              </div>
+              <div class="pay-radio"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Order Summary -->
+    <div class="summary-section">
+      <div class="summary-card-premium sticky">
+        <div class="summary-header">
+          <h3>Tóm tắt đơn hàng</h3>
+        </div>
+        
+        <div class="summary-body">
+          <div class="summary-rows">
+            <div class="s-row">
+              <span class="s-label">Đơn giá dự kiến</span>
+              <span class="s-value">{{ pricePerNight | number }}đ</span>
+            </div>
+            <div class="s-row">
+              <span class="s-label">Số đêm lưu trú</span>
+              <span class="s-value">{{ totalNights }} đêm</span>
+            </div>
+            <div class="s-row subtotal">
+              <span class="s-label">Tạm tính</span>
+              <span class="s-value">{{ rawTotalPrice | number }}đ</span>
+            </div>
+          </div>
+
+          <!-- VOUCHER SECTION -->
+          <div class="voucher-box-premium">
+            <div class="v-header-mini">
+              <label><i class="fa-solid fa-ticket"></i> Mã ưu đãi</label>
+              <button class="v-browse-btn" (click)="openVoucherModal()" [disabled]="discountAmount > 0">Khám phá mã</button>
+            </div>
+            <div class="v-input-wrap">
+              <input type="text" [(ngModel)]="voucherCode" placeholder="Nhập mã giảm giá..." [disabled]="discountAmount > 0">
+              <button class="v-apply-btn" *ngIf="discountAmount === 0" (click)="applyVoucher()" [disabled]="!voucherCode">Áp dụng</button>
+              <button class="v-apply-btn" *ngIf="discountAmount > 0" (click)="removeVoucher()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="v-success-badge animate-scale-in" *ngIf="discountAmount > 0">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>Tiết kiệm được <strong>{{ discountAmount | number }}đ</strong></span>
+            </div>
+            <p class="v-error-text" *ngIf="voucherError"><i class="fa-solid fa-circle-info"></i> {{ voucherError }}</p>
+          </div>
+
+          <div class="final-total">
+            <div class="total-label">
+              <strong>Tổng cộng</strong>
+              <span>(Đã bao gồm thuế & phí)</span>
+            </div>
+            <div class="total-amount">
+              <span class="old-price" *ngIf="discountAmount > 0">{{ rawTotalPrice | number }}đ</span>
+              <span class="new-price">{{ totalPrice | number }}đ</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-footer">
+          <button 
+            class="btn-book-premium" 
+            [disabled]="!canBook || bookingLoading" 
+            (click)="openConfirmationModal()">
+            <span *ngIf="!bookingLoading">Tiến hành thanh toán</span>
+            <span *ngIf="bookingLoading"><i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...</span>
+          </button>
+          <div class="trust-badges">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Thanh toán an toàn 100%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PREMUM CONFIRMATION MODAL -->
+<div class="modal-overlay-premium" *ngIf="showConfirmModal" (click)="closeConfirmationModal()">
+  <div class="modal-card-premium animate-fade-in" (click)="$event.stopPropagation()">
+    <div class="modal-header-banner">
+      <div class="header-icon-circle"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+      <div class="header-text">
+        <h2>Xác nhận Đặt phòng</h2>
+        <p>Vui lòng kiểm tra lại thông tin trước khi hoàn tất</p>
+      </div>
+      <button class="modal-close" (click)="closeConfirmationModal()">&times;</button>
+    </div>
+    
+    <div class="modal-body-premium">
+      <!-- Order Summary Mini -->
+      <div class="mini-order-card">
+        <div class="mini-row">
+          <span class="m-label">Homestay</span>
+          <span class="m-value">{{ homestay?.name }}</span>
+        </div>
+        <div class="mini-row">
+          <span class="m-label">Thời gian</span>
+          <span class="m-value">{{ checkInDate | date:'dd/MM' }} - {{ checkOutDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="mini-row total">
+          <span class="m-label">Tổng thanh toán</span>
+          <span class="m-value">{{ totalPrice | number }}đ</span>
+        </div>
+      </div>
+
+      <!-- User Info Update Form -->
+      <div class="info-update-section">
+        <div class="section-title">
+          <i class="fa-solid fa-user-pen"></i>
+          <h3>Thông tin người nhận phòng</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-group">
+            <label>Họ & Tên lót</label>
+            <input type="text" [(ngModel)]="userProfile.lastName" placeholder="Ví dụ: Nguyễn Văn">
+          </div>
+          <div class="info-group">
+            <label>Tên</label>
+            <input type="text" [(ngModel)]="userProfile.firstName" placeholder="Ví dụ: A">
+          </div>
+          <div class="info-group">
+            <label>Số điện thoại</label>
+            <input type="text" [(ngModel)]="userProfile.phoneNumber" placeholder="09xx xxx xxx">
+          </div>
+          <div class="info-group">
+            <label>CCCD / Passport</label>
+            <input type="text" [(ngModel)]="userProfile.citizenId" placeholder="Nhập số định danh">
+          </div>
+          <div class="info-group full">
+            <label>Địa chỉ thường trú</label>
+            <input type="text" [(ngModel)]="userProfile.address" placeholder="Nhập địa chỉ của bạn">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer-premium">
+      <button class="btn-cancel-modal" (click)="closeConfirmationModal()">Quay lại</button>
+      <button class="btn-confirm-modal" [disabled]="isSubmitting" (click)="submitBooking()">
+        <span *ngIf="!isSubmitting">Xác nhận & Thanh toán ngay</span>
+        <span *ngIf="isSubmitting"><i class="fa-solid fa-circle-notch fa-spin"></i> Đang khởi tạo...</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- VOUCHER SELECTION MODAL -->
+<div class="modal-overlay-premium" *ngIf="showVoucherModal" (click)="closeVoucherModal()">
+  <div class="voucher-modal-premium animate-fade-in" (click)="$event.stopPropagation()">
+    <div class="v-modal-header">
+      <div class="v-modal-title">
+        <i class="fa-solid fa-ticket"></i>
+        <h3>Kho Voucher Của Bạn</h3>
+      </div>
+      <button class="v-modal-close" (click)="closeVoucherModal()">&times;</button>
+    </div>
+    
+    <div class="v-modal-body">
+      <div class="v-list-modern" *ngIf="applicableVouchers.length > 0; else noVouchers">
+        <div 
+          class="v-card-modern" 
+          *ngFor="let v of applicableVouchers" 
+          [class.disabled]="rawTotalPrice < (v.minBookingAmount || 0)"
+          (click)="selectVoucherFromList(v)">
+          <div class="v-card-accent" [ngClass]="v.isGlobal ? 'global' : 'host'">
+            <i class="fa-solid" [ngClass]="v.isGlobal ? 'fa-globe' : 'fa-house-user'"></i>
+          </div>
+          <div class="v-card-main">
+            <div class="v-card-top">
+              <span class="v-code">{{ v.code }}</span>
+              <span class="v-type-tag" *ngIf="v.isGlobal">Hệ thống</span>
+            </div>
+            <div class="v-card-desc">
+              Giảm {{ v.type === 'PERCENTAGE' ? v.value + '%' : (v.value | number) + 'đ' }}
+              <small *ngIf="v.minBookingAmount">Đơn tối thiểu {{ v.minBookingAmount | number }}đ</small>
+            </div>
+            <div class="v-card-footer">
+              <span>Hết hạn: {{ v.expiryDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+          <div class="v-card-action">
+            <button [disabled]="rawTotalPrice < (v.minBookingAmount || 0)">Sử dụng</button>
+          </div>
+        </div>
+      </div>
+      <ng-template #noVouchers>
+        <div class="v-empty-state">
+          <i class="fa-solid fa-ticket-simple"></i>
+          <p>Hiện không có mã giảm giá nào phù hợp với homestay này.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>
