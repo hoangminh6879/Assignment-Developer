@@ -268,4 +268,70 @@ public class AuthService {
             log.warn("Logout request returned non-2xx: {}", e.getResponseBodyAsString());
         }
     }
+    // ─────────────────────────────────────────────
+    //  GOOGLE LOGIN — trao đổi code lấy token
+    // ─────────────────────────────────────────────
+    public AuthResponse loginWithCode(String code, String codeVerifier) {
+        String tokenUrl = serverUrl + "realms/" + realm + "/protocol/openid-connect/token";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.add("grant_type", "authorization_code");
+        map.add("client_id", clientId);
+        map.add("client_secret", clientSecret);
+        map.add("code", code);
+        map.add("redirect_uri", "http://localhost:4200/login");
+        
+        if (codeVerifier != null) {
+            map.add("code_verifier", codeVerifier);
+        }
+
+        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(map, headers);
+        try {
+            ResponseEntity<AuthResponse> response = restTemplate.postForEntity(tokenUrl, entity, AuthResponse.class);
+            AuthResponse authResponse = response.getBody();
+
+            if (authResponse != null && authResponse.getAccessToken() != null) {
+                syncUserFromToken(authResponse.getAccessToken());
+            }
+
+            return authResponse;
+        } catch (HttpClientErrorException e) {
+            log.error("Token exchange failed: {}", e.getResponseBodyAsString());
+            throw new RuntimeException("Đăng nhập bằng Google thất bại. Vui lòng thử lại.");
+        }
+    }
+
+    private void syncUserFromToken(String accessToken) {
+        try {
+            String[] parts = accessToken.split("\\.");
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode node = mapper.readTree(payload);
+
+            String keycloakId = node.get("sub").asText();
+            String email = node.get("email").asText();
+            String username = node.path("preferred_username").asText(email);
+            String firstName = node.path("given_name").asText("");
+            String lastName = node.path("family_name").asText("");
+
+            Optional<User> existingUser = userRepository.findByKeycloakId(UUID.fromString(keycloakId));
+            if (existingUser.isEmpty()) {
+                User newUser = User.builder()
+                        .keycloakId(UUID.fromString(keycloakId))
+                        .username(username)
+                        .email(email)
+                        .firstName(firstName)
+                        .lastName(lastName)
+                        .isActive(true)
+                        .build();
+                userRepository.save(newUser);
+                log.info("Synced new user from Google: {}", email);
+            }
+        } catch (Exception e) {
+            log.error("Failed to sync user from token: {}", e.getMessage());
+        }
+    }
 }

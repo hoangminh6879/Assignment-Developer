@@ -7,6 +7,10 @@ import { Observable, tap } from 'rxjs';
 })
 export class AuthService {
   private apiUrl = 'http://localhost:9999/api/auth';
+  private keycloakUrl = 'http://localhost:8080';
+  private realm = 'HomestayRealm';
+  private clientId = 'homestay-client';
+  private redirectUri = 'http://localhost:4200/login';
 
   isAuthenticated = signal<boolean>(
     !!(localStorage.getItem('access_token') || sessionStorage.getItem('access_token'))
@@ -38,6 +42,54 @@ export class AuthService {
         }
       })
     );
+  }
+
+  // ─────────────────────────────────────────────
+  //  Đăng nhập bằng Google (PKCE Flow)
+  // ─────────────────────────────────────────────
+  async getGoogleLoginUrl(): Promise<string> {
+    const verifier = this.generateCodeVerifier();
+    sessionStorage.setItem('code_verifier', verifier);
+    const challenge = await this.generateCodeChallenge(verifier);
+
+    return `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/auth` +
+      `?client_id=${this.clientId}` +
+      `&redirect_uri=${this.redirectUri}` +
+      `&response_type=code` +
+      `&scope=openid` +
+      `&kc_idp_hint=google` +
+      `&code_challenge=${challenge}` +
+      `&code_challenge_method=S256`;
+  }
+
+  loginWithCode(code: string): Observable<any> {
+    const codeVerifier = sessionStorage.getItem('code_verifier');
+    return this.http.post<any>(`${this.apiUrl}/code-login`, { code, codeVerifier }).pipe(
+      tap(response => {
+        if (response.access_token) {
+          this.clearStorage();
+          sessionStorage.setItem('access_token', response.access_token);
+          sessionStorage.setItem('refresh_token', response.refresh_token);
+          this.isAuthenticated.set(true);
+          sessionStorage.removeItem('code_verifier'); // Dùng xong thì xóa
+        }
+      })
+    );
+  }
+
+  private generateCodeVerifier(): string {
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    return btoa(String.fromCharCode.apply(null, Array.from(array)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  private async generateCodeChallenge(verifier: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(verifier);
+    const digest = await window.crypto.subtle.digest('SHA-256', data);
+    return btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(digest))))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
   // ─────────────────────────────────────────────
